@@ -189,7 +189,18 @@ public sealed partial class MainForm
         return
         [
             new TutorialStep(
-                "1. Read the cockpit",
+                "1. Run Quick Setup",
+                "Overview",
+                "Quick Setup turns a clean install into your bankroll tracker without importing any sample data. Use it once at the start, and rerun it later from the Setup button if your defaults change.",
+                [
+                    "Choose currency, enabled platforms, and the default platform.",
+                    "Pick whether opening funds are a starting bankroll or first deposit.",
+                    "Record optional starting wallet balances when you want reconciliation from day one."
+                ],
+                "Open Setup",
+                ShowQuickSetup),
+            new TutorialStep(
+                "2. Read the cockpit",
                 "Overview",
                 "Use Overview as the health check before you play. It keeps the important state visible without forcing you through every table.",
                 [
@@ -200,18 +211,18 @@ public sealed partial class MainForm
                 "Open Overview",
                 () => NavigateToPage("Overview")),
             new TutorialStep(
-                "2. Set your defaults",
+                "3. Set platforms and rules",
                 "Settings",
-                "Set the defaults once so every new decision starts from your real bankroll rules instead of from memory.",
+                "Settings controls the lists and limits the rest of the app uses. Disabled platforms stay out of tournament, cash, ledger, and decision pickers.",
                 [
-                    "Choose appearance and default platform.",
-                    "Set active month start and starting bankroll.",
+                    "Keep only the platforms you actually use enabled.",
+                    "Set active month start, starting bankroll, and default bullets.",
                     "Review risk caps, stop-loss, protect mode, and cooldown settings."
                 ],
                 "Open Settings",
                 () => NavigateToPage("Settings")),
             new TutorialStep(
-                "3. Reconcile wallets",
+                "4. Reconcile wallets",
                 "Wallets",
                 "Platform wallets compare expected cash against the amount you see on each poker site. This is where small tracking mistakes become obvious.",
                 [
@@ -222,7 +233,7 @@ public sealed partial class MainForm
                 "Open Wallets",
                 () => NavigateToPage("Wallets")),
             new TutorialStep(
-                "4. Decide before buying in",
+                "5. Decide before buying in",
                 "Decide",
                 "Decide turns the bankroll rules into a clear play, review, shot, pass, or break signal before you register.",
                 [
@@ -233,7 +244,7 @@ public sealed partial class MainForm
                 "Load Example",
                 LoadDecisionTutorialExample),
             new TutorialStep(
-                "5. Log tournaments",
+                "6. Log tournaments",
                 "MTTs",
                 "The MTT table is the audit trail for registrations, finishes, tickets, bounties, presets, and format-specific GGPoker fields.",
                 [
@@ -244,7 +255,7 @@ public sealed partial class MainForm
                 "Open Add MTT",
                 OpenTournamentTutorialDraft),
             new TutorialStep(
-                "6. Track tickets correctly",
+                "7. Track tickets correctly",
                 "MTTs",
                 "Ticket value is tracked separately from cash. That keeps a satellite win useful without pretending it is withdrawable money.",
                 [
@@ -255,7 +266,7 @@ public sealed partial class MainForm
                 "Open MTTs",
                 () => NavigateToPage("MTTs")),
             new TutorialStep(
-                "7. Run cash sessions",
+                "8. Run cash sessions",
                 "Cash",
                 "Cash is intentionally a start-close workflow: start moves money to the table, close returns the cashout and result.",
                 [
@@ -266,7 +277,7 @@ public sealed partial class MainForm
                 "Open Start Cash",
                 OpenCashTutorialDraft),
             new TutorialStep(
-                "8. Review patterns",
+                "9. Review patterns",
                 "Timeline",
                 "Use review pages after the session, not during the heat of play. They show whether the bankroll story adds up over time.",
                 [
@@ -277,7 +288,7 @@ public sealed partial class MainForm
                 "Open Timeline",
                 () => NavigateToPage("Timeline")),
             new TutorialStep(
-                "9. Use safety controls",
+                "10. Use safety controls",
                 "Settings",
                 "Lock Today and Cooldown are there for the moment when the best bankroll decision is to stop adding risk.",
                 [
@@ -288,7 +299,7 @@ public sealed partial class MainForm
                 "Open Settings",
                 () => NavigateToPage("Settings")),
             new TutorialStep(
-                "10. Back up and export",
+                "11. Back up and export",
                 "Overview",
                 "Use backups and exports before larger edits or after a clean reconciliation. Boring, but it saves future-you from detective work.",
                 [
@@ -299,7 +310,18 @@ public sealed partial class MainForm
                 "Show Options",
                 ShowBackupExportGuide),
             new TutorialStep(
-                "11. GGPoker quick guide",
+                "12. Updates and About",
+                "Overview",
+                "Installer builds can update themselves from GitHub Releases. About is the quick way to confirm the installed version, update mode, update source, and data file path.",
+                [
+                    "Use Updates to check for a newer released version.",
+                    "Use About after an update to confirm the running version.",
+                    "Remember: portable and debug builds can run, but only setup-installer builds self-update."
+                ],
+                "Open About",
+                ShowAbout),
+            new TutorialStep(
+                "13. GGPoker quick guide",
                 "Decide",
                 "The quick guide is the compact reminder for special GGPoker formats and what to record for each one.",
                 [
