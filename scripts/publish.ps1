@@ -49,14 +49,27 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 
 $safeVersion = $Version -replace "[^0-9A-Za-z._-]", "-"
+$packageVersion = $Version.Trim()
+if ($packageVersion.StartsWith("v", [System.StringComparison]::OrdinalIgnoreCase)) {
+    $packageVersion = $packageVersion.Substring(1)
+}
+
+if (!($packageVersion -match '^\d+\.\d+\.\d+([\-+][0-9A-Za-z\.-]+)?$')) {
+    throw "Velopack requires a semantic version such as v0.3.0 or 0.3.0. Received: $Version"
+}
+
 $artifactName = "BankrollManager-$safeVersion-$Runtime"
 $outputRootFull = Resolve-FromRepo $OutputRoot
 $publishDirectory = Join-Path $outputRootFull $artifactName
 $zipPath = Join-Path $outputRootFull "$artifactName.zip"
+$velopackDirectory = Join-Path $outputRootFull "velopack"
+$releaseNotesPath = Join-Path $outputRootFull "release-notes-$safeVersion.md"
 
 Assert-PathInsideRepo $outputRootFull
 Assert-PathInsideRepo $publishDirectory
 Assert-PathInsideRepo $zipPath
+Assert-PathInsideRepo $velopackDirectory
+Assert-PathInsideRepo $releaseNotesPath
 
 New-Item -ItemType Directory -Force $outputRootFull | Out-Null
 
@@ -66,6 +79,14 @@ if (Test-Path -LiteralPath $publishDirectory) {
 
 if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -LiteralPath $zipPath -Force
+}
+
+if (Test-Path -LiteralPath $velopackDirectory) {
+    Remove-Item -LiteralPath $velopackDirectory -Recurse -Force
+}
+
+if (Test-Path -LiteralPath $releaseNotesPath) {
+    Remove-Item -LiteralPath $releaseNotesPath -Force
 }
 
 dotnet publish $projectPath `
@@ -81,9 +102,32 @@ dotnet publish $projectPath `
 
 Compress-Archive -Path (Join-Path $publishDirectory "*") -DestinationPath $zipPath -Force
 
+$releaseNotes = @"
+Bankroll Manager $Version
+
+See the GitHub release notes for the full changelog.
+"@
+$releaseNotes | Out-File -FilePath $releaseNotesPath -Encoding utf8
+
+dotnet tool restore
+dotnet tool run vpk -- pack `
+    --packId BankrollManager `
+    --packTitle "Bankroll Manager" `
+    --packAuthors "Makmatoe" `
+    --packVersion $packageVersion `
+    --packDir $publishDirectory `
+    --mainExe "BankrollManager.App.exe" `
+    --runtime $Runtime `
+    --outputDir $velopackDirectory `
+    --releaseNotes $releaseNotesPath `
+    --shortcuts StartMenuRoot
+
 if (![string]::IsNullOrWhiteSpace($env:GITHUB_OUTPUT)) {
     "artifact_name=$artifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
     "zip_path=$zipPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+    "velopack_dir=$velopackDirectory" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+    "velopack_assets=$velopackDirectory\*" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 }
 
 Write-Host "Created release package: $zipPath"
+Write-Host "Created Velopack release assets: $velopackDirectory"

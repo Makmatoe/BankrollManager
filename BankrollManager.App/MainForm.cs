@@ -118,6 +118,7 @@ public sealed partial class MainForm : Form
     private bool _syncingTutorialList;
     private bool _tutorialAutoResumeChecked;
     private bool _firstRunSetupChecked;
+    private bool _updateCheckInProgress;
 
     private ComboBox _appearanceMode = null!;
     private TextBox _currency = null!;
@@ -383,6 +384,7 @@ public sealed partial class MainForm : Form
 
         strip.Items.Add(BuildCommandButton("Save", () => SaveData("Saved."), CommandTone.Primary));
         strip.Items.Add(BuildCommandButton("Setup", ShowQuickSetup));
+        strip.Items.Add(BuildCommandButton("Updates", CheckForUpdates));
         strip.Items.Add(BuildCommandButton("Backup", BackupData));
         strip.Items.Add(BuildCommandButton("Tutorial", () => StartTutorial()));
         strip.Items.Add(new ToolStripSeparator());

@@ -48,8 +48,8 @@ jobs:
       - name: Upload package artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.publish.outputs.artifact_name }}
-          path: ${{ steps.publish.outputs.zip_path }}
+          name: ${{ steps.publish.outputs.artifact_name }}-velopack
+          path: ${{ steps.publish.outputs.velopack_assets }}
           if-no-files-found: error
 
       - name: Create GitHub release
@@ -58,18 +58,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ github.ref_name }}
-          RELEASE_ZIP: ${{ steps.publish.outputs.zip_path }}
+          RELEASE_DIR: ${{ steps.publish.outputs.velopack_dir }}
         run: |
-          $PSNativeCommandUseErrorActionPreference = $false
-
-          gh release view $env:RELEASE_VERSION --repo $env:GITHUB_REPOSITORY *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $env:RELEASE_VERSION $env:RELEASE_ZIP --repo $env:GITHUB_REPOSITORY --clobber
-          }
-          else {
-            gh release create $env:RELEASE_VERSION $env:RELEASE_ZIP --repo $env:GITHUB_REPOSITORY --title $env:RELEASE_VERSION --notes "Bankroll Manager $env:RELEASE_VERSION"
-          }
-
-          if ($LASTEXITCODE -ne 0) {
-            exit $LASTEXITCODE
-          }
+          dotnet tool restore
+          dotnet tool run vpk -- upload github `
+            --outputDir $env:RELEASE_DIR `
+            --repoUrl "https://github.com/$env:GITHUB_REPOSITORY" `
+            --token $env:GH_TOKEN `
+            --publish true `
+            --merge true `
+            --releaseName $env:RELEASE_VERSION `
+            --tag $env:RELEASE_VERSION
