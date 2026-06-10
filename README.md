@@ -31,6 +31,14 @@ Or open `BankrollManager.sln` in Visual Studio and run `BankrollManager.App`.
 
 The verify script runs the full solution test suite with artifacts written under `.verify/`, which keeps tests working even when the desktop app is open and locking the normal `bin` output.
 
+## Publish
+
+```powershell
+.\scripts\publish.ps1 -Version v0.1.0
+```
+
+The publish script creates a self-contained `win-x64` package under `.verify\release`. GitHub Actions also has a Release workflow: run it manually with a version label to produce a zip artifact, or push a `v*` tag to build the package and create a GitHub Release.
+
 ## Data
 
 On first launch, the app creates:

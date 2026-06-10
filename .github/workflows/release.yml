@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version or build label, for example v0.1.0"
+        required: true
+        default: "v0.1.0"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build Release
+    runs-on: windows-2025-vs2026
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Verify
+        shell: pwsh
+        run: .\scripts\verify.ps1 -Configuration Release -ArtifactsPath .\.verify\release-test
+
+      - name: Publish package
+        id: publish
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}"
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $version = "${{ inputs.version }}"
+          }
+
+          .\scripts\publish.ps1 -Configuration Release -Runtime win-x64 -Version $version
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.publish.outputs.artifact_name }}
+          path: ${{ steps.publish.outputs.zip_path }}
+          if-no-files-found: error
+
+      - name: Create GitHub release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ github.ref_name }}
+          RELEASE_ZIP: ${{ steps.publish.outputs.zip_path }}
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $false
+
+          gh release view $env:RELEASE_VERSION --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:RELEASE_VERSION $env:RELEASE_ZIP --repo $env:GITHUB_REPOSITORY --clobber
+          }
+          else {
+            gh release create $env:RELEASE_VERSION $env:RELEASE_ZIP --repo $env:GITHUB_REPOSITORY --title $env:RELEASE_VERSION --notes "Bankroll Manager $env:RELEASE_VERSION"
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
