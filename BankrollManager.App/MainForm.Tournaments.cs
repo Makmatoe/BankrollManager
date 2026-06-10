@@ -83,7 +83,10 @@ public sealed partial class MainForm
         };
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
-        content.Controls.Add(_tournamentGrid, 0, 0);
+        content.Controls.Add(BuildGridWithEmptyState(
+            _tournamentGrid,
+            out _tournamentEmptyState,
+            "No tournaments yet. Add one manually or use Decide to evaluate the next registration."), 0, 0);
         content.Controls.Add(BuildTournamentInspector(), 0, 1);
         root.Controls.Add(content, 0, 1);
         return root;

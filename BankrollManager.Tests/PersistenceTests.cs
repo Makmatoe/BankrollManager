@@ -23,6 +23,7 @@ public sealed class PersistenceTests
             Assert.IsFalse(loaded.TournamentEntries.Any());
             Assert.IsFalse(loaded.CashSessions.Any());
             Assert.IsFalse(loaded.TournamentPresets.Any());
+            Assert.IsFalse(loaded.Settings.FirstRunSetupCompleted);
             Assert.AreEqual(0m, BankrollCalculator.CurrentBankroll(loaded));
             CollectionAssert.AreEquivalent(
                 Enum.GetValues<Platform>(),

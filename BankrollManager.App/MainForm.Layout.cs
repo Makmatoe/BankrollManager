@@ -65,6 +65,41 @@ public sealed partial class MainForm
         };
     }
 
+    private static Control BuildGridWithEmptyState(DataGridView grid, out Label emptyState, string text)
+    {
+        var host = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = Theme.Back
+        };
+
+        grid.Dock = DockStyle.Fill;
+        emptyState = BuildEmptyStateLabel(text);
+        emptyState.Dock = DockStyle.Top;
+        host.Controls.Add(grid);
+        host.Controls.Add(emptyState);
+        return host;
+    }
+
+    private static Label BuildEmptyStateLabel(string text)
+    {
+        return new Label
+        {
+            Text = text,
+            AutoSize = false,
+            AutoEllipsis = true,
+            Height = 42,
+            Dock = DockStyle.Top,
+            BackColor = Theme.AccentSurface,
+            ForeColor = Theme.Text,
+            Font = Theme.BodyFont,
+            Margin = new Padding(0, 0, 0, 8),
+            Padding = new Padding(14, 0, 14, 1),
+            TextAlign = ContentAlignment.MiddleLeft,
+            UseMnemonic = false
+        };
+    }
+
     private static void AddDecisionRow(TableLayoutPanel layout, string label, Control control)
     {
         var row = layout.RowCount++;

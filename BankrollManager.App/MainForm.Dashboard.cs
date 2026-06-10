@@ -172,10 +172,18 @@ public sealed partial class MainForm
         SetKpi("Protect mode", summary.StopLossStatus.ProtectModeActive ? "ACTIVE" : "Off", summary.StopLossStatus.ProtectModeActive ? -1m : 1m);
         SetKpi("Bankroll tier", summary.BankrollTier, summary.CurrentBankroll);
 
-        _stopLossBanner.Text = summary.StopLossStatus.BreakRequired
-            ? $"TAKE BREAK - {summary.StopLossStatus.Explanation}"
-            : "OK - no stop-loss or protect-mode rule is active";
-        _stopLossBanner.BackColor = summary.StopLossStatus.BreakRequired ? Theme.DangerSurface : Theme.PositiveSurface;
+        if (!FirstRunSetupService.HasUserData(_data))
+        {
+            _stopLossBanner.Text = "Clean bankroll ready - run Setup or add your first deposit.";
+            _stopLossBanner.BackColor = Theme.AccentSurface;
+        }
+        else
+        {
+            _stopLossBanner.Text = summary.StopLossStatus.BreakRequired
+                ? $"TAKE BREAK - {summary.StopLossStatus.Explanation}"
+                : "OK - no stop-loss or protect-mode rule is active";
+            _stopLossBanner.BackColor = summary.StopLossStatus.BreakRequired ? Theme.DangerSurface : Theme.PositiveSurface;
+        }
 
         var daily = BankrollCalculator.GetDailySummaries(_data).OrderBy(summary => summary.Date).ToList();
         var running = BankrollCalculator.GetRunningBankroll(_data).OrderBy(point => point.Date).ToList();

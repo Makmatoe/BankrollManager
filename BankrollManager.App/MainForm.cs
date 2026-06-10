@@ -64,6 +64,9 @@ public sealed partial class MainForm : Form
     private BankrollData _data = new();
     private Label _statusLabel = null!;
     private Label _stopLossBanner = null!;
+    private Label _tournamentEmptyState = null!;
+    private Label _cashEmptyState = null!;
+    private Label _ledgerEmptyState = null!;
     private MiniChart _dailyChart = null!;
     private MiniChart _dailyReviewChart = null!;
     private MiniChart _runningChart = null!;
@@ -114,6 +117,7 @@ public sealed partial class MainForm : Form
     private int _tutorialStepIndex;
     private bool _syncingTutorialList;
     private bool _tutorialAutoResumeChecked;
+    private bool _firstRunSetupChecked;
 
     private ComboBox _appearanceMode = null!;
     private TextBox _currency = null!;
@@ -196,6 +200,12 @@ public sealed partial class MainForm : Form
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);
+        if (!_firstRunSetupChecked)
+        {
+            _firstRunSetupChecked = true;
+            ShowFirstRunSetupIfNeeded();
+        }
+
         if (_tutorialAutoResumeChecked)
         {
             return;
@@ -372,6 +382,7 @@ public sealed partial class MainForm : Form
         };
 
         strip.Items.Add(BuildCommandButton("Save", () => SaveData("Saved."), CommandTone.Primary));
+        strip.Items.Add(BuildCommandButton("Setup", ShowQuickSetup));
         strip.Items.Add(BuildCommandButton("Backup", BackupData));
         strip.Items.Add(BuildCommandButton("Tutorial", () => StartTutorial()));
         strip.Items.Add(new ToolStripSeparator());

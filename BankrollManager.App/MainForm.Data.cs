@@ -24,6 +24,7 @@ public sealed partial class MainForm
         BankrollCalculator.RecalculateTrackingFields(_data);
         RefreshDataSources();
         RefreshDashboard();
+        RefreshEmptyStates();
         LoadSettingsControls();
         RefreshDecisionPlatformChoices(includeCurrent: true);
         RefreshDecision();
@@ -125,6 +126,24 @@ public sealed partial class MainForm
         _repository.Save(_data);
         RefreshAll();
         _statusLabel.Text = $"{message}  File: {_repository.FilePath}";
+    }
+
+    private void RefreshEmptyStates()
+    {
+        if (_tournamentEmptyState is not null)
+        {
+            _tournamentEmptyState.Visible = _data.TournamentEntries.Count == 0;
+        }
+
+        if (_cashEmptyState is not null)
+        {
+            _cashEmptyState.Visible = _data.CashSessions.Count == 0;
+        }
+
+        if (_ledgerEmptyState is not null)
+        {
+            _ledgerEmptyState.Visible = _data.LedgerEntries.Count == 0;
+        }
     }
 
     private void BackupData()

@@ -65,7 +65,10 @@ public sealed partial class MainForm
         };
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
-        content.Controls.Add(_cashGrid, 0, 0);
+        content.Controls.Add(BuildGridWithEmptyState(
+            _cashGrid,
+            out _cashEmptyState,
+            "No cash sessions yet. Start an active session or log a closed one when you are ready."), 0, 0);
         content.Controls.Add(BuildCashInspector(), 0, 1);
         root.Controls.Add(content, 0, 1);
         return root;

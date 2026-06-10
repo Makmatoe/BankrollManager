@@ -49,11 +49,14 @@ On first launch, the app creates:
 
 Set `BANKROLL_MANAGER_DATA_DIR` to use a custom data folder. If the new AppData file does not exist yet, the app will copy an existing legacy file from `BankrollManager.App\bin\Debug\net8.0-windows\Data\bankroll-data.json`; otherwise, it creates a clean empty bankroll file.
 
+On a clean empty bankroll, the app opens Quick Setup so you can set currency, enabled platforms, opening bankroll funding, and optional starting wallet balances.
+
 The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded when loaded, and files from a future schema are rejected with a clear error instead of being overwritten.
 
 ## Main Features
 
 - Overview with bankroll KPIs, stop-loss/protect-mode status, open tournaments, recent activity, and charts.
+- Quick Setup for first launch, with currency, platform, opening bankroll, first deposit, and starting wallet balance options.
 - Platform wallets with expected cash, reconciled actual cash, differences, ticket value, and transfer support.
 - Tournament log with cash bounty, ticket wins, ticket buy-ins, cash cost, net profit, ROI, risk percentage, rule result, and bankroll-after tracking.
 - Cash log with session cost, net profit, BB won, BB/100, risk percentage, and profit-lock warning support.

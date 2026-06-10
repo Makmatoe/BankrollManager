@@ -55,7 +55,10 @@ public sealed partial class MainForm
         AddTextColumn(_ledgerGrid, "BankrollBefore", "Bankroll Before", 115);
         AddTextColumn(_ledgerGrid, "BankrollAfter", "Bankroll After", 110);
         AddTextColumn(_ledgerGrid, "Notes", "Notes", 320);
-        root.Controls.Add(_ledgerGrid, 0, 1);
+        root.Controls.Add(BuildGridWithEmptyState(
+            _ledgerGrid,
+            out _ledgerEmptyState,
+            "No ledger entries yet. Add a deposit, withdrawal, bonus, rakeback, or correction here."), 0, 1);
         return root;
     }
 

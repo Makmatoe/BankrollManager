@@ -36,6 +36,8 @@ public sealed class BankrollSettings
     public bool TutorialCompleted { get; set; }
     public int TutorialStepIndex { get; set; }
     public List<string> TutorialCompletedTasks { get; set; } = [];
+    public bool FirstRunSetupCompleted { get; set; }
+    public DateTime? FirstRunSetupCompletedUtc { get; set; }
     public int RuleProfileVersion { get; set; }
     public List<CategoryRuleSettings> CategoryRules { get; set; } = CategoryRuleSettings.CreateDefaults();
 
