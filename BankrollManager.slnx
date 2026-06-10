@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BankrollManager.App/BankrollManager.App.csproj" />
+  <Project Path="BankrollManager.Core/BankrollManager.Core.csproj" />
+  <Project Path="BankrollManager.Tests/BankrollManager.Tests.csproj" />
+  <Project Path="BankrollManager.UiTests/BankrollManager.UiTests.csproj" />
+</Solution>

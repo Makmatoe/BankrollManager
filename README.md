@@ -1,0 +1,69 @@
+# Bankroll Manager
+
+A maintainable C#/.NET bankroll manager for online poker tracking. The app replaces a spreadsheet-style bankroll tracker with a local WinForms desktop app, JSON persistence, seed data, bankroll rules, stop-loss checks, and calculation tests.
+
+## Projects
+
+- `BankrollManager.Core` - models, seed data, bankroll calculations, rule engine, validation, JSON/CSV persistence.
+- `BankrollManager.App` - .NET 8 WinForms desktop UI.
+- `BankrollManager.Tests` - MSTest calculation tests.
+
+## Requirements
+
+- Windows
+- .NET 8 SDK or newer
+
+The app targets `net8.0-windows` and uses WinForms.
+
+## Run
+
+```powershell
+dotnet run --project .\BankrollManager.App\BankrollManager.App.csproj
+```
+
+Or open `BankrollManager.sln` in Visual Studio and run `BankrollManager.App`.
+
+## Test
+
+```powershell
+.\scripts\verify.ps1
+```
+
+The verify script runs the full solution test suite with artifacts written under `.verify/`, which keeps tests working even when the desktop app is open and locking the normal `bin` output.
+
+## Data
+
+On first launch, the app creates:
+
+```text
+%APPDATA%\BankrollManager\Data\bankroll-data.json
+```
+
+Set `BANKROLL_MANAGER_DATA_DIR` to use a custom data folder. If the new AppData file does not exist yet, the app will copy an existing legacy file from `BankrollManager.App\bin\Debug\net8.0-windows\Data\bankroll-data.json` before falling back to seed data.
+
+The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded when loaded, and files from a future schema are rejected with a clear error instead of being overwritten.
+
+The included seed totals are:
+
+- Total deposits: `€25.00`
+- Tournament P/L: `-€7.20`
+- Cash P/L: `-€14.22`
+- Total poker P/L: `-€21.42`
+- Current bankroll: `€3.58`
+
+## Main Features
+
+- Overview with bankroll KPIs, stop-loss/protect-mode status, open tournaments, recent activity, and charts.
+- Platform wallets with expected cash, reconciled actual cash, differences, ticket value, and transfer support.
+- Tournament log with cash bounty, ticket wins, ticket buy-ins, cash cost, net profit, ROI, risk percentage, rule result, and bankroll-after tracking.
+- Cash log with session cost, net profit, BB won, BB/100, risk percentage, and profit-lock warning support.
+- Ledger for deposits, withdrawals, bonuses, rakeback, ticket credits, corrections, and other bankroll movements.
+- Daily, monthly, yearly, platform, format, and category reviews.
+- Decision engine with PLAY / OK, SHOT OK, SHOT ONLY, PASS, TAKE BREAK, and FUND FIRST labels.
+- Editable bankroll settings and category defaults.
+- Save button plus autosave after add/edit/delete/settings changes.
+- JSON import/export, CSV import/export, and timestamped JSON backups.
+
+## Notes
+
+Deposits and withdrawals affect current bankroll but are excluded from poker P/L. Poker P/L is tournament net profit plus cash net profit.

@@ -1,0 +1,15 @@
+version = 1
+name = "BankrollManager"
+
+[setup]
+script = ""
+
+[[actions]]
+name = "Run App"
+icon = "run"
+command = "dotnet run --project .\\BankrollManager.App\\BankrollManager.App.csproj"
+
+[[actions]]
+name = "Test"
+icon = "check"
+command = ".\\scripts\\verify.ps1"
