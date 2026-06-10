@@ -37,13 +37,72 @@ jobs:
       - name: Publish package
         id: publish
         shell: pwsh
+        env:
+          SIGNING_CERTIFICATE_PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PFX_BASE64 }}
+          SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+          SIGNING_TIMESTAMP_URL: ${{ secrets.WINDOWS_SIGNING_TIMESTAMP_URL }}
         run: |
           $version = "${{ github.ref_name }}"
           if ("${{ github.event_name }}" -eq "workflow_dispatch") {
             $version = "${{ inputs.version }}"
           }
 
-          .\scripts\publish.ps1 -Configuration Release -Runtime win-x64 -Version $version
+          $hasSigningCertificate = ![string]::IsNullOrWhiteSpace($env:SIGNING_CERTIFICATE_PFX_BASE64)
+          $hasSigningPassword = ![string]::IsNullOrWhiteSpace($env:SIGNING_CERTIFICATE_PASSWORD)
+          if ($hasSigningCertificate -xor $hasSigningPassword) {
+            throw "Set both WINDOWS_SIGNING_CERTIFICATE_PFX_BASE64 and WINDOWS_SIGNING_CERTIFICATE_PASSWORD, or leave both unset for an unsigned build."
+          }
+
+          $signParams = ""
+          $certificatePath = $null
+          try {
+            if ($hasSigningCertificate) {
+              $certificatePath = Join-Path $env:RUNNER_TEMP "bankroll-manager-signing.pfx"
+              [System.IO.File]::WriteAllBytes(
+                $certificatePath,
+                [System.Convert]::FromBase64String($env:SIGNING_CERTIFICATE_PFX_BASE64))
+
+              $securePassword = ConvertTo-SecureString -String $env:SIGNING_CERTIFICATE_PASSWORD -AsPlainText -Force
+              $certificate = Import-PfxCertificate `
+                -FilePath $certificatePath `
+                -CertStoreLocation Cert:\CurrentUser\My `
+                -Password $securePassword
+
+              $thumbprint = @($certificate)[0].Thumbprint
+              if ([string]::IsNullOrWhiteSpace($thumbprint)) {
+                throw "Could not import the signing certificate."
+              }
+
+              $timestampUrl = if (![string]::IsNullOrWhiteSpace($env:SIGNING_TIMESTAMP_URL)) {
+                $env:SIGNING_TIMESTAMP_URL
+              }
+              else {
+                "http://timestamp.digicert.com"
+              }
+
+              $signParams = "/sha1 $thumbprint /s My /fd SHA256 /tr `"$timestampUrl`" /td SHA256"
+              Write-Host "Code signing enabled for this release."
+            }
+            else {
+              Write-Host "Code signing secrets are not configured; building unsigned release assets."
+            }
+
+            $publishArgs = @(
+              "-Configuration", "Release",
+              "-Runtime", "win-x64",
+              "-Version", $version
+            )
+            if (![string]::IsNullOrWhiteSpace($signParams)) {
+              $publishArgs += @("-SignParams", $signParams)
+            }
+
+            .\scripts\publish.ps1 @publishArgs
+          }
+          finally {
+            if (![string]::IsNullOrWhiteSpace($certificatePath) -and (Test-Path -LiteralPath $certificatePath)) {
+              Remove-Item -LiteralPath $certificatePath -Force
+            }
+          }
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v7

@@ -3,7 +3,8 @@ param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
     [string]$Version = "",
-    [string]$OutputRoot = ".\.verify\release"
+    [string]$OutputRoot = ".\.verify\release",
+    [string]$SignParams = $env:BANKROLL_MANAGER_SIGN_PARAMS
 )
 
 $ErrorActionPreference = "Stop"
@@ -109,24 +110,39 @@ See the GitHub release notes for the full changelog.
 "@
 $releaseNotes | Out-File -FilePath $releaseNotesPath -Encoding utf8
 
-dotnet tool restore
-dotnet tool run vpk -- pack `
-    --packId BankrollManager `
-    --packTitle "Bankroll Manager" `
-    --packAuthors "Makmatoe" `
-    --packVersion $packageVersion `
-    --packDir $publishDirectory `
-    --mainExe "BankrollManager.App.exe" `
-    --runtime $Runtime `
-    --outputDir $velopackDirectory `
-    --releaseNotes $releaseNotesPath `
-    --shortcuts StartMenuRoot
+$previousVpkSignParams = $env:VPK_SIGN_PARAMS
+try {
+    if (![string]::IsNullOrWhiteSpace($SignParams)) {
+        $env:VPK_SIGN_PARAMS = $SignParams
+        Write-Host "Velopack signing enabled via signtool parameters."
+    }
+    else {
+        Write-Host "Velopack signing disabled. Provide -SignParams or BANKROLL_MANAGER_SIGN_PARAMS to sign release assets."
+    }
+
+    dotnet tool restore
+    dotnet tool run vpk -- pack `
+        --packId BankrollManager `
+        --packTitle "Bankroll Manager" `
+        --packAuthors "Makmatoe" `
+        --packVersion $packageVersion `
+        --packDir $publishDirectory `
+        --mainExe "BankrollManager.App.exe" `
+        --runtime $Runtime `
+        --outputDir $velopackDirectory `
+        --releaseNotes $releaseNotesPath `
+        --shortcuts StartMenuRoot
+}
+finally {
+    $env:VPK_SIGN_PARAMS = $previousVpkSignParams
+}
 
 if (![string]::IsNullOrWhiteSpace($env:GITHUB_OUTPUT)) {
     "artifact_name=$artifactName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
     "zip_path=$zipPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
     "velopack_dir=$velopackDirectory" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
     "velopack_assets=$velopackDirectory\*" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+    "signing_enabled=$(![string]::IsNullOrWhiteSpace($SignParams))" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 }
 
 Write-Host "Created release package: $zipPath"

@@ -41,6 +41,24 @@ The publish script creates a self-contained `win-x64` package under `.verify\rel
 
 Install `BankrollManager-win-Setup.exe` from a GitHub Release to enable in-app updates. The app's Updates button checks GitHub Releases, downloads the newest Velopack package, applies it, and restarts the app. Portable/debug copies can still run, but they cannot update themselves.
 
+## Code Signing
+
+Release builds can be signed automatically when GitHub Actions has a Windows code-signing certificate. Without these secrets, the release still builds, but Velopack leaves the installer and app files unsigned.
+
+Add these repository secrets under GitHub Actions:
+
+- `WINDOWS_SIGNING_CERTIFICATE_PFX_BASE64` - base64 text for the `.pfx` certificate file.
+- `WINDOWS_SIGNING_CERTIFICATE_PASSWORD` - password for the `.pfx` file.
+- `WINDOWS_SIGNING_TIMESTAMP_URL` - optional RFC 3161 timestamp server. If omitted, the workflow uses `http://timestamp.digicert.com`.
+
+To convert a `.pfx` file to the base64 secret value:
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\certificate.pfx")) | Set-Clipboard
+```
+
+The release workflow imports the certificate into the current-user certificate store, passes the thumbprint to Velopack/SignTool, signs with SHA-256, and timestamps the signature. Code signing improves Windows trust prompts, but SmartScreen reputation can still take time to build, especially for a new publisher certificate.
+
 ## Data
 
 On first launch, the app creates:
