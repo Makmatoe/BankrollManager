@@ -56,6 +56,8 @@ public sealed partial class MainForm
         shell.Controls.Add(BuildStatsRail(statsColumn), 1, 0);
 
         _stopLossBanner = Theme.Label(string.Empty, Theme.HeaderFont, Theme.Text);
+        _stopLossBanner.AutoSize = false;
+        _stopLossBanner.AutoEllipsis = true;
         _stopLossBanner.Dock = DockStyle.Fill;
         _stopLossBanner.TextAlign = ContentAlignment.MiddleLeft;
         _stopLossBanner.Padding = new Padding(18, 8, 18, 8);
