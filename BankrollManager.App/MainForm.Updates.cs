@@ -1,3 +1,4 @@
+using System.Reflection;
 using Velopack;
 using Velopack.Exceptions;
 using Velopack.Sources;
@@ -90,6 +91,29 @@ public sealed partial class MainForm
         return new UpdateManager(new GithubSource(UpdateRepositoryUrl, accessToken: null, prerelease: false));
     }
 
+    private void ShowAbout()
+    {
+        var manager = CreateUpdateManager();
+        var installedMode = manager.IsInstalled
+            ? "Installer build - in-app updates enabled"
+            : "Portable/debug build - install the setup exe to enable updates";
+        var pendingUpdate = manager.UpdatePendingRestart is null
+            ? "No"
+            : manager.UpdatePendingRestart.Version.ToString();
+        var message =
+            $"Bankroll Manager {CurrentVersion()}{Environment.NewLine}{Environment.NewLine}" +
+            $"Update mode: {installedMode}{Environment.NewLine}" +
+            $"Update source: {UpdateRepositoryUrl}{Environment.NewLine}" +
+            $"Pending restart update: {pendingUpdate}{Environment.NewLine}{Environment.NewLine}" +
+            $"Data file:{Environment.NewLine}{_repository.FilePath}";
+
+        MessageBox.Show(
+            message,
+            "About Bankroll Manager",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information);
+    }
+
     private bool ConfirmUpdate(UpdateInfo update)
     {
         var notes = string.IsNullOrWhiteSpace(update.TargetFullRelease.NotesMarkdown)
@@ -127,5 +151,20 @@ public sealed partial class MainForm
     private static string UpdateVersion(UpdateInfo update)
     {
         return update.TargetFullRelease.Version.ToString();
+    }
+
+    private static string CurrentVersion()
+    {
+        var assembly = typeof(MainForm).Assembly;
+        var informationalVersion = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+        if (!string.IsNullOrWhiteSpace(informationalVersion))
+        {
+            return informationalVersion;
+        }
+
+        return assembly.GetName().Version?.ToString()
+            ?? "unknown";
     }
 }

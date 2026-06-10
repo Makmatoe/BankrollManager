@@ -34,7 +34,7 @@ The verify script runs the full solution test suite with artifacts written under
 ## Publish
 
 ```powershell
-.\scripts\publish.ps1 -Version v0.3.0
+.\scripts\publish.ps1 -Version v0.3.1
 ```
 
 The publish script creates a self-contained `win-x64` package under `.verify\release` and Velopack installer/update assets under `.verify\release\velopack`. GitHub Actions also has a Release workflow: run it manually with a version label to produce artifacts, or push a `v*` tag to build the package and create a GitHub Release.
@@ -60,6 +60,7 @@ The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded wh
 - Overview with bankroll KPIs, stop-loss/protect-mode status, open tournaments, recent activity, and charts.
 - Quick Setup for first launch, with currency, platform, opening bankroll, first deposit, and starting wallet balance options.
 - In-app update checks and one-click updates for installer-based builds.
+- About dialog with app version, update mode, update source, pending restart status, and data file path.
 - Platform wallets with expected cash, reconciled actual cash, differences, ticket value, and transfer support.
 - Tournament log with cash bounty, ticket wins, ticket buy-ins, cash cost, net profit, ROI, risk percentage, rule result, and bankroll-after tracking.
 - Cash log with session cost, net profit, BB won, BB/100, risk percentage, and profit-lock warning support.

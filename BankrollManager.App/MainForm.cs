@@ -385,6 +385,7 @@ public sealed partial class MainForm : Form
         strip.Items.Add(BuildCommandButton("Save", () => SaveData("Saved."), CommandTone.Primary));
         strip.Items.Add(BuildCommandButton("Setup", ShowQuickSetup));
         strip.Items.Add(BuildCommandButton("Updates", CheckForUpdates));
+        strip.Items.Add(BuildCommandButton("About", ShowAbout));
         strip.Items.Add(BuildCommandButton("Backup", BackupData));
         strip.Items.Add(BuildCommandButton("Tutorial", () => StartTutorial()));
         strip.Items.Add(new ToolStripSeparator());
