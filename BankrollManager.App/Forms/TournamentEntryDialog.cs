@@ -6,6 +6,7 @@ namespace BankrollManager.App.Forms;
 
 internal sealed class TournamentEntryDialog : Form
 {
+    private readonly BankrollSettings _settings;
     private readonly DateTimePicker _date;
     private readonly DateTimePicker _registrationTime;
     private readonly ComboBox _status;
@@ -68,8 +69,10 @@ internal sealed class TournamentEntryDialog : Form
     private readonly List<DialogLayout.Row> _ggRows = [];
     private readonly List<Control> _finishedOnlyGgControls = [];
 
-    public TournamentEntryDialog(TournamentEntry entry)
+    public TournamentEntryDialog(TournamentEntry entry, BankrollSettings settings)
     {
+        _settings = settings;
+        _settings.EnsureDefaults();
         Entry = Clone(entry);
         Text = Entry.Id == Guid.Empty ? "Add Tournament" : "Tournament Entry";
         Size = new Size(700, 760);
@@ -85,9 +88,9 @@ internal sealed class TournamentEntryDialog : Form
         _status = Theme.EnumBox(Entry.Status);
         _finishedDate = Theme.DatePicker(Entry.FinishedDate ?? Entry.Date);
         _finishedTime = Theme.TimePicker(Entry.FinishedTime ?? Entry.RegistrationTime ?? TimeOnly.FromDateTime(DateTime.Now));
-        _platform = Theme.EnumBox(Entry.Platform);
-        _category = Theme.EnumBox(Entry.Category);
-        _format = Theme.EnumBox(Entry.Format);
+        _platform = Theme.EnumBox(Entry.Platform, PlatformCatalog.EnabledPlatforms(_settings, Entry.Platform));
+        _category = Theme.EnumBox(Entry.Category, PlatformCatalog.TournamentCategoriesFor(Entry.Platform));
+        _format = Theme.EnumBox(Entry.Format, PlatformCatalog.TournamentFormatsFor(Entry.Platform));
         _eventName = Theme.TextBox();
         _eventName.Text = Entry.EventName;
         _currency = Theme.TextBox();
@@ -101,7 +104,9 @@ internal sealed class TournamentEntryDialog : Form
         _addOnsRebuys = Theme.MoneyBox(Entry.AddOnsRebuys);
         _bountyTicketValue = Theme.MoneyBox(Entry.BountyTicketValue);
         _ticketBuyInValue = Theme.MoneyBox(Entry.TicketBuyInValue);
-        _ticketBuyInPlatform = Theme.EnumBox(Entry.EffectiveTicketBuyInPlatform);
+        _ticketBuyInPlatform = Theme.EnumBox(
+            Entry.EffectiveTicketBuyInPlatform,
+            PlatformCatalog.EnabledPlatforms(_settings, Entry.EffectiveTicketBuyInPlatform));
         _ticketValueWon = Theme.MoneyBox(Entry.TicketValueWon);
         _cashPrize = Theme.MoneyBox(Entry.CashPrize);
         _tournamentDollarsWon = Theme.MoneyBox(Entry.TournamentDollarsWon);
@@ -210,10 +215,15 @@ internal sealed class TournamentEntryDialog : Form
         DialogLayout.AddRow(layout, "Mistake/Lesson", _mistakeLesson);
         DialogLayout.AddRow(layout, "Notes", _notes);
         _status.SelectedIndexChanged += (_, _) => UpdateStatusControls();
-        _platform.SelectedIndexChanged += (_, _) => UpdateGgControls();
+        _platform.SelectedIndexChanged += (_, _) =>
+        {
+            UpdatePlatformScopedChoices(includeCurrent: false);
+            UpdateGgControls();
+        };
         _format.SelectedIndexChanged += (_, _) => UpdateGgControls();
         _insuranceUsed.CheckedChanged += (_, _) => UpdateGgControls();
         _flipStacksBought.ValueChanged += (_, _) => UpdateGgControls();
+        UpdatePlatformScopedChoices(includeCurrent: true);
         UpdateStatusControls();
         UpdateGgControls();
     }
@@ -390,6 +400,39 @@ internal sealed class TournamentEntryDialog : Form
 
         _ggWarning.Text = BuildGgWarning(format);
         SetVisible(_ggWarning, !string.IsNullOrWhiteSpace(_ggWarning.Text));
+    }
+
+    private void UpdatePlatformScopedChoices(bool includeCurrent)
+    {
+        if (_platform.SelectedItem is not Platform platform)
+        {
+            return;
+        }
+
+        var selectedCategory = _category.SelectedItem is TournamentCategory category
+            ? category
+            : Entry.Category;
+        var selectedFormat = _format.SelectedItem is TournamentFormat format
+            ? format
+            : Entry.Format;
+        var selectedTicketPlatform = _ticketBuyInPlatform.SelectedItem is Platform ticketPlatform
+            ? ticketPlatform
+            : Entry.EffectiveTicketBuyInPlatform;
+
+        Theme.SetEnumBoxItems(
+            _category,
+            PlatformCatalog.TournamentCategoriesFor(platform),
+            selectedCategory,
+            includeCurrent);
+        Theme.SetEnumBoxItems(
+            _format,
+            PlatformCatalog.TournamentFormatsFor(platform),
+            selectedFormat,
+            includeCurrent);
+        Theme.SetEnumBoxItems(
+            _ticketBuyInPlatform,
+            PlatformCatalog.EnabledPlatforms(_settings, selectedTicketPlatform),
+            selectedTicketPlatform);
     }
 
     private void SetVisible(Control control, bool visible)

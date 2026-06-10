@@ -102,6 +102,7 @@ public sealed partial class MainForm
     private TournamentPreset? PromptTournamentPreset()
     {
         var items = _data.TournamentPresets
+            .Where(preset => _data.Settings.IsPlatformEnabled(preset.Platform))
             .Select(preset => new TournamentPresetListItem(
                 preset,
                 TournamentPresetService.DisplayName(preset, _data.Settings)))

@@ -228,7 +228,7 @@ public sealed partial class MainForm
             ActualBullets = _data.Settings.DefaultMaxBullets
         };
 
-        using var dialog = new TournamentEntryDialog(entry);
+        using var dialog = new TournamentEntryDialog(entry, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -255,7 +255,7 @@ public sealed partial class MainForm
 
     private void EditTournamentEntry(TournamentEntry selected)
     {
-        using var dialog = new TournamentEntryDialog(selected);
+        using var dialog = new TournamentEntryDialog(selected, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -283,7 +283,7 @@ public sealed partial class MainForm
         }
 
         var entry = TournamentPresetService.CreateEntry(preset, DateTime.Now);
-        using var dialog = new TournamentEntryDialog(entry);
+        using var dialog = new TournamentEntryDialog(entry, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -351,7 +351,7 @@ public sealed partial class MainForm
         draft.FinishedDate ??= DateOnly.FromDateTime(DateTime.Today);
         draft.FinishedTime ??= TimeOnly.FromDateTime(DateTime.Now);
 
-        using var dialog = new TournamentEntryDialog(draft);
+        using var dialog = new TournamentEntryDialog(draft, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -386,6 +386,7 @@ public sealed partial class MainForm
                     $"{platform} ({Money(available)} available)");
             })
             .Where(item => item.AvailableTicketValue > 0m
+                && _data.Settings.IsPlatformEnabled(item.Platform)
                 || (target.TicketBuyInValue > 0m && item.Platform == currentTicketPlatform))
             .OrderBy(item => item.Platform.ToString(), NaturalSortComparer.Instance)
             .ToList();

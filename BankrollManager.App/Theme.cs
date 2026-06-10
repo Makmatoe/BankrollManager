@@ -153,7 +153,7 @@ internal static class Theme
         };
     }
 
-    public static ComboBox EnumBox<TEnum>(TEnum selected) where TEnum : struct, Enum
+    public static ComboBox EnumBox<TEnum>(TEnum selected, IEnumerable<TEnum>? choices = null) where TEnum : struct, Enum
     {
         var box = new ComboBox
         {
@@ -165,12 +165,61 @@ internal static class Theme
             Width = 190,
             Height = ControlHeight
         };
-        box.Items.AddRange(Enum.GetValues<TEnum>()
-            .Cast<object>()
-            .OrderBy(value => value.ToString() ?? string.Empty, NaturalSortComparer.Instance)
-            .ToArray());
-        box.SelectedItem = selected;
+        SetEnumBoxItems(box, choices ?? Enum.GetValues<TEnum>(), selected);
         return box;
+    }
+
+    public static void SetEnumBoxItems<TEnum>(
+        ComboBox box,
+        IEnumerable<TEnum> choices,
+        TEnum selected,
+        bool includeSelected = true)
+        where TEnum : struct, Enum
+    {
+        var values = choices
+            .Where(Enum.IsDefined)
+            .Distinct()
+            .OrderBy(value => value.ToString() ?? string.Empty, NaturalSortComparer.Instance)
+            .ToList();
+
+        if (includeSelected && !values.Contains(selected))
+        {
+            values.Add(selected);
+            values = values
+                .OrderBy(value => value.ToString() ?? string.Empty, NaturalSortComparer.Instance)
+                .ToList();
+        }
+
+        if (values.Count == 0)
+        {
+            values.Add(selected);
+        }
+
+        box.BeginUpdate();
+        box.Items.Clear();
+        box.Items.AddRange(values.Cast<object>().ToArray());
+        box.SelectedItem = values.Contains(selected)
+            ? selected
+            : values[0];
+        box.EndUpdate();
+    }
+
+    public static void SelectEnumBoxItem<TEnum>(ComboBox box, TEnum selected, bool includeIfMissing = true)
+        where TEnum : struct, Enum
+    {
+        if (!box.Items.Cast<object>().OfType<TEnum>().Contains(selected))
+        {
+            if (!includeIfMissing)
+            {
+                return;
+            }
+
+            var values = box.Items.Cast<object>().OfType<TEnum>().Append(selected);
+            SetEnumBoxItems(box, values, selected);
+            return;
+        }
+
+        box.SelectedItem = selected;
     }
 
     public static DateTimePicker DatePicker(DateOnly value)

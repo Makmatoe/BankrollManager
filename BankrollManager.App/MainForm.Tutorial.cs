@@ -495,9 +495,10 @@ public sealed partial class MainForm
     {
         NavigateToPage("Decide");
         _decisionIsCash.Checked = false;
-        _decisionPlatform.SelectedItem = Platform.GGPoker;
-        _decisionCategory.SelectedItem = TournamentCategory.MainGrind;
-        _decisionFormat.SelectedItem = TournamentFormat.MysteryBounty;
+        Theme.SelectEnumBoxItem(_decisionPlatform, Platform.GGPoker);
+        RefreshDecisionChoices(includeCurrent: true);
+        Theme.SelectEnumBoxItem(_decisionCategory, TournamentCategory.MainGrind);
+        Theme.SelectEnumBoxItem(_decisionFormat, TournamentFormat.MysteryBounty);
         _decisionEventName.Text = "Tutorial Mystery Bounty";
         _decisionBuyIn.Value = ClampToBox(_decisionBuyIn, 1m);
         _decisionBullets.Value = ClampToBox(_decisionBullets, 1m);

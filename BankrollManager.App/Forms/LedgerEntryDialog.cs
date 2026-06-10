@@ -14,8 +14,9 @@ internal sealed class LedgerEntryDialog : Form
     private readonly ComboBox _category;
     private readonly TextBox _notes;
 
-    public LedgerEntryDialog(LedgerEntry entry)
+    public LedgerEntryDialog(LedgerEntry entry, BankrollSettings settings)
     {
+        settings.EnsureDefaults();
         Entry = Clone(entry);
         Text = Entry.Id == Guid.Empty ? "Add Ledger Entry" : "Ledger Entry";
         Size = new Size(560, 520);
@@ -28,7 +29,7 @@ internal sealed class LedgerEntryDialog : Form
         var layout = DialogLayout.Create(this, Save);
         _date = Theme.DatePicker(Entry.Date);
         _type = Theme.EnumBox(Entry.Type);
-        _platform = Theme.EnumBox(Entry.Platform);
+        _platform = Theme.EnumBox(Entry.Platform, PlatformCatalog.EnabledPlatforms(settings, Entry.Platform));
         _description = Theme.TextBox();
         _description.Text = Entry.Description;
         _amount = Theme.MoneyBox(Entry.Amount);

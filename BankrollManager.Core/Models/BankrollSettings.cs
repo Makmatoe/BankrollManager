@@ -7,6 +7,7 @@ public sealed class BankrollSettings
     public decimal StartingBankroll { get; set; } = 0m;
     public string CurrencySymbol { get; set; } = "\u20ac";
     public Platform DefaultPlatform { get; set; } = Platform.Unibet;
+    public List<Platform> EnabledPlatforms { get; set; } = Enum.GetValues<Platform>().ToList();
     public DateOnly ActiveMonthStart { get; set; } = new(2026, 6, 1);
     public int DefaultMaxBullets { get; set; } = 1;
     public int ActiveReviewYear { get; set; } = 2026;
@@ -45,6 +46,18 @@ public sealed class BankrollSettings
             ?? CategoryRules.First(rule => rule.Category == TournamentCategory.Other);
     }
 
+    public bool IsPlatformEnabled(Platform platform)
+    {
+        EnsureDefaults();
+        return EnabledPlatforms.Contains(platform);
+    }
+
+    public IReadOnlyList<Platform> GetEnabledPlatforms()
+    {
+        EnsureDefaults();
+        return EnabledPlatforms;
+    }
+
     public void EnsureDefaults()
     {
         var previousRuleProfileVersion = RuleProfileVersion;
@@ -54,6 +67,7 @@ public sealed class BankrollSettings
         {
             AppearanceMode = AppearanceMode.Dark;
         }
+        NormalizeEnabledPlatforms();
         TutorialCompletedTasks ??= [];
         TutorialStepIndex = Math.Max(0, TutorialStepIndex);
 
@@ -255,5 +269,24 @@ public sealed class BankrollSettings
     private static decimal ClampPercent(decimal value)
     {
         return Math.Clamp(value, 0m, 100m);
+    }
+
+    private void NormalizeEnabledPlatforms()
+    {
+        EnabledPlatforms ??= [];
+        EnabledPlatforms = EnabledPlatforms
+            .Where(Enum.IsDefined)
+            .Distinct()
+            .ToList();
+
+        if (EnabledPlatforms.Count == 0)
+        {
+            EnabledPlatforms = Enum.GetValues<Platform>().ToList();
+        }
+
+        if (!EnabledPlatforms.Contains(DefaultPlatform))
+        {
+            DefaultPlatform = EnabledPlatforms[0];
+        }
     }
 }

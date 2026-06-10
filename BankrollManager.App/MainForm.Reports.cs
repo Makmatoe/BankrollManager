@@ -249,7 +249,7 @@ public sealed partial class MainForm
             Platform = _data.Settings.DefaultPlatform
         };
 
-        using var dialog = new LedgerEntryDialog(entry);
+        using var dialog = new LedgerEntryDialog(entry, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -266,7 +266,7 @@ public sealed partial class MainForm
             return;
         }
 
-        using var dialog = new LedgerEntryDialog(selected);
+        using var dialog = new LedgerEntryDialog(selected, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;

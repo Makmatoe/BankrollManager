@@ -54,8 +54,8 @@ internal sealed class CashSessionDialog : Form
         _status = Theme.EnumBox(Entry.Status);
         _closedDate = Theme.DatePicker(Entry.ClosedDate ?? Entry.Date);
         _closedTime = Theme.TimePicker(Entry.ClosedTime ?? Entry.SessionTime ?? TimeOnly.FromDateTime(DateTime.Now));
-        _platform = Theme.EnumBox(Entry.Platform);
-        _format = Theme.EnumBox(Entry.Format);
+        _platform = Theme.EnumBox(Entry.Platform, PlatformCatalog.EnabledPlatforms(_settings, Entry.Platform));
+        _format = Theme.EnumBox(Entry.Format, PlatformCatalog.CashFormatsFor(Entry.Platform));
         _game = Theme.TextBox();
         _game.Text = Entry.Game;
         _stakes = Theme.TextBox();
@@ -113,7 +113,13 @@ internal sealed class CashSessionDialog : Form
         _status.SelectedIndexChanged += (_, _) => UpdateStatusControls();
         _closedDate.ValueChanged += (_, _) => AutoFillMinutes();
         _closedTime.ValueChanged += (_, _) => AutoFillMinutes();
+        _platform.SelectedIndexChanged += (_, _) =>
+        {
+            UpdateCashFormatChoices(includeCurrent: false);
+            UpdateGgCashControls();
+        };
         _format.SelectedIndexChanged += (_, _) => UpdateGgCashControls();
+        UpdateCashFormatChoices(includeCurrent: true);
         UpdateStatusControls();
         AutoFillMinutes();
         UpdateThresholdWarning();
@@ -231,6 +237,23 @@ internal sealed class CashSessionDialog : Form
         _jackpotRow.SetVisible(isFinished && (isAof || _jackpotFortunePrizeWon.Value > 0m));
         _formatWarning.Text = CashSessionDialogSupport.BuildFormatWarning(format);
         _formatWarningRow.SetVisible(!string.IsNullOrWhiteSpace(_formatWarning.Text));
+    }
+
+    private void UpdateCashFormatChoices(bool includeCurrent)
+    {
+        if (_platform.SelectedItem is not Platform platform)
+        {
+            return;
+        }
+
+        var selectedFormat = _format.SelectedItem is CashFormat format
+            ? format
+            : Entry.Format;
+        Theme.SetEnumBoxItems(
+            _format,
+            PlatformCatalog.CashFormatsFor(platform),
+            selectedFormat,
+            includeCurrent);
     }
 
     private void AutoFillMinutes()

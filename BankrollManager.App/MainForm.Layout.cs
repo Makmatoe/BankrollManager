@@ -98,6 +98,30 @@ public sealed partial class MainForm
         layout.Controls.Add(control, 1, row);
     }
 
+    private static void AddTallSettingsRow(TableLayoutPanel layout, string label, Control control, int height)
+    {
+        var row = layout.RowCount++;
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, height));
+
+        var labelControl = Theme.Label(label, Theme.BodyFont, Theme.Muted);
+        labelControl.AutoSize = false;
+        labelControl.AutoEllipsis = true;
+        labelControl.Dock = DockStyle.Fill;
+        labelControl.Margin = new Padding(0);
+        labelControl.Padding = new Padding(0, 8, 14, 0);
+        labelControl.TextAlign = ContentAlignment.TopLeft;
+        labelControl.UseMnemonic = false;
+
+        control.AutoSize = false;
+        control.Dock = DockStyle.Left;
+        control.Width = 300;
+        control.Height = Math.Max(32, height - 16);
+        control.Margin = new Padding(0, 6, 0, 6);
+
+        layout.Controls.Add(labelControl, 0, row);
+        layout.Controls.Add(control, 1, row);
+    }
+
     private static void AddSettingsSection(TableLayoutPanel layout, string text)
     {
         var row = layout.RowCount++;

@@ -204,7 +204,7 @@ public sealed partial class MainForm
     {
         var entry = CashSessionWorkflowService.CreateActiveDraft(DateTime.Now, _data.Settings.DefaultPlatform);
 
-        using var dialog = new CashSessionStartDialog(entry);
+        using var dialog = new CashSessionStartDialog(entry, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;

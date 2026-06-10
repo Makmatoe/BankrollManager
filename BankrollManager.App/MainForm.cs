@@ -117,6 +117,7 @@ public sealed partial class MainForm : Form
 
     private ComboBox _appearanceMode = null!;
     private TextBox _currency = null!;
+    private CheckedListBox _enabledPlatforms = null!;
     private ComboBox _defaultPlatform = null!;
     private DateTimePicker _activeMonthStart = null!;
     private NumericUpDown _startingBankroll = null!;

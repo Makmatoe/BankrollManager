@@ -6,6 +6,7 @@ namespace BankrollManager.App.Forms;
 
 internal sealed class CashSessionStartDialog : Form
 {
+    private readonly BankrollSettings _settings;
     private readonly DateTimePicker _date;
     private readonly DateTimePicker _sessionTime;
     private readonly ComboBox _platform;
@@ -20,8 +21,10 @@ internal sealed class CashSessionStartDialog : Form
     private readonly DialogLayout.Row _formatWarningRow;
     private readonly TextBox _notes;
 
-    public CashSessionStartDialog(CashSession entry)
+    public CashSessionStartDialog(CashSession entry, BankrollSettings settings)
     {
+        _settings = settings;
+        _settings.EnsureDefaults();
         Entry = CashSessionDialogSupport.Clone(entry);
         CashSessionWorkflowService.MarkActive(Entry);
         Text = "Start Cash Session";
@@ -35,8 +38,8 @@ internal sealed class CashSessionStartDialog : Form
         var layout = DialogLayout.Create(this, Save);
         _date = Theme.DatePicker(Entry.Date);
         _sessionTime = Theme.TimePicker(Entry.SessionTime ?? TimeOnly.FromDateTime(DateTime.Now));
-        _platform = Theme.EnumBox(Entry.Platform);
-        _format = Theme.EnumBox(Entry.Format);
+        _platform = Theme.EnumBox(Entry.Platform, PlatformCatalog.EnabledPlatforms(_settings, Entry.Platform));
+        _format = Theme.EnumBox(Entry.Format, PlatformCatalog.CashFormatsFor(Entry.Platform));
         _game = Theme.TextBox();
         _game.Text = Entry.Game;
         _stakes = Theme.TextBox();
@@ -63,7 +66,13 @@ internal sealed class CashSessionStartDialog : Form
         DialogLayout.AddRow(layout, "Reload cap", _reloadCap);
         _formatWarningRow = DialogLayout.AddRow(layout, "Format warning", _formatWarning);
         DialogLayout.AddRow(layout, "Notes", _notes);
+        _platform.SelectedIndexChanged += (_, _) =>
+        {
+            UpdateCashFormatChoices(includeCurrent: false);
+            UpdateFormatWarning();
+        };
         _format.SelectedIndexChanged += (_, _) => UpdateFormatWarning();
+        UpdateCashFormatChoices(includeCurrent: true);
         UpdateFormatWarning();
     }
 
@@ -104,5 +113,22 @@ internal sealed class CashSessionStartDialog : Form
 
         _formatWarning.Text = CashSessionDialogSupport.BuildFormatWarning(format);
         _formatWarningRow.SetVisible(!string.IsNullOrWhiteSpace(_formatWarning.Text));
+    }
+
+    private void UpdateCashFormatChoices(bool includeCurrent)
+    {
+        if (_platform.SelectedItem is not Platform platform)
+        {
+            return;
+        }
+
+        var selectedFormat = _format.SelectedItem is CashFormat format
+            ? format
+            : Entry.Format;
+        Theme.SetEnumBoxItems(
+            _format,
+            PlatformCatalog.CashFormatsFor(platform),
+            selectedFormat,
+            includeCurrent);
     }
 }

@@ -25,6 +25,7 @@ public sealed partial class MainForm
         RefreshDataSources();
         RefreshDashboard();
         LoadSettingsControls();
+        RefreshDecisionPlatformChoices(includeCurrent: true);
         RefreshDecision();
     }
 

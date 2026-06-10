@@ -104,9 +104,17 @@ public sealed partial class MainForm
             && Enum.TryParse<Platform>(selected.Name, out var parsed)
                 ? parsed
                 : _data.Settings.DefaultPlatform;
-        var fallbackTo = Enum.GetValues<Platform>()
+        var transferPlatforms = PlatformCatalog.EnabledPlatforms(_data.Settings, selectedPlatform)
             .OrderBy(platform => platform.ToString(), NaturalSortComparer.Instance)
-            .First(platform => platform != selectedPlatform);
+            .ToList();
+        if (transferPlatforms.Count < 2)
+        {
+            transferPlatforms = Enum.GetValues<Platform>()
+                .OrderBy(platform => platform.ToString(), NaturalSortComparer.Instance)
+                .ToList();
+        }
+
+        var fallbackTo = transferPlatforms.First(platform => platform != selectedPlatform);
         WalletTransferDraft? result = null;
 
         using var form = new Form
@@ -157,8 +165,8 @@ public sealed partial class MainForm
         });
 
         transferDate = Theme.DatePicker(DateOnly.FromDateTime(DateTime.Today));
-        fromPlatform = Theme.EnumBox(selectedPlatform);
-        toPlatform = Theme.EnumBox(fallbackTo);
+        fromPlatform = Theme.EnumBox(selectedPlatform, transferPlatforms);
+        toPlatform = Theme.EnumBox(fallbackTo, transferPlatforms);
         transferAmount = Theme.MoneyBox(0m);
         transferAmount.Minimum = 0.01m;
         transferAmount.Value = 0.01m;

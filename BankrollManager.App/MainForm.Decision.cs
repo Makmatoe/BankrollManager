@@ -46,10 +46,18 @@ public sealed partial class MainForm
         formScroller.Controls.Add(form);
 
         _decisionIsCash = new CheckBox { Text = "Cash session", AutoSize = true, ForeColor = Theme.Text, Font = Theme.BodyFont };
-        _decisionPlatform = Theme.EnumBox(_data.Settings.DefaultPlatform);
-        _decisionCategory = Theme.EnumBox(TournamentCategory.MainGrind);
-        _decisionFormat = Theme.EnumBox(TournamentFormat.MTT);
-        _decisionCashFormat = Theme.EnumBox(CashFormat.HoldemCash);
+        _decisionPlatform = Theme.EnumBox(
+            _data.Settings.DefaultPlatform,
+            PlatformCatalog.EnabledPlatforms(_data.Settings, _data.Settings.DefaultPlatform));
+        _decisionCategory = Theme.EnumBox(
+            TournamentCategory.MainGrind,
+            PlatformCatalog.TournamentCategoriesFor(_data.Settings.DefaultPlatform));
+        _decisionFormat = Theme.EnumBox(
+            TournamentFormat.MTT,
+            PlatformCatalog.TournamentFormatsFor(_data.Settings.DefaultPlatform));
+        _decisionCashFormat = Theme.EnumBox(
+            CashFormat.HoldemCash,
+            PlatformCatalog.CashFormatsFor(_data.Settings.DefaultPlatform));
         _decisionEventName = Theme.TextBox();
         _decisionBuyIn = Theme.MoneyBox(0m);
         _decisionBullets = Theme.IntBox(_data.Settings.DefaultMaxBullets);
@@ -106,6 +114,13 @@ public sealed partial class MainForm
                 case NumericUpDown numeric:
                     numeric.ValueChanged += (_, _) => DecisionSetupChanged();
                     break;
+                case ComboBox combo when ReferenceEquals(combo, _decisionPlatform):
+                    combo.SelectedIndexChanged += (_, _) =>
+                    {
+                        RefreshDecisionChoices(includeCurrent: false);
+                        DecisionSetupChanged();
+                    };
+                    break;
                 case ComboBox combo:
                     combo.SelectedIndexChanged += (_, _) => DecisionSetupChanged();
                     break;
@@ -154,6 +169,58 @@ public sealed partial class MainForm
         resultLayout.Controls.Add(_decisionWarnings, 0, 6);
 
         return root;
+    }
+
+    private void RefreshDecisionChoices(bool includeCurrent)
+    {
+        if (_decisionPlatform.SelectedItem is not Platform platform)
+        {
+            return;
+        }
+
+        var selectedCategory = _decisionCategory.SelectedItem is TournamentCategory category
+            ? category
+            : TournamentCategory.MainGrind;
+        var selectedFormat = _decisionFormat.SelectedItem is TournamentFormat format
+            ? format
+            : TournamentFormat.MTT;
+        var selectedCashFormat = _decisionCashFormat.SelectedItem is CashFormat cashFormat
+            ? cashFormat
+            : CashFormat.HoldemCash;
+
+        Theme.SetEnumBoxItems(
+            _decisionCategory,
+            PlatformCatalog.TournamentCategoriesFor(platform),
+            selectedCategory,
+            includeCurrent);
+        Theme.SetEnumBoxItems(
+            _decisionFormat,
+            PlatformCatalog.TournamentFormatsFor(platform),
+            selectedFormat,
+            includeCurrent);
+        Theme.SetEnumBoxItems(
+            _decisionCashFormat,
+            PlatformCatalog.CashFormatsFor(platform),
+            selectedCashFormat,
+            includeCurrent);
+    }
+
+    private void RefreshDecisionPlatformChoices(bool includeCurrent)
+    {
+        if (_decisionPlatform is null)
+        {
+            return;
+        }
+
+        var selectedPlatform = _decisionPlatform.SelectedItem is Platform platform
+            ? platform
+            : _data.Settings.DefaultPlatform;
+        Theme.SetEnumBoxItems(
+            _decisionPlatform,
+            PlatformCatalog.EnabledPlatforms(_data.Settings, selectedPlatform),
+            selectedPlatform,
+            includeCurrent);
+        RefreshDecisionChoices(includeCurrent);
     }
 
     private static void ConfigureResultLabel(Label label, int minimumHeight)
@@ -239,10 +306,11 @@ public sealed partial class MainForm
         {
             _decisionAppliedPreset = preset;
             _decisionIsCash.Checked = false;
-            _decisionPlatform.SelectedItem = preset.Platform;
-            _decisionCategory.SelectedItem = preset.Category;
-            _decisionFormat.SelectedItem = preset.Format;
-            _decisionCashFormat.SelectedItem = CashFormat.HoldemCash;
+            Theme.SelectEnumBoxItem(_decisionPlatform, preset.Platform);
+            RefreshDecisionChoices(includeCurrent: true);
+            Theme.SelectEnumBoxItem(_decisionCategory, preset.Category);
+            Theme.SelectEnumBoxItem(_decisionFormat, preset.Format);
+            Theme.SelectEnumBoxItem(_decisionCashFormat, CashFormat.HoldemCash);
             _decisionEventName.Text = string.IsNullOrWhiteSpace(preset.EventName) ? preset.Name : preset.EventName;
             _decisionBuyIn.Value = ClampToBox(_decisionBuyIn, preset.BuyIn);
             _decisionBullets.Value = ClampToBox(_decisionBullets, Math.Max(1, preset.PlannedBullets));
@@ -313,7 +381,7 @@ public sealed partial class MainForm
         entry.Tags = AppendTag(entry.Tags, "Decision");
         entry.Notes = BuildDecisionAuditNotes(request, result);
 
-        using var dialog = new TournamentEntryDialog(entry);
+        using var dialog = new TournamentEntryDialog(entry, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
@@ -348,7 +416,7 @@ public sealed partial class MainForm
         entry.ReloadCap = request.CashReloads;
         entry.Notes = BuildDecisionAuditNotes(request, result);
 
-        using var dialog = new CashSessionStartDialog(entry);
+        using var dialog = new CashSessionStartDialog(entry, _data.Settings);
         if (dialog.ShowDialog(this) != DialogResult.OK)
         {
             return;

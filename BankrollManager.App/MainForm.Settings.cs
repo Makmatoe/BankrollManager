@@ -40,6 +40,7 @@ public sealed partial class MainForm
 
         _appearanceMode = Theme.EnumBox(AppearanceMode.Dark);
         _currency = Theme.TextBox();
+        _enabledPlatforms = BuildEnabledPlatformsList();
         _defaultPlatform = Theme.EnumBox(Platform.Unibet);
         _activeMonthStart = Theme.DatePicker(new DateOnly(2026, 6, 1));
         _startingBankroll = Theme.MoneyBox(0m);
@@ -70,6 +71,7 @@ public sealed partial class MainForm
         AddSettingsSection(form, "App Defaults");
         AddSettingsRow(form, "Appearance", _appearanceMode);
         AddSettingsRow(form, "Currency", _currency);
+        AddTallSettingsRow(form, "Enabled platforms", _enabledPlatforms, 112);
         AddSettingsRow(form, "Default platform", _defaultPlatform);
         AddSettingsRow(form, "Active month start", _activeMonthStart);
         AddSettingsRow(form, "Starting bankroll", _startingBankroll);
@@ -149,7 +151,11 @@ public sealed partial class MainForm
         var today = DateOnly.FromDateTime(DateTime.Today);
         _appearanceMode.SelectedItem = settings.AppearanceMode;
         _currency.Text = settings.CurrencySymbol;
-        _defaultPlatform.SelectedItem = settings.DefaultPlatform;
+        LoadEnabledPlatforms(settings.GetEnabledPlatforms());
+        Theme.SetEnumBoxItems(
+            _defaultPlatform,
+            PlatformCatalog.EnabledPlatforms(settings, settings.DefaultPlatform),
+            settings.DefaultPlatform);
         _activeMonthStart.Value = settings.ActiveMonthStart.ToDateTime(TimeOnly.MinValue);
         _startingBankroll.Value = ClampToBox(_startingBankroll, settings.StartingBankroll);
         _defaultMaxBullets.Value = ClampToBox(_defaultMaxBullets, settings.DefaultMaxBullets);
@@ -181,7 +187,25 @@ public sealed partial class MainForm
     {
         _data.Settings.AppearanceMode = (AppearanceMode)_appearanceMode.SelectedItem!;
         _data.Settings.CurrencySymbol = string.IsNullOrWhiteSpace(_currency.Text) ? "\u20ac" : _currency.Text.Trim();
-        _data.Settings.DefaultPlatform = (Platform)_defaultPlatform.SelectedItem!;
+        var enabledPlatforms = CheckedEnabledPlatforms();
+        if (enabledPlatforms.Count == 0)
+        {
+            MessageBox.Show(
+                "Keep at least one platform enabled.",
+                "Enabled platforms",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        var defaultPlatform = (Platform)_defaultPlatform.SelectedItem!;
+        if (!enabledPlatforms.Contains(defaultPlatform))
+        {
+            defaultPlatform = enabledPlatforms[0];
+        }
+
+        _data.Settings.EnabledPlatforms = enabledPlatforms;
+        _data.Settings.DefaultPlatform = defaultPlatform;
         _data.Settings.ActiveMonthStart = DateOnly.FromDateTime(_activeMonthStart.Value);
         _data.Settings.StartingBankroll = _startingBankroll.Value;
         _data.Settings.DefaultMaxBullets = (int)_defaultMaxBullets.Value;
@@ -252,6 +276,43 @@ public sealed partial class MainForm
         InitializeComponent();
         RefreshAll();
         ResumeLayout();
+    }
+
+    private static CheckedListBox BuildEnabledPlatformsList()
+    {
+        var list = new CheckedListBox
+        {
+            CheckOnClick = true,
+            BackColor = Theme.PanelAlt,
+            ForeColor = Theme.Text,
+            BorderStyle = BorderStyle.FixedSingle,
+            Font = Theme.BodyFont,
+            Height = 96,
+            Width = 300
+        };
+
+        return list;
+    }
+
+    private void LoadEnabledPlatforms(IReadOnlyList<Platform> enabledPlatforms)
+    {
+        _enabledPlatforms.BeginUpdate();
+        _enabledPlatforms.Items.Clear();
+        foreach (var platform in Enum.GetValues<Platform>()
+            .OrderBy(platform => platform.ToString(), NaturalSortComparer.Instance))
+        {
+            _enabledPlatforms.Items.Add(platform, enabledPlatforms.Contains(platform));
+        }
+
+        _enabledPlatforms.EndUpdate();
+    }
+
+    private List<Platform> CheckedEnabledPlatforms()
+    {
+        return _enabledPlatforms.CheckedItems
+            .Cast<object>()
+            .OfType<Platform>()
+            .ToList();
     }
 
 
