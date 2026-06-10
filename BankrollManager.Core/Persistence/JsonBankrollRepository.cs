@@ -39,9 +39,9 @@ public sealed class JsonBankrollRepository
 
         if (!File.Exists(FilePath))
         {
-            var seedData = SeedDataFactory.Create();
-            Save(seedData);
-            return seedData;
+            var data = new BankrollData();
+            Save(data);
+            return data;
         }
 
         return LoadFromFile(FilePath);

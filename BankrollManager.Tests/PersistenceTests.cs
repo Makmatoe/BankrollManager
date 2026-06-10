@@ -8,6 +8,33 @@ namespace BankrollManager.Tests;
 public sealed class PersistenceTests
 {
     [TestMethod]
+    public void RepositoryCreatesCleanDataWhenNoFileExists()
+    {
+        var folder = CreateTempFolder();
+        try
+        {
+            var repository = new JsonBankrollRepository(folder);
+
+            var loaded = repository.LoadOrCreate();
+
+            Assert.IsTrue(File.Exists(repository.FilePath));
+            Assert.AreEqual(BankrollData.CurrentDataSchemaVersion, loaded.DataSchemaVersion);
+            Assert.IsFalse(loaded.LedgerEntries.Any());
+            Assert.IsFalse(loaded.TournamentEntries.Any());
+            Assert.IsFalse(loaded.CashSessions.Any());
+            Assert.IsFalse(loaded.TournamentPresets.Any());
+            Assert.AreEqual(0m, BankrollCalculator.CurrentBankroll(loaded));
+            CollectionAssert.AreEquivalent(
+                Enum.GetValues<Platform>(),
+                loaded.PlatformWallets.Select(wallet => wallet.Platform).ToArray());
+        }
+        finally
+        {
+            DeleteTempFolder(folder);
+        }
+    }
+
+    [TestMethod]
     public void RepositorySavesCurrentSchemaVersionAndCleansTemporaryFiles()
     {
         var folder = CreateTempFolder();

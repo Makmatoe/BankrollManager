@@ -1,10 +1,10 @@
 # Bankroll Manager
 
-A maintainable C#/.NET bankroll manager for online poker tracking. The app replaces a spreadsheet-style bankroll tracker with a local WinForms desktop app, JSON persistence, seed data, bankroll rules, stop-loss checks, and calculation tests.
+A maintainable C#/.NET bankroll manager for online poker tracking. The app replaces a spreadsheet-style bankroll tracker with a local WinForms desktop app, JSON persistence, clean first-run data, bankroll rules, stop-loss checks, and calculation tests.
 
 ## Projects
 
-- `BankrollManager.Core` - models, seed data, bankroll calculations, rule engine, validation, JSON/CSV persistence.
+- `BankrollManager.Core` - models, bankroll calculations, rule engine, validation, JSON/CSV persistence.
 - `BankrollManager.App` - .NET 8 WinForms desktop UI.
 - `BankrollManager.Tests` - MSTest calculation tests.
 
@@ -47,17 +47,9 @@ On first launch, the app creates:
 %APPDATA%\BankrollManager\Data\bankroll-data.json
 ```
 
-Set `BANKROLL_MANAGER_DATA_DIR` to use a custom data folder. If the new AppData file does not exist yet, the app will copy an existing legacy file from `BankrollManager.App\bin\Debug\net8.0-windows\Data\bankroll-data.json` before falling back to seed data.
+Set `BANKROLL_MANAGER_DATA_DIR` to use a custom data folder. If the new AppData file does not exist yet, the app will copy an existing legacy file from `BankrollManager.App\bin\Debug\net8.0-windows\Data\bankroll-data.json`; otherwise, it creates a clean empty bankroll file.
 
 The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded when loaded, and files from a future schema are rejected with a clear error instead of being overwritten.
-
-The included seed totals are:
-
-- Total deposits: `€25.00`
-- Tournament P/L: `-€7.20`
-- Cash P/L: `-€14.22`
-- Total poker P/L: `-€21.42`
-- Current bankroll: `€3.58`
 
 ## Main Features
 
