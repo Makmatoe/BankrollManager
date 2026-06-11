@@ -155,9 +155,11 @@ public sealed partial class MainForm
             Margin = new Padding(0, 0, 0, 8),
             MinimumSize = new Size(180, 150)
         };
+        _selectedDayChart.PointActivated += (_, e) => OpenSelectedDayChartPoint(e.Point);
         shell.Controls.Add(_selectedDayChart, 0, 1);
 
         _selectedDayTimelineGrid = CreateGrid(_selectedDayTimelineSource);
+        _selectedDayTimelineGrid.SelectionChanged += (_, _) => UpdateSelectedDayChartSelectionFromTimeline();
         AddTextColumn(_selectedDayTimelineGrid, "Time", "Time", 68);
         AddTextColumn(_selectedDayTimelineGrid, "Type", "Type", 112);
         AddTextColumn(_selectedDayTimelineGrid, "Name", "Event", 190);
@@ -308,6 +310,50 @@ public sealed partial class MainForm
         }
 
         _selectedDayChart.SetData("Intraday Value P&L", points, MiniChartKind.Line);
+        UpdateSelectedDayChartSelectionFromTimeline();
+    }
+
+    private void OpenSelectedDayChartPoint(MiniChartPoint point)
+    {
+        if (point.Tag is not DayTimelineEntry timelineEntry)
+        {
+            _selectedDayTimelineGrid.ClearSelection();
+            return;
+        }
+
+        if (!SelectGridRow<DayTimelineEntry>(
+            _selectedDayTimelineSource,
+            _selectedDayTimelineGrid,
+            entry => ReferenceEquals(entry, timelineEntry)))
+        {
+            SelectGridRow<DayTimelineEntry>(
+                _selectedDayTimelineSource,
+                _selectedDayTimelineGrid,
+                entry => entry == timelineEntry);
+        }
+
+        var timeText = timelineEntry.Time is { } time
+            ? time.ToString("HH:mm", CultureInfo.CurrentCulture)
+            : "day start";
+        _statusLabel.Text = $"Showing {timelineEntry.Type} at {timeText}.";
+    }
+
+    private void UpdateSelectedDayChartSelectionFromTimeline()
+    {
+        if (_selectedDayChart is null)
+        {
+            return;
+        }
+
+        if (Selected<DayTimelineEntry>(_selectedDayTimelineSource) is not { } timelineEntry)
+        {
+            _selectedDayChart.ClearSelection();
+            return;
+        }
+
+        _selectedDayChart.SelectPoint(point =>
+            ReferenceEquals(point.Tag, timelineEntry)
+            || point.Tag is DayTimelineEntry pointEntry && pointEntry == timelineEntry);
     }
 
     private Control BuildMonthlyTab()

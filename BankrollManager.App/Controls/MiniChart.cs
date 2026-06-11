@@ -25,6 +25,7 @@ public sealed class MiniChart : Control
     private List<MiniChartPoint> _points = [];
     private readonly ToolTip _toolTip = new();
     private int _hoveredIndex = -1;
+    private int _selectedIndex = -1;
 
     public MiniChart()
     {
@@ -49,6 +50,26 @@ public sealed class MiniChart : Control
         _points = points.ToList();
         Kind = kind;
         _hoveredIndex = -1;
+        _selectedIndex = -1;
+        Invalidate();
+    }
+
+    public void SelectPoint(Predicate<MiniChartPoint> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        _selectedIndex = _points.FindIndex(predicate);
+        Invalidate();
+    }
+
+    public void ClearSelection()
+    {
+        if (_selectedIndex < 0)
+        {
+            return;
+        }
+
+        _selectedIndex = -1;
         Invalidate();
     }
 
@@ -124,7 +145,7 @@ public sealed class MiniChart : Control
             var height = Math.Max(2, Math.Abs(y - zeroY));
             using var brush = new SolidBrush(point.Value >= 0m ? Theme.Positive : Theme.Negative);
             graphics.FillRectangle(brush, x, top, barWidth, height);
-            if (index == _hoveredIndex)
+            if (IsPointHighlighted(index))
             {
                 using var border = new Pen(Theme.Text, 1.5f);
                 graphics.DrawRectangle(border, x, top, barWidth, height);
@@ -138,8 +159,13 @@ public sealed class MiniChart : Control
         {
             var y = ScaleY(_points[0].Value, area, min, max);
             using var singlePointBrush = new SolidBrush(Theme.Accent);
-            var radius = _hoveredIndex == 0 ? 6 : 4;
+            var radius = IsPointHighlighted(0) ? 6 : 4;
             graphics.FillEllipse(singlePointBrush, area.Left + area.Width / 2 - radius, y - radius, radius * 2, radius * 2);
+            if (_selectedIndex == 0)
+            {
+                using var outline = new Pen(Theme.Text, 1.5f);
+                graphics.DrawEllipse(outline, area.Left + area.Width / 2 - radius, y - radius, radius * 2, radius * 2);
+            }
             return;
         }
 
@@ -156,9 +182,10 @@ public sealed class MiniChart : Control
         for (var index = 0; index < points.Length; index++)
         {
             var point = points[index];
-            var radius = index == _hoveredIndex ? 5 : 3;
+            var highlighted = IsPointHighlighted(index);
+            var radius = highlighted ? 5 : 3;
             graphics.FillEllipse(pointBrush, point.X - radius, point.Y - radius, radius * 2, radius * 2);
-            if (index == _hoveredIndex)
+            if (highlighted)
             {
                 using var outline = new Pen(Theme.Text, 1.5f);
                 graphics.DrawEllipse(outline, point.X - radius, point.Y - radius, radius * 2, radius * 2);
@@ -204,7 +231,14 @@ public sealed class MiniChart : Control
             return;
         }
 
+        _selectedIndex = pointIndex;
+        Invalidate();
         PointActivated?.Invoke(this, new MiniChartPointActivatedEventArgs(_points[pointIndex], pointIndex));
+    }
+
+    private bool IsPointHighlighted(int index)
+    {
+        return index == _hoveredIndex || index == _selectedIndex;
     }
 
     protected override void Dispose(bool disposing)
