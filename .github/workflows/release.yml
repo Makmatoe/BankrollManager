@@ -87,16 +87,19 @@ jobs:
               Write-Host "Code signing secrets are not configured; building unsigned release assets."
             }
 
-            $publishArgs = @(
-              "-Configuration", "Release",
-              "-Runtime", "win-x64",
-              "-Version", $version
-            )
             if (![string]::IsNullOrWhiteSpace($signParams)) {
-              $publishArgs += @("-SignParams", $signParams)
+              .\scripts\publish.ps1 `
+                -Configuration Release `
+                -Runtime win-x64 `
+                -Version $version `
+                -SignParams $signParams
             }
-
-            .\scripts\publish.ps1 @publishArgs
+            else {
+              .\scripts\publish.ps1 `
+                -Configuration Release `
+                -Runtime win-x64 `
+                -Version $version
+            }
           }
           finally {
             if (![string]::IsNullOrWhiteSpace($certificatePath) -and (Test-Path -LiteralPath $certificatePath)) {
