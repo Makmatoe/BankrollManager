@@ -18,6 +18,7 @@ public sealed partial class MainForm : Form
     private readonly BindingSource _ledgerSource = new();
     private readonly BindingSource _timelineSource = new();
     private readonly BindingSource _dailySource = new();
+    private readonly BindingSource _selectedDayTimelineSource = new();
     private readonly BindingSource _monthlySource = new();
     private readonly BindingSource _yearlySource = new();
     private readonly BindingSource _platformSource = new();
@@ -92,6 +93,13 @@ public sealed partial class MainForm : Form
     private DataGridView _ledgerGrid = null!;
     private DataGridView _timelineGrid = null!;
     private DataGridView _dailyGrid = null!;
+    private MiniChart _selectedDayChart = null!;
+    private DataGridView _selectedDayTimelineGrid = null!;
+    private Label _selectedDayTitle = null!;
+    private Label _selectedDayMeta = null!;
+    private Label _selectedDayEmptyState = null!;
+    private DateOnly? _selectedDayDate;
+    private bool _syncingDailySelection;
     private DataGridView _monthlyGrid = null!;
     private DataGridView _yearlyGrid = null!;
     private DataGridView _platformGrid = null!;

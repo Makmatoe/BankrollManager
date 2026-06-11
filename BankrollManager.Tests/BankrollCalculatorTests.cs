@@ -220,6 +220,64 @@ public sealed class BankrollCalculatorTests
     }
 
     [TestMethod]
+    public void DayTimelineTracksCashTicketsAndRunningValueForSelectedDay()
+    {
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings { StartingBankroll = 20m },
+            LedgerEntries =
+            [
+                new LedgerEntry
+                {
+                    Date = new DateOnly(2026, 6, 8),
+                    Type = LedgerType.Deposit,
+                    Amount = 10m,
+                    Description = "Opening top-up"
+                }
+            ],
+            TournamentEntries =
+            [
+                new TournamentEntry
+                {
+                    Date = new DateOnly(2026, 6, 8),
+                    RegistrationTime = new TimeOnly(23, 45),
+                    FinishedDate = new DateOnly(2026, 6, 9),
+                    FinishedTime = new TimeOnly(0, 15),
+                    Status = TournamentStatus.Finished,
+                    EventName = "Late satellite",
+                    BuyIn = 2m,
+                    ActualBullets = 1,
+                    TicketValueWon = 8m
+                }
+            ],
+            CashSessions =
+            [
+                new CashSession
+                {
+                    Date = new DateOnly(2026, 6, 9),
+                    SessionTime = new TimeOnly(20, 0),
+                    Game = "Cash",
+                    Stakes = "0.01/0.02",
+                    StartStackBuyIn = 5m,
+                    Cashout = 7m
+                }
+            ]
+        };
+
+        var timeline = BankrollCalculator.GetDayTimeline(data, new DateOnly(2026, 6, 9));
+
+        Assert.HasCount(2, timeline);
+        Assert.AreEqual("Tournament Result", timeline[0].Type);
+        AssertMoney(0m, timeline[0].CashChange);
+        AssertMoney(8m, timeline[0].TicketChange);
+        AssertMoney(36m, timeline[0].BankrollValueAfter);
+        Assert.AreEqual("Cash", timeline[1].Type);
+        AssertMoney(2m, timeline[1].CashChange);
+        AssertMoney(0m, timeline[1].TicketChange);
+        AssertMoney(38m, timeline[1].BankrollValueAfter);
+    }
+
+    [TestMethod]
     public void AuditTimelineShowsBankrollBeforeAndAfterInEventOrder()
     {
         var date = new DateOnly(2026, 6, 9);

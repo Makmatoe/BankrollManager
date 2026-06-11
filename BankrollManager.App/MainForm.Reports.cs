@@ -64,14 +64,34 @@ public sealed partial class MainForm
 
     private Control BuildDailyTab()
     {
-        var root = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2, BackColor = Theme.Back, Padding = new Padding(8) };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 1,
+            BackColor = Theme.Back,
+            Padding = new Padding(8)
+        };
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 64));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 36));
+
+        var review = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            BackColor = Theme.Back,
+            Margin = new Padding(0)
+        };
+        review.RowStyles.Add(new RowStyle(SizeType.Absolute, 220));
+        review.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.Controls.Add(review, 0, 0);
+
         _dailyReviewChart = new MiniChart { Dock = DockStyle.Fill, Margin = new Padding(6) };
         _dailyReviewChart.PointActivated += (_, e) => OpenDailyChartPoint(e.Point);
-        root.Controls.Add(_dailyReviewChart, 0, 0);
+        review.Controls.Add(_dailyReviewChart, 0, 0);
 
         _dailyGrid = CreateGrid(_dailySource);
+        _dailyGrid.SelectionChanged += (_, _) => UpdateSelectedDayFromGrid();
         AddTextColumn(_dailyGrid, "Date", "Date", 100);
         AddTextColumn(_dailyGrid, "TournamentProfitLoss", "MTT Cash P/L", 130);
         AddTextColumn(_dailyGrid, "CashProfitLoss", "Cash Session P/L", 135);
@@ -82,8 +102,212 @@ public sealed partial class MainForm
         AddTextColumn(_dailyGrid, "RunningMonthProfitLoss", "Running Month P/L", 150);
         AddTextColumn(_dailyGrid, "RunningLifetimeBankrollValue", "Running Value", 140);
         AddTextColumn(_dailyGrid, "RunningLifetimeBankroll", "Running Cash", 130);
-        root.Controls.Add(_dailyGrid, 0, 1);
+        review.Controls.Add(_dailyGrid, 0, 1);
+
+        root.Controls.Add(BuildSelectedDayPanel(), 1, 0);
         return root;
+    }
+
+    private Control BuildSelectedDayPanel()
+    {
+        var shell = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 3,
+            BackColor = Theme.Panel,
+            Padding = new Padding(10),
+            Margin = new Padding(6)
+        };
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
+        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        var header = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            BackColor = Theme.Panel,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        header.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        header.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        _selectedDayTitle = Theme.Label("Selected day", Theme.SubHeaderFont, Theme.Text);
+        _selectedDayTitle.AutoSize = false;
+        _selectedDayTitle.AutoEllipsis = true;
+        _selectedDayTitle.Dock = DockStyle.Fill;
+        _selectedDayTitle.Margin = new Padding(0);
+        _selectedDayTitle.TextAlign = ContentAlignment.MiddleLeft;
+        header.Controls.Add(_selectedDayTitle, 0, 0);
+
+        _selectedDayMeta = Theme.Label("No day selected", Theme.SmallFont, Theme.Muted);
+        _selectedDayMeta.AutoSize = false;
+        _selectedDayMeta.AutoEllipsis = true;
+        _selectedDayMeta.Dock = DockStyle.Fill;
+        _selectedDayMeta.Margin = new Padding(0);
+        _selectedDayMeta.TextAlign = ContentAlignment.TopLeft;
+        header.Controls.Add(_selectedDayMeta, 0, 1);
+        shell.Controls.Add(header, 0, 0);
+
+        _selectedDayChart = new MiniChart
+        {
+            Dock = DockStyle.Fill,
+            Margin = new Padding(0, 0, 0, 8),
+            MinimumSize = new Size(180, 150)
+        };
+        shell.Controls.Add(_selectedDayChart, 0, 1);
+
+        _selectedDayTimelineGrid = CreateGrid(_selectedDayTimelineSource);
+        AddTextColumn(_selectedDayTimelineGrid, "Time", "Time", 68);
+        AddTextColumn(_selectedDayTimelineGrid, "Type", "Type", 112);
+        AddTextColumn(_selectedDayTimelineGrid, "Name", "Event", 190);
+        AddTextColumn(_selectedDayTimelineGrid, "CostRisk", "Risk", 86);
+        AddTextColumn(_selectedDayTimelineGrid, "CashChange", "Cash", 86);
+        AddTextColumn(_selectedDayTimelineGrid, "TicketChange", "Tickets", 86);
+        AddTextColumn(_selectedDayTimelineGrid, "ValueChange", "Value", 86);
+        AddTextColumn(_selectedDayTimelineGrid, "BankrollValueAfter", "Value After", 108);
+        AddTextColumn(_selectedDayTimelineGrid, "Rule", "Rule", 100);
+        shell.Controls.Add(BuildGridWithEmptyState(
+            _selectedDayTimelineGrid,
+            out _selectedDayEmptyState,
+            "No events for this day."), 0, 2);
+
+        return shell;
+    }
+
+    private void UpdateSelectedDayFromGrid()
+    {
+        if (_syncingDailySelection || _selectedDayChart is null)
+        {
+            return;
+        }
+
+        if (Selected<DailySummary>(_dailySource) is not { } summary)
+        {
+            UpdateSelectedDayDetail(null);
+            return;
+        }
+
+        UpdateSelectedDayDetail(summary.Date);
+        _statusLabel.Text = $"Showing day detail for {summary.Date:yyyy-MM-dd}.";
+    }
+
+    private void RefreshSelectedDaySelection()
+    {
+        if (_selectedDayChart is null)
+        {
+            return;
+        }
+
+        DailySummary? selectedSummary = null;
+        DailySummary? firstSummary = null;
+        for (var index = 0; index < _dailySource.Count; index++)
+        {
+            if (_dailySource[index] is not DailySummary summary)
+            {
+                continue;
+            }
+
+            firstSummary ??= summary;
+            if (_selectedDayDate == summary.Date)
+            {
+                selectedSummary = summary;
+                break;
+            }
+        }
+
+        selectedSummary ??= firstSummary;
+        if (selectedSummary is null)
+        {
+            UpdateSelectedDayDetail(null);
+            return;
+        }
+
+        _syncingDailySelection = true;
+        try
+        {
+            SelectGridRow<DailySummary>(_dailySource, _dailyGrid, summary => summary.Date == selectedSummary.Date);
+        }
+        finally
+        {
+            _syncingDailySelection = false;
+        }
+
+        UpdateSelectedDayDetail(selectedSummary.Date);
+    }
+
+    private void UpdateSelectedDayDetail(DateOnly? date)
+    {
+        if (_selectedDayChart is null || _selectedDayTimelineGrid is null)
+        {
+            return;
+        }
+
+        _selectedDayDate = date;
+        if (date is null)
+        {
+            _selectedDayTitle.Text = "Selected day";
+            _selectedDayMeta.Text = "No day selected";
+            _selectedDayTimelineSource.DataSource = new SortableBindingList<DayTimelineEntry>([]);
+            _selectedDayChart.SetData("Intraday Value P&L", [], MiniChartKind.Line);
+            _selectedDayEmptyState.Visible = true;
+            return;
+        }
+
+        var selectedDate = date.Value;
+        var rows = BankrollCalculator.GetDayTimeline(_data, selectedDate);
+        _selectedDayTimelineSource.DataSource = new SortableBindingList<DayTimelineEntry>(rows);
+        _selectedDayEmptyState.Visible = rows.Count == 0;
+
+        var summary = FindDailySummary(selectedDate);
+        _selectedDayTitle.Text = selectedDate.ToString("dddd, dd MMM yyyy", CultureInfo.CurrentCulture);
+        _selectedDayMeta.Text = summary is null
+            ? $"{rows.Count} event(s)"
+            : $"Value {Money(summary.TotalValueProfitLoss)}   Cash {Money(summary.TotalProfitLoss)}   Tickets {Money(summary.TicketProfitLoss)}   Sessions {summary.NumberOfSessions}";
+
+        UpdateSelectedDayChart(selectedDate, rows);
+    }
+
+    private DailySummary? FindDailySummary(DateOnly date)
+    {
+        for (var index = 0; index < _dailySource.Count; index++)
+        {
+            if (_dailySource[index] is DailySummary summary && summary.Date == date)
+            {
+                return summary;
+            }
+        }
+
+        return null;
+    }
+
+    private void UpdateSelectedDayChart(DateOnly date, IReadOnlyList<DayTimelineEntry> rows)
+    {
+        var points = new List<MiniChartPoint>();
+        if (rows.Count > 0)
+        {
+            points.Add(new MiniChartPoint(
+                "Start",
+                0m,
+                null,
+                $"Intraday Value P&L{Environment.NewLine}{date:yyyy-MM-dd}{Environment.NewLine}Start: {Money(0m)}"));
+        }
+
+        var runningValue = 0m;
+        foreach (var row in rows)
+        {
+            runningValue += row.ValueChange;
+            var label = row.Time is { } time
+                ? time.ToString("HH:mm", CultureInfo.CurrentCulture)
+                : row.Type;
+            points.Add(new MiniChartPoint(
+                label,
+                runningValue,
+                row,
+                $"Intraday Value P&L{Environment.NewLine}{date:yyyy-MM-dd} {label}{Environment.NewLine}{row.Name}{Environment.NewLine}Value change: {Money(row.ValueChange)}{Environment.NewLine}Cash change: {Money(row.CashChange)}{Environment.NewLine}Ticket change: {Money(row.TicketChange)}{Environment.NewLine}Day total: {Money(runningValue)}{Environment.NewLine}Overall value after: {Money(row.BankrollValueAfter)}"));
+        }
+
+        _selectedDayChart.SetData("Intraday Value P&L", points, MiniChartKind.Line);
     }
 
     private Control BuildMonthlyTab()

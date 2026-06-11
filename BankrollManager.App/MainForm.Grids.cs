@@ -166,6 +166,7 @@ public sealed partial class MainForm
             if (property.Contains("Profit", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("Loss", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("Net", StringComparison.OrdinalIgnoreCase)
+                || property.Contains("Change", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("Biggest", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("ROI", StringComparison.OrdinalIgnoreCase)
                 || property == "Amount"

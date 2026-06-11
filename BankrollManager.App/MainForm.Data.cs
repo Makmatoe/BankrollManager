@@ -69,6 +69,7 @@ public sealed partial class MainForm
             .ToList());
         UpdateTournamentInspector();
         UpdateCashInspector();
+        RefreshSelectedDaySelection();
     }
 
     private void OpenSelectedAttentionItem()

@@ -14,6 +14,7 @@ public sealed partial class MainForm
 
         SelectNavigationPage("Day");
         SelectGridRow<DailySummary>(_dailySource, _dailyGrid, summary => summary.Date == date);
+        UpdateSelectedDayDetail(date);
         _statusLabel.Text = $"Showing day detail for {date:yyyy-MM-dd}.";
     }
 

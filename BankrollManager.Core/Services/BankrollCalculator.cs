@@ -290,6 +290,100 @@ public static class BankrollCalculator
         return timeline;
     }
 
+    public static List<DayTimelineEntry> GetDayTimeline(BankrollData data, DateOnly date)
+    {
+        data.EnsureDefaults();
+
+        var events = new List<DayTimelineEvent>();
+        events.AddRange(data.LedgerEntries.Select(entry => new DayTimelineEvent(
+            entry.Date,
+            null,
+            0,
+            entry.Id,
+            entry.Type.ToString(),
+            string.IsNullOrWhiteSpace(entry.Description) ? entry.Category.ToString() : entry.Description,
+            0m,
+            SignedLedgerAmount(entry),
+            0m,
+            string.Empty)));
+        events.AddRange(data.TournamentEntries.Select(entry => new DayTimelineEvent(
+            entry.Date,
+            entry.RegistrationTime,
+            1,
+            entry.Id,
+            UsesSplitTournamentSettlement(entry) ? "Tournament Buy-in" : "Tournament",
+            string.IsNullOrWhiteSpace(entry.EventName)
+                ? entry.Format.ToString()
+                : UsesSplitTournamentSettlement(entry)
+                    ? $"{entry.EventName} registration"
+                    : entry.EventName,
+            entry.CashCost,
+            TournamentRegistrationAmount(entry),
+            TournamentTicketRegistrationAmount(entry),
+            entry.RuleCheckResult)));
+        events.AddRange(data.TournamentEntries
+            .Where(HasTournamentSettlement)
+            .Select(entry => new DayTimelineEvent(
+                TournamentSettlementDate(entry),
+                TournamentSettlementTime(entry),
+                2,
+                entry.Id,
+                "Tournament Result",
+                string.IsNullOrWhiteSpace(entry.EventName) ? entry.Format.ToString() : $"{entry.EventName} finish",
+                0m,
+                entry.ReturnAmount,
+                TournamentTicketSettlementAmount(entry),
+                entry.RuleCheckResult)));
+        events.AddRange(data.CashSessions.Select(entry => new DayTimelineEvent(
+            entry.Date,
+            entry.SessionTime,
+            3,
+            entry.Id,
+            "Cash",
+            CashSessionName(entry),
+            entry.SessionCost,
+            entry.NetProfit,
+            0m,
+            entry.RuleCheckResult)));
+
+        var runningBankroll = data.Settings.StartingBankroll;
+        var runningTicketBalance = 0m;
+        var timeline = new List<DayTimelineEntry>();
+
+        foreach (var item in events
+            .OrderBy(item => item.Date)
+            .ThenBy(item => EffectiveTime(item.Time))
+            .ThenBy(item => item.SortOrder)
+            .ThenBy(item => item.Id))
+        {
+            var bankrollBefore = runningBankroll;
+            var ticketBalanceBefore = runningTicketBalance;
+            runningBankroll += item.CashChange;
+            runningTicketBalance += item.TicketChange;
+
+            if (item.Date != date)
+            {
+                continue;
+            }
+
+            timeline.Add(new DayTimelineEntry(
+                item.Date,
+                item.Time,
+                item.Type,
+                item.Name,
+                item.CostRisk,
+                item.CashChange,
+                item.TicketChange,
+                bankrollBefore,
+                runningBankroll,
+                ticketBalanceBefore,
+                runningTicketBalance,
+                item.Rule));
+        }
+
+        return timeline;
+    }
+
     public static List<DailySummary> GetDailySummaries(BankrollData data)
     {
         data.EnsureDefaults();
@@ -706,6 +800,18 @@ public static class BankrollCalculator
         decimal Result,
         string Rule);
 
+    private sealed record DayTimelineEvent(
+        DateOnly Date,
+        TimeOnly? Time,
+        int SortOrder,
+        Guid Id,
+        string Type,
+        string Name,
+        decimal CostRisk,
+        decimal CashChange,
+        decimal TicketChange,
+        string Rule);
+
     private static bool HasTournamentSettlement(TournamentEntry entry)
     {
         return UsesSplitTournamentSettlement(entry)
@@ -753,6 +859,12 @@ public static class BankrollCalculator
     private static TimeOnly? TournamentSettlementTime(TournamentEntry entry)
     {
         return entry.FinishedTime ?? entry.RegistrationTime;
+    }
+
+    private static string CashSessionName(CashSession entry)
+    {
+        var name = $"{entry.Game} {entry.Stakes}".Trim();
+        return string.IsNullOrWhiteSpace(name) ? entry.Format.ToString() : name;
     }
 
     private static decimal TournamentProfitLossForDate(BankrollData data, DateOnly date)

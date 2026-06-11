@@ -117,6 +117,25 @@ public sealed record AuditTimelineEntry(
     decimal BankrollAfter,
     string Rule);
 
+public sealed record DayTimelineEntry(
+    DateOnly Date,
+    TimeOnly? Time,
+    string Type,
+    string Name,
+    decimal CostRisk,
+    decimal CashChange,
+    decimal TicketChange,
+    decimal BankrollBefore,
+    decimal BankrollAfter,
+    decimal TicketBalanceBefore,
+    decimal TicketBalanceAfter,
+    string Rule)
+{
+    public decimal ValueChange => CashChange + TicketChange;
+    public decimal BankrollValueBefore => BankrollBefore + TicketBalanceBefore;
+    public decimal BankrollValueAfter => BankrollAfter + TicketBalanceAfter;
+}
+
 public sealed record RunningBankrollPoint(
     DateOnly Date,
     string Source,

@@ -34,7 +34,7 @@ The verify script runs the full solution test suite with artifacts written under
 ## Publish
 
 ```powershell
-.\scripts\publish.ps1 -Version v0.3.3
+.\scripts\publish.ps1 -Version v0.4.0
 ```
 
 The publish script creates a self-contained `win-x64` package under `.verify\release` and Velopack installer/update assets under `.verify\release\velopack`. GitHub Actions also has a Release workflow: run it manually with a version label to produce artifacts, or push a `v*` tag to build the package and create a GitHub Release.
@@ -84,7 +84,7 @@ The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded wh
 - Tournament log with cash bounty, ticket wins, ticket buy-ins, cash cost, net profit, ROI, risk percentage, rule result, and cash-bankroll-after tracking.
 - Cash log with session cost, net profit, BB won, BB/100, risk percentage, and profit-lock warning support.
 - Ledger for deposits, withdrawals, bonuses, rakeback, ticket credits, corrections, and other bankroll movements.
-- Daily, monthly, yearly, platform, format, and category reviews with separate cash P/L, ticket P/L, and combined value P/L.
+- Daily, monthly, yearly, platform, format, and category reviews with separate cash P/L, ticket P/L, combined value P/L, and selected-day replay.
 - Decision engine with PLAY / OK, SHOT OK, SHOT ONLY, PASS, TAKE BREAK, and FUND FIRST labels.
 - Editable bankroll settings and category defaults.
 - Save button plus autosave after add/edit/delete/settings changes.
