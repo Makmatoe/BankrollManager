@@ -27,7 +27,7 @@ public static class RuleEngine
                 DecisionLabel.Pass,
                 context,
                 $"Ticket buy-in value exceeds the available ticket balance ({Money(ticketBalance, settings)}).",
-                "Use a smaller ticket amount or pay the remaining buy-in from bankroll.");
+                "Use a smaller ticket amount or pay the remaining buy-in from cash bankroll.");
         }
 
         if (context.RiskAmount > 0m && context.CurrentBankroll <= 0m)
@@ -35,7 +35,7 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.FundFirst,
                 context,
-                $"The bankroll is {Money(0m, settings)} and this entry costs money.",
+                $"The cash bankroll is {Money(0m, settings)} and this entry costs money.",
                 "Fund first or choose freeroll/centroll play.");
         }
 
@@ -53,7 +53,7 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.Pass,
                 context,
-                "The planned risk is larger than the available bankroll.",
+                "The planned risk is larger than the available cash bankroll.",
                 "Reduce buy-in, skip cash today, or play a freeroll.");
         }
 
@@ -62,7 +62,7 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.Pass,
                 context,
-                "Reserve category is protected bankroll and cannot be spent.",
+                "Reserve category is protected cash bankroll and cannot be spent.",
                 "Move the play to a real category or skip it.");
         }
 
@@ -73,8 +73,8 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.Pass,
                 context,
-                $"{context.Category} requires at least {Money(context.CategoryRule.MinBankroll, settings)} bankroll.",
-                "Stay in lower-risk categories until the bankroll reaches the threshold.");
+                $"{context.Category} requires at least {Money(context.CategoryRule.MinBankroll, settings)} cash bankroll.",
+                "Stay in lower-risk categories until the cash bankroll reaches the threshold.");
         }
 
         if (request.PlannedBullets > context.CategoryRule.BulletCap)
@@ -297,7 +297,7 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.PlayOk,
                 context,
-                "Tournament is inside normal bankroll-management limits.",
+                "Tournament is inside normal cash-bankroll management limits.",
                 "Play as planned and keep bullets capped.");
         }
 
@@ -306,7 +306,7 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.Pass,
                 context,
-                $"This is shot-level risk, but bankroll is below the {Money(settings.GreenLightShotBankroll, settings)} shot threshold.",
+                $"This is shot-level risk, but cash bankroll is below the {Money(settings.GreenLightShotBankroll, settings)} shot threshold.",
                 "Stay with main-grind stakes until the shot threshold is reached.");
         }
 
@@ -395,7 +395,7 @@ public static class RuleEngine
 
         if (context.CategoryRule.MinBankroll > 0m)
         {
-            thresholds.Add($"Min bankroll for {context.Category}: {Money(context.CategoryRule.MinBankroll, settings)}");
+            thresholds.Add($"Min cash bankroll for {context.Category}: {Money(context.CategoryRule.MinBankroll, settings)}");
         }
 
         if (context.CategoryRule.DailyEntryCap > 0)
@@ -523,7 +523,7 @@ public static class RuleEngine
                 || (request.BuyIn > context.CategoryRule.DefaultBuyInCap && context.CategoryRule.DefaultBuyInCap > 0m));
         if (isShotRelevant && context.CurrentBankroll > 0m && context.CurrentBankroll < settings.GreenLightShotBankroll)
         {
-            warnings.Add("Bankroll is still below the green-light shot threshold.");
+            warnings.Add("Cash bankroll is still below the green-light shot threshold.");
         }
 
         return warnings;

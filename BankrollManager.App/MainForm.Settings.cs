@@ -74,7 +74,7 @@ public sealed partial class MainForm
         AddTallSettingsRow(form, "Enabled platforms", _enabledPlatforms, 112);
         AddSettingsRow(form, "Default platform", _defaultPlatform);
         AddSettingsRow(form, "Active month start", _activeMonthStart);
-        AddSettingsRow(form, "Starting bankroll", _startingBankroll);
+        AddSettingsRow(form, "Starting cash bankroll", _startingBankroll);
         AddSettingsRow(form, "Default max bullets", _defaultMaxBullets);
         AddSettingsRow(form, "Active review year", _activeReviewYear);
 
@@ -93,13 +93,13 @@ public sealed partial class MainForm
         AddSettingsRow(form, "Stop-loss warning %", _stopLossWarning);
         AddSettingsRow(form, "Cash reload warning %", _cashReloadWarning);
 
-        AddSettingsSection(form, "Bankroll Protections");
+        AddSettingsSection(form, "Cash Bankroll Protections");
         AddSettingsRow(form, "Daily stop-loss amount", _dailyStopLoss);
         AddSettingsRow(form, "Monthly stop-loss %", _monthlyStopLoss);
         AddSettingsRow(form, "Reserve target %", _reserveTarget);
-        AddSettingsRow(form, "Protect below bankroll", _protectBelow);
-        AddSettingsRow(form, "Move-up review bankroll", _moveUpBankroll);
-        AddSettingsRow(form, "Green-light shot bankroll", _greenLightBankroll);
+        AddSettingsRow(form, "Protect below cash bankroll", _protectBelow);
+        AddSettingsRow(form, "Move-up review cash bankroll", _moveUpBankroll);
+        AddSettingsRow(form, "Green-light shot cash bankroll", _greenLightBankroll);
         AddSettingsRow(form, "Withdrawal/profit lock", _profitLockThreshold);
         AddSettingsRow(form, "Session locked today", _sessionLocked);
         AddSettingsRow(form, "Cooldown enabled", _cooldownEnabled);
@@ -132,7 +132,7 @@ public sealed partial class MainForm
         AddTextColumn(_categoryRulesGrid, "MaxRiskPercent", "Max Risk %", 100, readOnly: false);
         AddTextColumn(_categoryRulesGrid, "MonthlyBudgetPercent", "Budget %", 90, readOnly: false);
         AddTextColumn(_categoryRulesGrid, "DefaultBuyInCap", "Buy-in Cap", 90, readOnly: false);
-        AddTextColumn(_categoryRulesGrid, "MinBankroll", "Min Bankroll", 110, readOnly: false);
+        AddTextColumn(_categoryRulesGrid, "MinBankroll", "Min Cash BR", 110, readOnly: false);
         AddTextColumn(_categoryRulesGrid, "BulletCap", "Bullets", 70, readOnly: false);
         AddTextColumn(_categoryRulesGrid, "DailyEntryCap", "Day Cap", 80, readOnly: false);
         AddTextColumn(_categoryRulesGrid, "CooldownDays", "Cooldown", 88, readOnly: false);

@@ -60,7 +60,7 @@ public static class CsvBankrollSerializer
     {
         var rows = new List<string[]>
         {
-            new[] { "Id", "Date", "Type", "Platform", "Description", "Amount", "Category", "Notes", "BankrollBefore", "BankrollAfter" }
+            new[] { "Id", "Date", "Type", "Platform", "Description", "Amount", "Category", "Notes", "CashBankrollBefore", "CashBankrollAfter" }
         };
         rows.AddRange(data.LedgerEntries.Select(entry => new[]
         {
@@ -87,8 +87,8 @@ public static class CsvBankrollSerializer
                 "Id", "Date", "Time", "Platform", "Category", "Format", "EventName", "BuyIn",
                 "PlannedBullets", "ActualBullets", "AddOnsRebuys", "BountyTicketValue",
                 "CashPrize", "TotalCost", "NetProfit", "ROI", "Placement", "FieldSize",
-                "ITM", "FinalTable", "RiskPercent", "RuleCheckResult", "BankrollAfter",
-                "PreGameFocus", "Tags", "MistakeLesson", "Notes", "BankrollBefore",
+                "ITM", "FinalTable", "RiskPercent", "RuleCheckResult", "CashBankrollAfter",
+                "PreGameFocus", "Tags", "MistakeLesson", "Notes", "CashBankrollBefore",
                 "Status", "FinishedDate", "FinishedTime", "TicketBuyInValue", "TicketBuyInPlatform", "TicketValueWon",
                 "CashCost", "TicketBalanceImpact", "TotalValueProfitLoss", "ValueROI",
                 "Currency", "FeeRake", "EventTag", "IsPromoFreebieTicketEvent",
@@ -186,7 +186,7 @@ public static class CsvBankrollSerializer
                 "Id", "Date", "Time", "Platform", "Game", "Stakes", "BigBlindAmount",
                 "StartStackBuyIn", "Reloads", "Cashout", "Minutes", "Hands",
                 "SessionCost", "NetProfit", "BBWon", "BBPer100", "RiskPercent",
-                "RuleCheckResult", "BankrollAfter", "Notes", "BankrollBefore",
+                "RuleCheckResult", "CashBankrollAfter", "Notes", "CashBankrollBefore",
                 "Status", "ClosedDate", "ClosedTime", "ReloadCap", "ActiveTableCash",
                 "WalletCashImpact", "Format", "SmallBlindAmount", "CashDropWon", "JackpotFortunePrizeWon"
             }
@@ -248,17 +248,20 @@ public static class CsvBankrollSerializer
     {
         var rows = new List<string[]>
         {
-            new[] { "Date", "TournamentPL", "CashPL", "TotalPL", "Sessions", "RunningMonthPL", "RunningLifetimeBankroll" }
+            new[] { "Date", "TournamentCashPL", "CashSessionPL", "TicketPL", "TotalCashPL", "TotalValuePL", "Sessions", "RunningMonthCashPL", "RunningLifetimeCashBankroll", "RunningLifetimeBankrollValue" }
         };
         rows.AddRange(BankrollCalculator.GetDailySummaries(data).Select(summary => new[]
         {
             summary.Date.ToString("yyyy-MM-dd", Culture),
             Money(summary.TournamentProfitLoss),
             Money(summary.CashProfitLoss),
+            Money(summary.TicketProfitLoss),
             Money(summary.TotalProfitLoss),
+            Money(summary.TotalValueProfitLoss),
             summary.NumberOfSessions.ToString(Culture),
             Money(summary.RunningMonthProfitLoss),
-            Money(summary.RunningLifetimeBankroll)
+            Money(summary.RunningLifetimeBankroll),
+            Money(summary.RunningLifetimeBankrollValue)
         }));
         return WriteRows(rows);
     }
@@ -269,8 +272,8 @@ public static class CsvBankrollSerializer
         {
             new[]
             {
-                "Month", "Deposits", "Withdrawals", "TournamentPL", "CashPL",
-                "TotalPokerPL", "Tournaments", "CashSessions", "AverageTournamentBuyIn",
+                "Month", "Deposits", "Withdrawals", "TournamentCashPL", "CashSessionPL",
+                "TicketPL", "TotalCashPL", "TotalValuePL", "Tournaments", "CashSessions", "AverageTournamentBuyIn",
                 "BiggestWin", "BiggestLoss", "StopLossBreaches", "Notes"
             }
         };
@@ -281,7 +284,9 @@ public static class CsvBankrollSerializer
             Money(summary.Withdrawals),
             Money(summary.TournamentProfitLoss),
             Money(summary.CashProfitLoss),
+            Money(summary.TicketProfitLoss),
             Money(summary.TotalPokerProfitLoss),
+            Money(summary.TotalValueProfitLoss),
             summary.NumberOfTournaments.ToString(Culture),
             summary.NumberOfCashSessions.ToString(Culture),
             Money(summary.AverageTournamentBuyIn),

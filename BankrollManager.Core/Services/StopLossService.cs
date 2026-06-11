@@ -39,7 +39,7 @@ public static class StopLossService
 
         if (protectModeActive)
         {
-            reasons.Add($"bankroll below protect mode threshold ({currentBankroll:0.00})");
+            reasons.Add($"cash bankroll below protect mode threshold ({currentBankroll:0.00})");
         }
 
         if (settings.IsSessionLocked(today))

@@ -34,7 +34,7 @@ The verify script runs the full solution test suite with artifacts written under
 ## Publish
 
 ```powershell
-.\scripts\publish.ps1 -Version v0.3.2
+.\scripts\publish.ps1 -Version v0.3.3
 ```
 
 The publish script creates a self-contained `win-x64` package under `.verify\release` and Velopack installer/update assets under `.verify\release\velopack`. GitHub Actions also has a Release workflow: run it manually with a version label to produce artifacts, or push a `v*` tag to build the package and create a GitHub Release.
@@ -69,22 +69,22 @@ On first launch, the app creates:
 
 Set `BANKROLL_MANAGER_DATA_DIR` to use a custom data folder. If the new AppData file does not exist yet, the app will copy an existing legacy file from `BankrollManager.App\bin\Debug\net8.0-windows\Data\bankroll-data.json`; otherwise, it creates a clean empty bankroll file.
 
-On a clean empty bankroll, the app opens Quick Setup so you can set currency, enabled platforms, opening bankroll funding, and optional starting wallet balances.
+On a clean empty bankroll, the app opens Quick Setup so you can set currency, enabled platforms, opening cash-bankroll funding, and optional starting wallet balances.
 
 The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded when loaded, and files from a future schema are rejected with a clear error instead of being overwritten.
 
 ## Main Features
 
-- Overview with bankroll KPIs, stop-loss/protect-mode status, open tournaments, recent activity, and charts.
-- Quick Setup for first launch, with currency, platform, opening bankroll, first deposit, and starting wallet balance options.
+- Overview with overall bankroll value, cash bankroll, ticket value, stop-loss/protect-mode status, open tournaments, recent activity, and value-inclusive charts.
+- Quick Setup for first launch, with currency, platform, opening cash bankroll, first deposit, and starting wallet balance options.
 - In-app update checks and one-click updates for installer-based builds.
 - About dialog with app version, update mode, update source, pending restart status, and data file path.
 - Interactive tutorial covering setup, platform filters, logging, reviews, safety controls, backups, updates, and GGPoker-specific formats.
-- Platform wallets with expected cash, reconciled actual cash, differences, ticket value, and transfer support.
-- Tournament log with cash bounty, ticket wins, ticket buy-ins, cash cost, net profit, ROI, risk percentage, rule result, and bankroll-after tracking.
+- Platform wallets with expected cash, reconciled actual cash, cash exposure, ticket value, combined platform value, and transfer support.
+- Tournament log with cash bounty, ticket wins, ticket buy-ins, cash cost, net profit, ROI, risk percentage, rule result, and cash-bankroll-after tracking.
 - Cash log with session cost, net profit, BB won, BB/100, risk percentage, and profit-lock warning support.
 - Ledger for deposits, withdrawals, bonuses, rakeback, ticket credits, corrections, and other bankroll movements.
-- Daily, monthly, yearly, platform, format, and category reviews.
+- Daily, monthly, yearly, platform, format, and category reviews with separate cash P/L, ticket P/L, and combined value P/L.
 - Decision engine with PLAY / OK, SHOT OK, SHOT ONLY, PASS, TAKE BREAK, and FUND FIRST labels.
 - Editable bankroll settings and category defaults.
 - Save button plus autosave after add/edit/delete/settings changes.
@@ -92,4 +92,4 @@ The JSON file includes a `DataSchemaVersion` marker. Older files are upgraded wh
 
 ## Notes
 
-Deposits and withdrawals affect current bankroll but are excluded from poker P/L. Poker P/L is tournament net profit plus cash net profit.
+Deposits and withdrawals affect cash bankroll but are excluded from poker P/L. Cash bankroll is withdrawable cash plus cash poker results. Overall bankroll value is cash bankroll plus available ticket value, and value P/L includes ticket wins and ticket buy-ins.

@@ -82,7 +82,7 @@ internal sealed class FirstRunSetupDialog : Form
         AddRow(form, "Default platform", _defaultPlatform);
         AddRow(form, "Setup date", _setupDate);
 
-        AddSection(form, "Opening Bankroll");
+        AddSection(form, "Opening Cash Bankroll");
         AddRow(form, "Funding type", _fundingMode);
         AddRow(form, "Amount", _fundingAmount);
         AddRow(form, "Deposit platform", _depositPlatform);
@@ -239,7 +239,7 @@ internal sealed class FirstRunSetupDialog : Form
             Width = 300,
             Height = Theme.ControlHeight
         };
-        box.Items.Add(new FundingModeItem(FirstRunFundingMode.StartingBankroll, "Starting bankroll setting"));
+        box.Items.Add(new FundingModeItem(FirstRunFundingMode.StartingBankroll, "Starting cash bankroll setting"));
         box.Items.Add(new FundingModeItem(FirstRunFundingMode.DepositEntry, "First deposit ledger entry"));
         box.SelectedIndex = 0;
         return box;

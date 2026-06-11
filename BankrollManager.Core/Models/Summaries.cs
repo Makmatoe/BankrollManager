@@ -10,20 +10,32 @@ public sealed record DashboardSummary(
     decimal TournamentProfitLoss,
     decimal CashProfitLoss,
     decimal TodayProfitLoss,
+    decimal TodayValueProfitLoss,
     decimal ThisMonthProfitLoss,
+    decimal ThisMonthValueProfitLoss,
     DailySummary? BestDay,
     DailySummary? WorstDay,
     StopLossStatus StopLossStatus,
-    string BankrollTier);
+    string BankrollTier)
+{
+    public decimal CurrentBankrollValue => CurrentBankroll + TicketBalance;
+    public decimal TournamentValueProfitLoss => TournamentProfitLoss + TicketBalance;
+    public decimal TotalValueProfitLoss => TotalPokerProfitLoss + TicketBalance;
+}
 
 public sealed record DailySummary(
     DateOnly Date,
     decimal TournamentProfitLoss,
     decimal CashProfitLoss,
+    decimal TicketProfitLoss,
     decimal TotalProfitLoss,
     int NumberOfSessions,
     decimal RunningMonthProfitLoss,
-    decimal RunningLifetimeBankroll);
+    decimal RunningLifetimeBankroll,
+    decimal RunningLifetimeBankrollValue)
+{
+    public decimal TotalValueProfitLoss => TotalProfitLoss + TicketProfitLoss;
+}
 
 public sealed record MonthlySummary(
     DateOnly Month,
@@ -31,6 +43,7 @@ public sealed record MonthlySummary(
     decimal Withdrawals,
     decimal TournamentProfitLoss,
     decimal CashProfitLoss,
+    decimal TicketProfitLoss,
     decimal TotalPokerProfitLoss,
     int NumberOfTournaments,
     int NumberOfCashSessions,
@@ -38,7 +51,10 @@ public sealed record MonthlySummary(
     decimal BiggestWin,
     decimal BiggestLoss,
     int StopLossBreaches,
-    string Notes);
+    string Notes)
+{
+    public decimal TotalValueProfitLoss => TotalPokerProfitLoss + TicketProfitLoss;
+}
 
 public sealed record YearlySummary(
     int Year,
@@ -46,6 +62,7 @@ public sealed record YearlySummary(
     decimal Withdrawals,
     decimal TournamentProfitLoss,
     decimal CashProfitLoss,
+    decimal TicketProfitLoss,
     decimal TotalPokerProfitLoss,
     int NumberOfTournaments,
     int NumberOfCashSessions,
@@ -53,7 +70,10 @@ public sealed record YearlySummary(
     decimal BiggestWin,
     decimal BiggestLoss,
     int StopLossBreaches,
-    string Notes);
+    string Notes)
+{
+    public decimal TotalValueProfitLoss => TotalPokerProfitLoss + TicketProfitLoss;
+}
 
 public sealed record ComparisonSummary(
     string Name,
@@ -83,6 +103,7 @@ public sealed record PlatformSummary(
     string Notes)
 {
     public decimal ActiveCashBalance => WalletCashBalance;
+    public decimal TotalPlatformValue => TotalPlatformExposure + TicketBalance;
 }
 
 public sealed record AuditTimelineEntry(
@@ -101,7 +122,13 @@ public sealed record RunningBankrollPoint(
     string Source,
     string Label,
     decimal Amount,
-    decimal Bankroll);
+    decimal Bankroll,
+    decimal TicketAmount,
+    decimal TicketBalance)
+{
+    public decimal ValueAmount => Amount + TicketAmount;
+    public decimal BankrollValue => Bankroll + TicketBalance;
+}
 
 public sealed record StopLossStatus(
     bool DailyStopLossHit,

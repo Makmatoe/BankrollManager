@@ -68,8 +68,8 @@ public sealed partial class MainForm
         AddCheckColumn(_tournamentGrid, "FinalTable", "FT", 54);
         AddTextColumn(_tournamentGrid, "RiskPercentageOfBankrollAtRegistration", "Risk %", 78);
         AddTextColumn(_tournamentGrid, "RuleCheckResult", "Rule", 96);
-        AddTextColumn(_tournamentGrid, "BankrollBefore", "Bankroll Before", 115);
-        AddTextColumn(_tournamentGrid, "BankrollAfter", "Bankroll After", 110);
+        AddTextColumn(_tournamentGrid, "BankrollBefore", "Cash BR Before", 125);
+        AddTextColumn(_tournamentGrid, "BankrollAfter", "Cash BR After", 120);
         AddTextColumn(_tournamentGrid, "PreGameFocus", "Focus", 150);
         AddTextColumn(_tournamentGrid, "Tags", "Tags", 120);
         AddTextColumn(_tournamentGrid, "MistakeLesson", "Mistake/Lesson", 190);
@@ -189,7 +189,7 @@ public sealed partial class MainForm
             $"Net {Money(entry.TotalValueProfitLoss)}  ROI {entry.ValueROI:P1}  Cash {Money(entry.CashProfitLoss)}  Ticket {Money(entry.TicketBalanceImpact)}  Cost {Money(entry.TotalCost)}";
         _tournamentInspectorResult.ForeColor = entry.TotalValueProfitLoss >= 0m ? Theme.Positive : Theme.Negative;
         _tournamentInspectorMeta.Text =
-            $"Status {entry.Status}  Place {NullableText(entry.Placement)} / {NullableText(entry.FieldSize)}  ITM {YesNo(entry.ITM)}  FT {YesNo(entry.FinalTable)}  Bankroll {Money(entry.BankrollBefore)} -> {Money(entry.BankrollAfter)}";
+            $"Status {entry.Status}  Place {NullableText(entry.Placement)} / {NullableText(entry.FieldSize)}  ITM {YesNo(entry.ITM)}  FT {YesNo(entry.FinalTable)}  Cash bankroll {Money(entry.BankrollBefore)} -> {Money(entry.BankrollAfter)}";
         _tournamentInspectorNotes.Text = InspectorNotes(entry);
     }
 

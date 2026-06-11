@@ -86,7 +86,7 @@ public sealed class CategoryRuleSettings
                 BulletCap = 0,
                 DailyEntryCap = 0,
                 CooldownDays = 0,
-                UsageNote = "Protected bankroll; do not spend."
+                UsageNote = "Protected cash bankroll; do not spend."
             },
             new()
             {

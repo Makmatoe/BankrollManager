@@ -258,7 +258,7 @@ public sealed partial class MainForm
         var result = RuleEngine.Evaluate(_data, request, DateOnly.FromDateTime(DateTime.Today));
         _decisionLabel.Text = result.DisplayLabel;
         _decisionLabel.ForeColor = LabelColor(result.Label);
-        _decisionRisk.Text = $"Risk: {Money(result.TotalPlannedRisk)} ({result.RiskPercent:0.0}% of {Money(result.CurrentBankroll)})";
+        _decisionRisk.Text = $"Risk: {Money(result.TotalPlannedRisk)} ({result.RiskPercent:0.0}% of cash bankroll {Money(result.CurrentBankroll)})";
         _decisionBudget.Text = $"Category budget remaining: {Money(result.CategoryBudgetRemaining)}";
         _decisionExplanation.Text = $"Explanation:{Environment.NewLine}{result.Explanation}";
         _decisionAlternative.Text = $"Safer alternative:{Environment.NewLine}{result.SuggestedSaferAlternative}";
@@ -479,7 +479,7 @@ public sealed partial class MainForm
         var lines = new List<string>
         {
             $"Decision: {result.DisplayLabel}",
-            $"Risk: {Money(result.TotalPlannedRisk)} ({result.RiskPercent:0.0}% of {Money(result.CurrentBankroll)})",
+            $"Risk: {Money(result.TotalPlannedRisk)} ({result.RiskPercent:0.0}% of cash bankroll {Money(result.CurrentBankroll)})",
             request.IsCashSession
                 ? $"Cash format: {request.CashFormat}"
                 : $"Tournament format: {request.Format}",

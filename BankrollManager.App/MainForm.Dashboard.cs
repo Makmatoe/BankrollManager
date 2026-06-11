@@ -76,7 +76,7 @@ public sealed partial class MainForm
 
         foreach (var title in new[]
         {
-            "Current bankroll", "On tables", "Today P/L", "This month P/L", "Tickets available", "Stop-loss status"
+            "Overall value", "Cash bankroll", "Today value P/L", "This month value P/L", "Tickets available", "Stop-loss status"
         })
         {
             AddKpi(kpis, title);
@@ -119,7 +119,7 @@ public sealed partial class MainForm
         AddTextColumn(_overviewActivityGrid, "Type", "Type", 110);
         AddTextColumn(_overviewActivityGrid, "Name", "Name", 230);
         AddTextColumn(_overviewActivityGrid, "Result", "Result", 90);
-        AddTextColumn(_overviewActivityGrid, "BankrollAfter", "After", 92);
+        AddTextColumn(_overviewActivityGrid, "BankrollAfter", "Cash After", 104);
         overview.Controls.Add(BuildOverviewPanel("Recent activity", _overviewActivityGrid), 2, 0);
 
         var charts = new TableLayoutPanel
@@ -156,25 +156,30 @@ public sealed partial class MainForm
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         var summary = BankrollCalculator.GetDashboardSummary(_data, today);
-        SetKpi("Current bankroll", Money(summary.CurrentBankroll), summary.CurrentBankroll);
+        SetKpi("Overall value", Money(summary.CurrentBankrollValue), summary.CurrentBankrollValue);
+        SetKpi("Cash bankroll", Money(summary.CurrentBankroll), summary.CurrentBankroll);
         SetKpi("On tables", Money(summary.ActiveTableCash), summary.ActiveTableCash);
         SetKpi("Total deposits", Money(summary.TotalDeposits), summary.TotalDeposits);
         SetKpi("Total withdrawals", Money(summary.TotalWithdrawals), -summary.TotalWithdrawals);
+        SetKpi("Total value P/L", Money(summary.TotalValueProfitLoss), summary.TotalValueProfitLoss);
         SetKpi("Total poker P/L", Money(summary.TotalPokerProfitLoss), summary.TotalPokerProfitLoss);
+        SetKpi("Tournament value P/L", Money(summary.TournamentValueProfitLoss), summary.TournamentValueProfitLoss);
         SetKpi("Tournament P/L", Money(summary.TournamentProfitLoss), summary.TournamentProfitLoss);
         SetKpi("Cash P/L", Money(summary.CashProfitLoss), summary.CashProfitLoss);
         SetKpi("Today P/L", Money(summary.TodayProfitLoss), summary.TodayProfitLoss);
+        SetKpi("Today value P/L", Money(summary.TodayValueProfitLoss), summary.TodayValueProfitLoss);
         SetKpi("This month P/L", Money(summary.ThisMonthProfitLoss), summary.ThisMonthProfitLoss);
+        SetKpi("This month value P/L", Money(summary.ThisMonthValueProfitLoss), summary.ThisMonthValueProfitLoss);
         SetKpi("Tickets available", Money(summary.TicketBalance), summary.TicketBalance);
-        SetKpi("Best day", summary.BestDay is null ? "-" : $"{summary.BestDay.Date:yyyy-MM-dd}  {Money(summary.BestDay.TotalProfitLoss)}", summary.BestDay?.TotalProfitLoss ?? 0m);
-        SetKpi("Worst day", summary.WorstDay is null ? "-" : $"{summary.WorstDay.Date:yyyy-MM-dd}  {Money(summary.WorstDay.TotalProfitLoss)}", summary.WorstDay?.TotalProfitLoss ?? 0m);
+        SetKpi("Best day", summary.BestDay is null ? "-" : $"{summary.BestDay.Date:yyyy-MM-dd}  {Money(summary.BestDay.TotalValueProfitLoss)}", summary.BestDay?.TotalValueProfitLoss ?? 0m);
+        SetKpi("Worst day", summary.WorstDay is null ? "-" : $"{summary.WorstDay.Date:yyyy-MM-dd}  {Money(summary.WorstDay.TotalValueProfitLoss)}", summary.WorstDay?.TotalValueProfitLoss ?? 0m);
         SetKpi("Stop-loss status", summary.StopLossStatus.StatusText, summary.StopLossStatus.BreakRequired ? -1m : 1m);
         SetKpi("Protect mode", summary.StopLossStatus.ProtectModeActive ? "ACTIVE" : "Off", summary.StopLossStatus.ProtectModeActive ? -1m : 1m);
         SetKpi("Bankroll tier", summary.BankrollTier, summary.CurrentBankroll);
 
         if (!FirstRunSetupService.HasUserData(_data))
         {
-            _stopLossBanner.Text = "Clean bankroll ready - run Setup or add your first deposit.";
+            _stopLossBanner.Text = "Clean cash bankroll ready - run Setup or add your first deposit.";
             _stopLossBanner.BackColor = Theme.AccentSurface;
         }
         else
@@ -190,26 +195,26 @@ public sealed partial class MainForm
         var monthly = BankrollCalculator.GetMonthlySummaries(_data).OrderBy(summary => summary.Month).ToList();
         var dailyPoints = daily.Select(summary => new MiniChartPoint(
             summary.Date.ToString("MM-dd"),
-            summary.TotalProfitLoss,
+            summary.TotalValueProfitLoss,
             summary.Date,
-            $"Daily P&L{Environment.NewLine}{summary.Date:yyyy-MM-dd}{Environment.NewLine}Total: {Money(summary.TotalProfitLoss)}{Environment.NewLine}Tournaments: {Money(summary.TournamentProfitLoss)}{Environment.NewLine}Cash: {Money(summary.CashProfitLoss)}{Environment.NewLine}Sessions: {summary.NumberOfSessions}"));
-        _dailyChart.SetData("Daily P&L", dailyPoints, MiniChartKind.Bars);
-        _dailyReviewChart.SetData("Daily P&L", dailyPoints, MiniChartKind.Bars);
-        _runningChart.SetData("Running Bankroll", running.Select(point => new MiniChartPoint(
+            $"Daily Value P&L{Environment.NewLine}{summary.Date:yyyy-MM-dd}{Environment.NewLine}Value: {Money(summary.TotalValueProfitLoss)}{Environment.NewLine}Cash P/L: {Money(summary.TotalProfitLoss)}{Environment.NewLine}Tickets: {Money(summary.TicketProfitLoss)}{Environment.NewLine}Tournaments cash: {Money(summary.TournamentProfitLoss)}{Environment.NewLine}Cash sessions: {Money(summary.CashProfitLoss)}{Environment.NewLine}Sessions: {summary.NumberOfSessions}"));
+        _dailyChart.SetData("Daily Value P&L", dailyPoints, MiniChartKind.Bars);
+        _dailyReviewChart.SetData("Daily Value P&L", dailyPoints, MiniChartKind.Bars);
+        _runningChart.SetData("Running Overall Value", running.Select(point => new MiniChartPoint(
             point.Date.ToString("MM-dd"),
-            point.Bankroll,
+            point.BankrollValue,
             point,
-            $"Running Bankroll{Environment.NewLine}{point.Date:yyyy-MM-dd}{Environment.NewLine}{point.Label}{Environment.NewLine}Change: {Money(point.Amount)}{Environment.NewLine}Bankroll: {Money(point.Bankroll)}")), MiniChartKind.Line);
-        _comparisonChart.SetData("Tournament vs Cash P/L",
+            $"Running Overall Value{Environment.NewLine}{point.Date:yyyy-MM-dd}{Environment.NewLine}{point.Label}{Environment.NewLine}Value change: {Money(point.ValueAmount)}{Environment.NewLine}Cash change: {Money(point.Amount)}{Environment.NewLine}Ticket change: {Money(point.TicketAmount)}{Environment.NewLine}Overall value: {Money(point.BankrollValue)}{Environment.NewLine}Cash bankroll: {Money(point.Bankroll)}{Environment.NewLine}Tickets: {Money(point.TicketBalance)}")), MiniChartKind.Line);
+        _comparisonChart.SetData("Tournament Value vs Cash P/L",
         [
-            new MiniChartPoint("Tournaments", summary.TournamentProfitLoss, "MTTs", $"Tournament P/L{Environment.NewLine}{Money(summary.TournamentProfitLoss)}"),
+            new MiniChartPoint("Tournaments", summary.TournamentValueProfitLoss, "MTTs", $"Tournament value P/L{Environment.NewLine}{Money(summary.TournamentValueProfitLoss)}{Environment.NewLine}Cash: {Money(summary.TournamentProfitLoss)}{Environment.NewLine}Tickets: {Money(summary.TicketBalance)}"),
             new MiniChartPoint("Cash", summary.CashProfitLoss, "Cash", $"Cash P/L{Environment.NewLine}{Money(summary.CashProfitLoss)}")
         ], MiniChartKind.Bars);
-        _monthlyChart.SetData("Monthly P&L", monthly.Select(month => new MiniChartPoint(
+        _monthlyChart.SetData("Monthly Value P&L", monthly.Select(month => new MiniChartPoint(
             month.Month.ToString("yyyy-MM"),
-            month.TotalPokerProfitLoss,
+            month.TotalValueProfitLoss,
             month.Month,
-            $"Monthly P&L{Environment.NewLine}{month.Month:yyyy-MM}{Environment.NewLine}Total: {Money(month.TotalPokerProfitLoss)}{Environment.NewLine}Tournaments: {Money(month.TournamentProfitLoss)}{Environment.NewLine}Cash: {Money(month.CashProfitLoss)}{Environment.NewLine}MTTs: {month.NumberOfTournaments}  Cash sessions: {month.NumberOfCashSessions}")), MiniChartKind.Bars);
+            $"Monthly Value P&L{Environment.NewLine}{month.Month:yyyy-MM}{Environment.NewLine}Value: {Money(month.TotalValueProfitLoss)}{Environment.NewLine}Cash P/L: {Money(month.TotalPokerProfitLoss)}{Environment.NewLine}Tickets: {Money(month.TicketProfitLoss)}{Environment.NewLine}Tournaments cash: {Money(month.TournamentProfitLoss)}{Environment.NewLine}Cash: {Money(month.CashProfitLoss)}{Environment.NewLine}MTTs: {month.NumberOfTournaments}  Cash sessions: {month.NumberOfCashSessions}")), MiniChartKind.Bars);
     }
 
 
@@ -245,7 +250,8 @@ public sealed partial class MainForm
 
         foreach (var title in new[]
         {
-            "Total poker P/L", "Tournament P/L", "Cash P/L", "Total deposits", "Total withdrawals",
+            "On tables", "Total value P/L", "Total poker P/L", "Tournament value P/L", "Tournament P/L",
+            "Cash P/L", "Today P/L", "This month P/L", "Total deposits", "Total withdrawals",
             "Best day", "Worst day", "Protect mode", "Bankroll tier"
         })
         {

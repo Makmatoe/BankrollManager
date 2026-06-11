@@ -41,9 +41,11 @@ public sealed partial class MainForm
             AddTextColumn(grid, "Year", "Year", 80);
             AddTextColumn(grid, "Deposits", "Deposits", 100);
             AddTextColumn(grid, "Withdrawals", "Withdrawals", 110);
-            AddTextColumn(grid, "TournamentProfitLoss", "Tournament P/L", 130);
-            AddTextColumn(grid, "CashProfitLoss", "Cash P/L", 110);
-            AddTextColumn(grid, "TotalPokerProfitLoss", "Poker P/L", 110);
+            AddTextColumn(grid, "TournamentProfitLoss", "MTT Cash P/L", 130);
+            AddTextColumn(grid, "CashProfitLoss", "Cash Session P/L", 135);
+            AddTextColumn(grid, "TicketProfitLoss", "Ticket P/L", 110);
+            AddTextColumn(grid, "TotalValueProfitLoss", "Value P/L", 110);
+            AddTextColumn(grid, "TotalPokerProfitLoss", "Total Cash P/L", 125);
             AddTextColumn(grid, "NumberOfTournaments", "Tournaments", 105);
             AddTextColumn(grid, "NumberOfCashSessions", "Cash Sessions", 115);
             AddTextColumn(grid, "AverageTournamentBuyIn", "Avg Buy-in", 110);
@@ -56,7 +58,7 @@ public sealed partial class MainForm
             AddTextColumn(grid, "Name", "Name", 160);
             AddTextColumn(grid, "TournamentProfitLoss", "Tournament P/L", 130);
             AddTextColumn(grid, "CashProfitLoss", "Cash P/L", 110);
-            AddTextColumn(grid, "TotalPokerProfitLoss", "Poker P/L", 110);
+            AddTextColumn(grid, "TotalPokerProfitLoss", "Total Cash P/L", 125);
             AddTextColumn(grid, "TotalCost", "Cash Cost", 110);
             AddTextColumn(grid, "Count", "Count", 80);
         }
@@ -71,12 +73,13 @@ public sealed partial class MainForm
         AddTextColumn(grid, "WalletCashBalance", "Wallet Cash", 115);
         AddTextColumn(grid, "ActiveTableCash", "On Tables", 105);
         AddTextColumn(grid, "TotalPlatformExposure", "Total Exposure", 125);
+        AddTextColumn(grid, "TotalPlatformValue", "Total Value", 115);
         AddTextColumn(grid, "Deposits", "Deposits", 100);
         AddTextColumn(grid, "Withdrawals", "Withdrawals", 110);
         AddTextColumn(grid, "LedgerNet", "Ledger Net", 105);
         AddTextColumn(grid, "TournamentProfitLoss", "Tournament P/L", 130);
         AddTextColumn(grid, "CashSessionProfitLoss", "Cash Session P/L", 135);
-        AddTextColumn(grid, "TotalPokerProfitLoss", "Poker P/L", 110);
+        AddTextColumn(grid, "TotalPokerProfitLoss", "Total Cash P/L", 125);
         AddTextColumn(grid, "TicketBalance", "Tickets", 90);
         AddTextColumn(grid, "CashCost", "Cash Cost", 110);
         AddTextColumn(grid, "Count", "Entries", 80);
@@ -90,6 +93,7 @@ public sealed partial class MainForm
         AddTextColumn(grid, "WalletCashBalance", "Expected Wallet", 125);
         AddTextColumn(grid, "ActiveTableCash", "On Tables", 105);
         AddTextColumn(grid, "TotalPlatformExposure", "Total Exposure", 125);
+        AddTextColumn(grid, "TotalPlatformValue", "Total Value", 115);
         AddTextColumn(grid, "ActualCashBalance", "Actual Cash", 115);
         AddTextColumn(grid, "Difference", "Difference", 105);
         AddTextColumn(grid, "TicketBalance", "Tickets", 90);
@@ -168,6 +172,7 @@ public sealed partial class MainForm
                 || property == "WalletCashBalance"
                 || property == "ActiveTableCash"
                 || property == "TotalPlatformExposure"
+                || property == "TotalPlatformValue"
                 || property == "WalletCashImpact"
                 || property == "TicketBalance"
                 || property == "Difference")
@@ -298,6 +303,7 @@ public sealed partial class MainForm
             || property.Contains("ROI", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Risk", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Bankroll", StringComparison.OrdinalIgnoreCase)
+            || property.Contains("Value", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Deposits", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Withdrawals", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Ledger", StringComparison.OrdinalIgnoreCase)

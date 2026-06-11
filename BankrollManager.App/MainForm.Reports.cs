@@ -30,8 +30,8 @@ public sealed partial class MainForm
         AddTextColumn(_timelineGrid, "Name", "Name", 240);
         AddTextColumn(_timelineGrid, "CostRisk", "Cost/Risk", 105);
         AddTextColumn(_timelineGrid, "Result", "Result", 105);
-        AddTextColumn(_timelineGrid, "BankrollBefore", "Bankroll Before", 125);
-        AddTextColumn(_timelineGrid, "BankrollAfter", "Bankroll After", 125);
+        AddTextColumn(_timelineGrid, "BankrollBefore", "Cash BR Before", 125);
+        AddTextColumn(_timelineGrid, "BankrollAfter", "Cash BR After", 125);
         AddTextColumn(_timelineGrid, "Rule", "Rule", 110);
         root.Controls.Add(_timelineGrid, 0, 0);
         return root;
@@ -52,8 +52,8 @@ public sealed partial class MainForm
         AddTextColumn(_ledgerGrid, "Description", "Description", 260);
         AddTextColumn(_ledgerGrid, "Amount", "Amount", 90);
         AddTextColumn(_ledgerGrid, "Category", "Category", 120);
-        AddTextColumn(_ledgerGrid, "BankrollBefore", "Bankroll Before", 115);
-        AddTextColumn(_ledgerGrid, "BankrollAfter", "Bankroll After", 110);
+        AddTextColumn(_ledgerGrid, "BankrollBefore", "Cash BR Before", 125);
+        AddTextColumn(_ledgerGrid, "BankrollAfter", "Cash BR After", 120);
         AddTextColumn(_ledgerGrid, "Notes", "Notes", 320);
         root.Controls.Add(BuildGridWithEmptyState(
             _ledgerGrid,
@@ -73,12 +73,15 @@ public sealed partial class MainForm
 
         _dailyGrid = CreateGrid(_dailySource);
         AddTextColumn(_dailyGrid, "Date", "Date", 100);
-        AddTextColumn(_dailyGrid, "TournamentProfitLoss", "Tournament P/L", 130);
-        AddTextColumn(_dailyGrid, "CashProfitLoss", "Cash P/L", 110);
-        AddTextColumn(_dailyGrid, "TotalProfitLoss", "Total P/L", 110);
+        AddTextColumn(_dailyGrid, "TournamentProfitLoss", "MTT Cash P/L", 130);
+        AddTextColumn(_dailyGrid, "CashProfitLoss", "Cash Session P/L", 135);
+        AddTextColumn(_dailyGrid, "TicketProfitLoss", "Ticket P/L", 110);
+        AddTextColumn(_dailyGrid, "TotalValueProfitLoss", "Value P/L", 110);
+        AddTextColumn(_dailyGrid, "TotalProfitLoss", "Total Cash P/L", 125);
         AddTextColumn(_dailyGrid, "NumberOfSessions", "Sessions", 88);
         AddTextColumn(_dailyGrid, "RunningMonthProfitLoss", "Running Month P/L", 150);
-        AddTextColumn(_dailyGrid, "RunningLifetimeBankroll", "Running Bankroll", 150);
+        AddTextColumn(_dailyGrid, "RunningLifetimeBankrollValue", "Running Value", 140);
+        AddTextColumn(_dailyGrid, "RunningLifetimeBankroll", "Running Cash", 130);
         root.Controls.Add(_dailyGrid, 0, 1);
         return root;
     }
@@ -90,9 +93,11 @@ public sealed partial class MainForm
         AddTextColumn(_monthlyGrid, "Month", "Month", 100);
         AddTextColumn(_monthlyGrid, "Deposits", "Deposits", 100);
         AddTextColumn(_monthlyGrid, "Withdrawals", "Withdrawals", 110);
-        AddTextColumn(_monthlyGrid, "TournamentProfitLoss", "Tournament P/L", 130);
-        AddTextColumn(_monthlyGrid, "CashProfitLoss", "Cash P/L", 110);
-        AddTextColumn(_monthlyGrid, "TotalPokerProfitLoss", "Poker P/L", 110);
+        AddTextColumn(_monthlyGrid, "TournamentProfitLoss", "MTT Cash P/L", 130);
+        AddTextColumn(_monthlyGrid, "CashProfitLoss", "Cash Session P/L", 135);
+        AddTextColumn(_monthlyGrid, "TicketProfitLoss", "Ticket P/L", 110);
+        AddTextColumn(_monthlyGrid, "TotalValueProfitLoss", "Value P/L", 110);
+        AddTextColumn(_monthlyGrid, "TotalPokerProfitLoss", "Total Cash P/L", 125);
         AddTextColumn(_monthlyGrid, "NumberOfTournaments", "Tournaments", 105);
         AddTextColumn(_monthlyGrid, "NumberOfCashSessions", "Cash Sessions", 115);
         AddTextColumn(_monthlyGrid, "AverageTournamentBuyIn", "Avg Buy-in", 110);

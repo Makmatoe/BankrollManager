@@ -194,7 +194,7 @@ public sealed partial class MainForm
                 "Quick Setup turns a clean install into your bankroll tracker without importing any sample data. Use it once at the start, and rerun it later from the Setup button if your defaults change.",
                 [
                     "Choose currency, enabled platforms, and the default platform.",
-                    "Pick whether opening funds are a starting bankroll or first deposit.",
+                    "Pick whether opening funds are a starting cash bankroll or first deposit.",
                     "Record optional starting wallet balances when you want reconciliation from day one."
                 ],
                 "Open Setup",
@@ -204,9 +204,10 @@ public sealed partial class MainForm
                 "Overview",
                 "Use Overview as the health check before you play. It keeps the important state visible without forcing you through every table.",
                 [
+                    "Compare Overall value, Cash bankroll, and Tickets available.",
                     "Check the stop-loss banner first.",
                     "Open Needs attention when it shows a warning.",
-                    "Use Recent activity to sanity-check bankroll movement."
+                    "Use Recent activity to sanity-check cash bankroll movement."
                 ],
                 "Open Overview",
                 () => NavigateToPage("Overview")),
@@ -216,7 +217,7 @@ public sealed partial class MainForm
                 "Settings controls the lists and limits the rest of the app uses. Disabled platforms stay out of tournament, cash, ledger, and decision pickers.",
                 [
                     "Keep only the platforms you actually use enabled.",
-                    "Set active month start, starting bankroll, and default bullets.",
+                    "Set active month start, starting cash bankroll, and default bullets.",
                     "Review risk caps, stop-loss, protect mode, and cooldown settings."
                 ],
                 "Open Settings",
@@ -261,6 +262,7 @@ public sealed partial class MainForm
                 [
                     "Use Ticket Won when a tournament pays a ticket.",
                     "Use Ticket buy-in when a ticket pays for a future entry.",
+                    "Read Overall value and value P/L charts when you want cash plus ticket value.",
                     "Mark ticket realized only when it becomes cash value."
                 ],
                 "Open MTTs",
@@ -281,8 +283,8 @@ public sealed partial class MainForm
                 "Timeline",
                 "Use review pages after the session, not during the heat of play. They show whether the bankroll story adds up over time.",
                 [
-                    "Timeline explains the event-by-event bankroll path.",
-                    "Day and Month show stop-loss pressure.",
+                    "Timeline explains the event-by-event cash bankroll path.",
+                    "Day and Month show cash P/L, ticket P/L, and combined value P/L.",
                     "Year and comparison tabs show where profit/loss is coming from."
                 ],
                 "Open Timeline",

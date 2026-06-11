@@ -53,8 +53,8 @@ public sealed partial class MainForm
         AddTextColumn(_cashGrid, "BBPer100", "BB/100", 82);
         AddTextColumn(_cashGrid, "RiskPercentageOfBankrollAtSessionStart", "Risk %", 78);
         AddTextColumn(_cashGrid, "RuleCheckResult", "Rule", 96);
-        AddTextColumn(_cashGrid, "BankrollBefore", "Bankroll Before", 115);
-        AddTextColumn(_cashGrid, "BankrollAfter", "Bankroll After", 110);
+        AddTextColumn(_cashGrid, "BankrollBefore", "Cash BR Before", 125);
+        AddTextColumn(_cashGrid, "BankrollAfter", "Cash BR After", 120);
         AddTextColumn(_cashGrid, "Notes", "Notes", 320);
         ApplyCashColumnMode();
         var content = new TableLayoutPanel
@@ -170,7 +170,7 @@ public sealed partial class MainForm
             ? "-"
             : $"{entry.ClosedDate:yyyy-MM-dd} {FormatTime(entry.ClosedTime)}";
         _cashInspectorMeta.Text =
-            $"Started {entry.Date:yyyy-MM-dd} {FormatTime(entry.SessionTime)}  Closed {closed}  SB/BB {Money(entry.SmallBlindAmount)}/{Money(entry.BigBlindAmount)}  Minutes {NullableText(entry.Minutes)}  Hands {NullableText(entry.Hands)}  Risk {entry.RiskPercentageOfBankrollAtSessionStart:0.0}%  Bankroll {Money(entry.BankrollBefore)} -> {Money(entry.BankrollAfter)}";
+            $"Started {entry.Date:yyyy-MM-dd} {FormatTime(entry.SessionTime)}  Closed {closed}  SB/BB {Money(entry.SmallBlindAmount)}/{Money(entry.BigBlindAmount)}  Minutes {NullableText(entry.Minutes)}  Hands {NullableText(entry.Hands)}  Risk {entry.RiskPercentageOfBankrollAtSessionStart:0.0}%  Cash bankroll {Money(entry.BankrollBefore)} -> {Money(entry.BankrollAfter)}";
         _cashInspectorNotes.Text = CashInspectorNotes(entry);
     }
 
