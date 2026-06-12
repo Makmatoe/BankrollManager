@@ -103,8 +103,8 @@ public static class BankrollCalculator
         data.EnsureDefaults();
         var positiveLedgerFunding = data.LedgerEntries
             .Where(entry => entry.Date >= monthStart && entry.Date <= throughDate)
+            .Where(IsExternalMonthlyFunding)
             .Select(SignedLedgerAmount)
-            .Where(amount => amount > 0m)
             .Sum();
 
         return Math.Max(0m, data.Settings.StartingBankroll + positiveLedgerFunding);
@@ -986,6 +986,12 @@ public static class BankrollCalculator
         return ended > started
             ? (decimal)(ended - started).TotalHours
             : 0m;
+    }
+
+    private static bool IsExternalMonthlyFunding(LedgerEntry entry)
+    {
+        return entry.Type != LedgerType.TransferIn
+            && SignedLedgerAmount(entry) > 0m;
     }
 
     private static TimeOnly EffectiveTime(TimeOnly? time)

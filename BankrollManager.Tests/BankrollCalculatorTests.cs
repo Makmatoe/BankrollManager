@@ -173,6 +173,27 @@ public sealed class BankrollCalculatorTests
     }
 
     [TestMethod]
+    public void MonthFundingIgnoresInternalPlatformTransfers()
+    {
+        var monthStart = new DateOnly(2026, 6, 1);
+        var throughDate = new DateOnly(2026, 6, 30);
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings { StartingBankroll = 10m },
+            LedgerEntries =
+            [
+                new LedgerEntry { Date = new DateOnly(2026, 6, 2), Type = LedgerType.Deposit, Amount = 20m },
+                new LedgerEntry { Date = new DateOnly(2026, 6, 3), Type = LedgerType.TransferOut, Amount = 8m },
+                new LedgerEntry { Date = new DateOnly(2026, 6, 3), Type = LedgerType.TransferIn, Amount = 8m },
+                new LedgerEntry { Date = new DateOnly(2026, 6, 4), Type = LedgerType.Bonus, Amount = 3m },
+                new LedgerEntry { Date = new DateOnly(2026, 6, 5), Type = LedgerType.Withdrawal, Amount = 5m }
+            ]
+        };
+
+        AssertMoney(33m, BankrollCalculator.MonthFunding(data, monthStart, throughDate));
+    }
+
+    [TestMethod]
     public void SummariesTrackHoursPlayedAndHourlyRate()
     {
         var date = new DateOnly(2026, 6, 9);

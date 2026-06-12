@@ -8,28 +8,24 @@ public static class TournamentEvCalculator
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var buyIn = Math.Max(0m, request.BuyIn);
+        var currentEntries = Math.Max(1, request.CurrentEntries);
         var totalPrizeValue = TotalPrizeValue(request);
-        var grossEv = request.CurrentEntries > 0
-            ? totalPrizeValue / request.CurrentEntries
+        var grossEv = totalPrizeValue / currentEntries;
+        var netEv = grossEv - buyIn;
+        var roi = buyIn > 0m
+            ? netEv / buyIn
             : 0m;
-        var netEv = grossEv - request.BuyIn;
-        var roi = request.BuyIn > 0m
-            ? netEv / request.BuyIn
-            : 0m;
-        var exactBreakEvenEntries = request.BuyIn > 0m
-            ? totalPrizeValue / request.BuyIn
-            : 0m;
-        var negativeEvStartsAt = (long)Math.Floor(exactBreakEvenEntries) + 1;
-        var maxPositiveEntries = (long)Math.Ceiling(exactBreakEvenEntries) - 1;
+        var thresholds = CalculateThresholds(totalPrizeValue, buyIn);
 
         return new TournamentEvResult(
             totalPrizeValue,
             grossEv,
             netEv,
             roi,
-            exactBreakEvenEntries,
-            negativeEvStartsAt,
-            maxPositiveEntries,
+            thresholds.ExactBreakEvenEntries,
+            thresholds.NegativeEvStartsAt,
+            thresholds.MaxPositiveEntries,
             StatusFor(netEv));
     }
 
@@ -39,9 +35,29 @@ public static class TournamentEvCalculator
 
         return request.PrizeType switch
         {
-            TournamentEvPrizeType.CashPrizePool => request.ManualPrizeValue,
-            _ => request.NumberOfTickets * request.TicketValue * request.TicketValueDiscountPercent / 100m
+            TournamentEvPrizeType.CashPrizePool => Math.Max(0m, request.ManualPrizeValue),
+            _ => Math.Max(0, request.NumberOfTickets)
+                * Math.Max(0m, request.TicketValue)
+                * Math.Clamp(request.TicketValueDiscountPercent, 0m, 100m)
+                / 100m
         };
+    }
+
+    private static (decimal ExactBreakEvenEntries, long NegativeEvStartsAt, long MaxPositiveEntries) CalculateThresholds(
+        decimal totalPrizeValue,
+        decimal buyIn)
+    {
+        if (buyIn <= 0m)
+        {
+            return totalPrizeValue > 0m
+                ? (0m, long.MaxValue, long.MaxValue)
+                : (0m, 0L, 0L);
+        }
+
+        var exactBreakEvenEntries = totalPrizeValue / buyIn;
+        var negativeEvStartsAt = Math.Max(1L, (long)Math.Floor(exactBreakEvenEntries) + 1L);
+        var maxPositiveEntries = Math.Max(0L, (long)Math.Ceiling(exactBreakEvenEntries) - 1L);
+        return (exactBreakEvenEntries, negativeEvStartsAt, maxPositiveEntries);
     }
 
     private static TournamentEvStatus StatusFor(decimal netEv)

@@ -94,6 +94,67 @@ public sealed class TournamentEvCalculatorTests
     }
 
     [TestMethod]
+    public void TicketDiscountIsClampedToTicketFaceValue()
+    {
+        var result = TournamentEvCalculator.Evaluate(new TournamentEvRequest
+        {
+            BuyIn = 2m,
+            PrizeType = TournamentEvPrizeType.Tickets,
+            NumberOfTickets = 1,
+            TicketValue = 10m,
+            TicketValueDiscountPercent = 125m,
+            CurrentEntries = 5
+        });
+
+        AssertMoney(10m, result.TotalPrizeValue);
+        AssertMoney(2m, result.GrossEv);
+        AssertMoney(0m, result.NetEv);
+        Assert.AreEqual(TournamentEvStatus.Breakeven, result.Status);
+    }
+
+    [TestMethod]
+    public void ZeroPrizeDoesNotReportNegativePositiveThreshold()
+    {
+        var result = TournamentEvCalculator.Evaluate(new TournamentEvRequest
+        {
+            BuyIn = 1m,
+            PrizeType = TournamentEvPrizeType.Tickets,
+            NumberOfTickets = 0,
+            TicketValue = 10m,
+            CurrentEntries = 1
+        });
+
+        AssertMoney(0m, result.TotalPrizeValue);
+        AssertMoney(-1m, result.NetEv);
+        AssertMoney(0m, result.ExactBreakEvenEntries);
+        Assert.AreEqual(0L, result.MaxPositiveEntries);
+        Assert.AreEqual(1L, result.NegativeEvStartsAt);
+        Assert.AreEqual(TournamentEvStatus.Negative, result.Status);
+    }
+
+    [TestMethod]
+    public void ImpossibleNegativeInputsAreTreatedAsZero()
+    {
+        var result = TournamentEvCalculator.Evaluate(new TournamentEvRequest
+        {
+            BuyIn = -1m,
+            PrizeType = TournamentEvPrizeType.Tickets,
+            NumberOfTickets = -2,
+            TicketValue = -10m,
+            TicketValueDiscountPercent = -50m,
+            CurrentEntries = -5
+        });
+
+        AssertMoney(0m, result.TotalPrizeValue);
+        AssertMoney(0m, result.GrossEv);
+        AssertMoney(0m, result.NetEv);
+        AssertMoney(0m, result.Roi);
+        Assert.AreEqual(0L, result.MaxPositiveEntries);
+        Assert.AreEqual(0L, result.NegativeEvStartsAt);
+        Assert.AreEqual(TournamentEvStatus.Breakeven, result.Status);
+    }
+
+    [TestMethod]
     public void ManualPrizePoolModeUsesManualTotalPrizeValue()
     {
         var result = TournamentEvCalculator.Evaluate(new TournamentEvRequest
