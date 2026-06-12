@@ -56,6 +56,18 @@ internal static class CashSessionDialogSupport
         }
     }
 
+    public static string FormatStakes(decimal smallBlind, decimal bigBlind, BankrollSettings settings)
+    {
+        if (smallBlind <= 0m || bigBlind <= 0m)
+        {
+            return string.Empty;
+        }
+
+        var small = BankrollManager.Core.Formatting.MoneyFormatter.Format(smallBlind, settings.CurrencySymbol);
+        var big = BankrollManager.Core.Formatting.MoneyFormatter.Format(bigBlind, settings.CurrencySymbol);
+        return $"{small}/{big}";
+    }
+
     public static string SessionSummary(CashSession entry, BankrollSettings settings)
     {
         var time = entry.SessionTime?.ToString("HH:mm") ?? "--:--";

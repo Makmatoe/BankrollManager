@@ -34,6 +34,9 @@ internal sealed class CashSessionDialog : Form
     private readonly TextBox _notes;
     private bool _syncingMinutes;
     private bool _minutesEditedByUser;
+    private string _lastAutoStakes = string.Empty;
+    private bool _syncingStakes;
+    private bool _stakesEditedByUser;
 
     public CashSessionDialog(CashSession entry, BankrollSettings settings)
     {
@@ -108,6 +111,7 @@ internal sealed class CashSessionDialog : Form
         DialogLayout.AddRow(layout, "Profit lock", _thresholdWarning);
         DialogLayout.AddRow(layout, "Notes", _notes);
         CashSessionDialogSupport.EnforceNonNegative(_smallBlind, _bigBlind, _startStackBuyIn, _reloads, _reloadCap, _cashout, _cashDropWon, _jackpotFortunePrizeWon);
+        InitializeStakesAutoFill();
         _date.ValueChanged += (_, _) => AutoFillMinutes();
         _sessionTime.ValueChanged += (_, _) => AutoFillMinutes();
         _status.SelectedIndexChanged += (_, _) => UpdateStatusControls();
@@ -254,6 +258,45 @@ internal sealed class CashSessionDialog : Form
             PlatformCatalog.CashFormatsFor(platform),
             selectedFormat,
             includeCurrent);
+    }
+
+    private void InitializeStakesAutoFill()
+    {
+        _lastAutoStakes = CashSessionDialogSupport.FormatStakes(_smallBlind.Value, _bigBlind.Value, _settings);
+        _stakesEditedByUser = !string.IsNullOrWhiteSpace(_stakes.Text)
+            && !string.Equals(_stakes.Text.Trim(), _lastAutoStakes, StringComparison.Ordinal);
+        _stakes.TextChanged += (_, _) => TrackStakesEdit();
+        _smallBlind.ValueChanged += (_, _) => AutoFillStakes();
+        _bigBlind.ValueChanged += (_, _) => AutoFillStakes();
+        AutoFillStakes();
+    }
+
+    private void TrackStakesEdit()
+    {
+        if (_syncingStakes)
+        {
+            return;
+        }
+
+        var text = _stakes.Text.Trim();
+        _stakesEditedByUser = !string.IsNullOrWhiteSpace(text)
+            && !string.Equals(text, _lastAutoStakes, StringComparison.Ordinal);
+    }
+
+    private void AutoFillStakes()
+    {
+        var nextAutoStakes = CashSessionDialogSupport.FormatStakes(_smallBlind.Value, _bigBlind.Value, _settings);
+        if (_stakesEditedByUser && !string.Equals(_stakes.Text.Trim(), _lastAutoStakes, StringComparison.Ordinal))
+        {
+            _lastAutoStakes = nextAutoStakes;
+            return;
+        }
+
+        _syncingStakes = true;
+        _stakes.Text = nextAutoStakes;
+        _syncingStakes = false;
+        _lastAutoStakes = nextAutoStakes;
+        _stakesEditedByUser = false;
     }
 
     private void AutoFillMinutes()

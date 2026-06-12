@@ -46,7 +46,7 @@ public sealed partial class MainForm
         var amount = PromptMoney(
             "Reconcile Wallet",
             $"Actual {displayName} cash",
-            selected?.ActualCashBalance ?? Math.Max(0m, expectedCash),
+            Math.Max(0m, expectedCash),
             0m,
             1_000_000m);
         if (amount is null)
@@ -62,8 +62,9 @@ public sealed partial class MainForm
         }
 
         wallet.ActualCashBalance = amount.Value;
+        wallet.AcceptedCashDifference = amount.Value - expectedCash;
         wallet.LastUpdatedDate = DateOnly.FromDateTime(DateTime.Today);
-        SaveData($"{displayName} wallet reconciled.");
+        SaveData($"{displayName} wallet reconciled. Accepted difference: {Money(wallet.AcceptedCashDifference.Value)}.");
     }
 
     private void TransferBetweenWallets()

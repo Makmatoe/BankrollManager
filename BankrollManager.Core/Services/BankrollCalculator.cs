@@ -499,6 +499,10 @@ public static class BankrollCalculator
                 var activeTableCash = cashSessions.Sum(entry => entry.ActiveTableCash);
                 var totalPlatformExposure = walletCashBalance + activeTableCash;
                 var wallet = data.PlatformWallets.FirstOrDefault(wallet => wallet.Platform == platform);
+                var actualCashBalance = wallet?.AcceptedCashDifference is { } acceptedDifference
+                    ? walletCashBalance + acceptedDifference
+                    : wallet?.ActualCashBalance;
+                var difference = actualCashBalance - walletCashBalance - (wallet?.AcceptedCashDifference ?? 0m);
                 return new PlatformSummary(
                     platform.ToString(),
                     walletCashBalance,
@@ -513,8 +517,9 @@ public static class BankrollCalculator
                     ticketBalance,
                     tournamentEntries.Sum(entry => entry.CashCost) + cashSessions.Sum(entry => entry.SessionCost),
                     ledgerEntries.Count + tournamentEntries.Count + cashSessions.Count,
-                    wallet?.ActualCashBalance,
-                    wallet?.ActualCashBalance - walletCashBalance,
+                    actualCashBalance,
+                    difference,
+                    wallet?.AcceptedCashDifference,
                     wallet?.LastUpdatedDate,
                     wallet?.Notes ?? string.Empty);
             })

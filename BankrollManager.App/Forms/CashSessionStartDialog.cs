@@ -20,6 +20,9 @@ internal sealed class CashSessionStartDialog : Form
     private readonly Label _formatWarning;
     private readonly DialogLayout.Row _formatWarningRow;
     private readonly TextBox _notes;
+    private string _lastAutoStakes = string.Empty;
+    private bool _syncingStakes;
+    private bool _stakesEditedByUser;
 
     public CashSessionStartDialog(CashSession entry, BankrollSettings settings)
     {
@@ -66,6 +69,7 @@ internal sealed class CashSessionStartDialog : Form
         DialogLayout.AddRow(layout, "Reload cap", _reloadCap);
         _formatWarningRow = DialogLayout.AddRow(layout, "Format warning", _formatWarning);
         DialogLayout.AddRow(layout, "Notes", _notes);
+        InitializeStakesAutoFill();
         _platform.SelectedIndexChanged += (_, _) =>
         {
             UpdateCashFormatChoices(includeCurrent: false);
@@ -130,5 +134,44 @@ internal sealed class CashSessionStartDialog : Form
             PlatformCatalog.CashFormatsFor(platform),
             selectedFormat,
             includeCurrent);
+    }
+
+    private void InitializeStakesAutoFill()
+    {
+        _lastAutoStakes = CashSessionDialogSupport.FormatStakes(_smallBlind.Value, _bigBlind.Value, _settings);
+        _stakesEditedByUser = !string.IsNullOrWhiteSpace(_stakes.Text)
+            && !string.Equals(_stakes.Text.Trim(), _lastAutoStakes, StringComparison.Ordinal);
+        _stakes.TextChanged += (_, _) => TrackStakesEdit();
+        _smallBlind.ValueChanged += (_, _) => AutoFillStakes();
+        _bigBlind.ValueChanged += (_, _) => AutoFillStakes();
+        AutoFillStakes();
+    }
+
+    private void TrackStakesEdit()
+    {
+        if (_syncingStakes)
+        {
+            return;
+        }
+
+        var text = _stakes.Text.Trim();
+        _stakesEditedByUser = !string.IsNullOrWhiteSpace(text)
+            && !string.Equals(text, _lastAutoStakes, StringComparison.Ordinal);
+    }
+
+    private void AutoFillStakes()
+    {
+        var nextAutoStakes = CashSessionDialogSupport.FormatStakes(_smallBlind.Value, _bigBlind.Value, _settings);
+        if (_stakesEditedByUser && !string.Equals(_stakes.Text.Trim(), _lastAutoStakes, StringComparison.Ordinal))
+        {
+            _lastAutoStakes = nextAutoStakes;
+            return;
+        }
+
+        _syncingStakes = true;
+        _stakes.Text = nextAutoStakes;
+        _syncingStakes = false;
+        _lastAutoStakes = nextAutoStakes;
+        _stakesEditedByUser = false;
     }
 }

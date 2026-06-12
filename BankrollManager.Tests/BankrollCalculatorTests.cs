@@ -96,6 +96,46 @@ public sealed class BankrollCalculatorTests
     }
 
     [TestMethod]
+    public void PlatformWalletAcceptedDifferenceCarriesForwardAfterReconcile()
+    {
+        var data = new BankrollData
+        {
+            LedgerEntries =
+            [
+                new LedgerEntry { Type = LedgerType.Deposit, Platform = Platform.HollandCasino, Amount = 10m }
+            ],
+            CashSessions =
+            [
+                new CashSession
+                {
+                    Date = new DateOnly(2026, 6, 10),
+                    Platform = Platform.HollandCasino,
+                    StartStackBuyIn = 2m,
+                    Cashout = 2.43m
+                }
+            ],
+            PlatformWallets =
+            [
+                new PlatformWallet
+                {
+                    Platform = Platform.HollandCasino,
+                    ActualCashBalance = 9.57m,
+                    AcceptedCashDifference = -0.43m,
+                    LastUpdatedDate = new DateOnly(2026, 6, 9)
+                }
+            ]
+        };
+
+        var hollandCasino = BankrollCalculator.GetPlatformSummaries(data)
+            .Single(summary => summary.Name == Platform.HollandCasino.ToString());
+
+        AssertMoney(10.43m, hollandCasino.WalletCashBalance);
+        AssertMoney(10m, hollandCasino.ActualCashBalance ?? 0m);
+        AssertMoney(-0.43m, hollandCasino.AcceptedCashDifference ?? 0m);
+        AssertMoney(0m, hollandCasino.Difference ?? 0m);
+    }
+
+    [TestMethod]
     public void PlatformWalletAndSummaryListsUseAlphabeticOrder()
     {
         var data = new BankrollData

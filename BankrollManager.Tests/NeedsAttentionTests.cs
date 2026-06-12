@@ -74,5 +74,36 @@ public sealed class NeedsAttentionTests
         Assert.AreEqual(AttentionSeverity.Clear, item.Severity);
         Assert.AreEqual(AttentionTargetType.None, item.TargetType);
     }
+
+    [TestMethod]
+    public void NeedsAttentionIgnoresAcceptedWalletDifference()
+    {
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings
+            {
+                ProtectModeBelowBankroll = 0m,
+                DailyStopLossAmount = 0m,
+                MonthlyPokerStopLossPercent = 0m
+            },
+            LedgerEntries =
+            [
+                new LedgerEntry { Type = LedgerType.Deposit, Platform = Platform.HollandCasino, Amount = 10m }
+            ],
+            PlatformWallets =
+            [
+                new PlatformWallet
+                {
+                    Platform = Platform.HollandCasino,
+                    ActualCashBalance = 9.57m,
+                    AcceptedCashDifference = -0.43m
+                }
+            ]
+        };
+
+        var items = NeedsAttentionService.GetItems(data, new DateOnly(2026, 6, 12));
+
+        Assert.IsFalse(items.Any(item => item.TargetType == AttentionTargetType.Wallet));
+    }
 }
 

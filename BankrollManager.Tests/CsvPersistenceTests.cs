@@ -40,7 +40,48 @@ public sealed class CsvPersistenceTests
             AssertMoney(1.50m, cash.ReloadCap);
             Assert.AreEqual(new TimeOnly(12, 34), cash.SessionTime);
             AssertMoney(7m, wallet.ActualCashBalance ?? 0m);
+            Assert.IsNull(wallet.AcceptedCashDifference);
             Assert.AreEqual(new DateOnly(2026, 6, 9), wallet.LastUpdatedDate);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+
+    [TestMethod]
+    public void CsvRoundTripsWalletAcceptedDifference()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "BankrollManagerTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            CsvBankrollSerializer.ExportToFolder(
+                new BankrollData
+                {
+                    PlatformWallets =
+                    [
+                        new PlatformWallet
+                        {
+                            Platform = Platform.HollandCasino,
+                            ActualCashBalance = 4.33m,
+                            AcceptedCashDifference = -0.43m,
+                            LastUpdatedDate = new DateOnly(2026, 6, 12),
+                            Notes = "Accepted after reconcile"
+                        }
+                    ]
+                },
+                folder);
+
+            var exported = File.ReadAllText(Path.Combine(folder, "wallets.csv"));
+            StringAssert.Contains(exported, "AcceptedCashDifference");
+
+            var imported = CsvBankrollSerializer.ImportFromFolder(folder);
+            var wallet = imported.PlatformWallets.Single(wallet => wallet.Platform == Platform.HollandCasino);
+
+            AssertMoney(4.33m, wallet.ActualCashBalance ?? 0m);
+            AssertMoney(-0.43m, wallet.AcceptedCashDifference ?? 0m);
+            Assert.AreEqual(new DateOnly(2026, 6, 12), wallet.LastUpdatedDate);
         }
         finally
         {

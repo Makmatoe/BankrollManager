@@ -108,6 +108,7 @@ public sealed record PlatformSummary(
     int Count,
     decimal? ActualCashBalance,
     decimal? Difference,
+    decimal? AcceptedCashDifference,
     DateOnly? LastUpdatedDate,
     string Notes)
 {

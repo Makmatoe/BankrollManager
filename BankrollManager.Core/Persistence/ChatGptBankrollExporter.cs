@@ -144,7 +144,7 @@ public static class ChatGptBankrollExporter
             [
                 "platform", "wallet_cash", "on_tables", "total_exposure", "total_value",
                 "deposits", "withdrawals", "ledger_net", "tournament_cash_pl", "cash_session_pl",
-                "total_cash_pl", "ticket_balance", "cash_cost", "entries", "actual_cash", "difference", "updated", "notes"
+                "total_cash_pl", "ticket_balance", "cash_cost", "entries", "actual_cash", "difference", "accepted_difference", "updated", "notes"
             ],
             platformSummaries.Select(summary => new[]
             {
@@ -164,6 +164,7 @@ public static class ChatGptBankrollExporter
                 Int(summary.Count),
                 NullableMoney(summary.ActualCashBalance),
                 NullableMoney(summary.Difference),
+                NullableMoney(summary.AcceptedCashDifference),
                 NullableDate(summary.LastUpdatedDate),
                 summary.Notes
             }));

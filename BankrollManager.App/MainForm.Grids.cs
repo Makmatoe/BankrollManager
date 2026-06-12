@@ -99,6 +99,7 @@ public sealed partial class MainForm
         AddTextColumn(grid, "TotalPlatformValue", "Total Value", 115);
         AddTextColumn(grid, "ActualCashBalance", "Actual Cash", 115);
         AddTextColumn(grid, "Difference", "Difference", 105);
+        AddTextColumn(grid, "AcceptedCashDifference", "Accepted Diff", 115);
         AddTextColumn(grid, "TicketBalance", "Tickets", 90);
         AddTextColumn(grid, "Deposits", "Deposits", 100);
         AddTextColumn(grid, "Withdrawals", "Withdrawals", 110);
@@ -185,7 +186,8 @@ public sealed partial class MainForm
                 || property == "TotalPlatformValue"
                 || property == "WalletCashImpact"
                 || property == "TicketBalance"
-                || property == "Difference")
+                || property == "Difference"
+                || property == "AcceptedCashDifference")
             {
                 if (e.CellStyle is not null)
                 {

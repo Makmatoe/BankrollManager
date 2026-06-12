@@ -232,12 +232,13 @@ public static class CsvBankrollSerializer
     {
         var rows = new List<string[]>
         {
-            new[] { "Platform", "ActualCashBalance", "LastUpdatedDate", "Notes" }
+            new[] { "Platform", "ActualCashBalance", "AcceptedCashDifference", "LastUpdatedDate", "Notes" }
         };
         rows.AddRange(data.PlatformWallets.Select(wallet => new[]
         {
             wallet.Platform.ToString(),
             wallet.ActualCashBalance.HasValue ? Money(wallet.ActualCashBalance.Value) : string.Empty,
+            wallet.AcceptedCashDifference.HasValue ? Money(wallet.AcceptedCashDifference.Value) : string.Empty,
             FormatDate(wallet.LastUpdatedDate),
             wallet.Notes
         }));
@@ -449,14 +450,23 @@ public static class CsvBankrollSerializer
         }
 
         var header = new CsvHeader(rows[0]);
-        return rows.Skip(1).Select(row => new PlatformWallet
+        return rows.Skip(1).Select(row =>
         {
-            Platform = ParseEnum(header.Get(row, "Platform", 0), Platform.Other),
-            ActualCashBalance = string.IsNullOrWhiteSpace(header.Get(row, "ActualCashBalance", 1))
-                ? null
-                : ParseDecimal(header.Get(row, "ActualCashBalance", 1)),
-            LastUpdatedDate = ParseNullableDate(header.Get(row, "LastUpdatedDate", 2)),
-            Notes = header.Get(row, "Notes", 3)
+            var acceptedDifference = header.Has("AcceptedCashDifference")
+                ? header.Get(row, "AcceptedCashDifference")
+                : string.Empty;
+            return new PlatformWallet
+            {
+                Platform = ParseEnum(header.Get(row, "Platform", 0), Platform.Other),
+                ActualCashBalance = string.IsNullOrWhiteSpace(header.Get(row, "ActualCashBalance", 1))
+                    ? null
+                    : ParseDecimal(header.Get(row, "ActualCashBalance", 1)),
+                AcceptedCashDifference = string.IsNullOrWhiteSpace(acceptedDifference)
+                    ? null
+                    : ParseDecimal(acceptedDifference),
+                LastUpdatedDate = ParseNullableDate(header.Get(row, "LastUpdatedDate", 3)),
+                Notes = header.Get(row, "Notes", 4)
+            };
         }).ToList();
     }
 
