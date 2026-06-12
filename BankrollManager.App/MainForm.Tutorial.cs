@@ -553,6 +553,7 @@ public sealed partial class MainForm
             string.Join(Environment.NewLine,
             [
                 "Use Backup before bigger cleanup sessions or before importing data.",
+                "Use ChatGPT when you want a readable Markdown export for outside review.",
                 "Use Export > JSON when you want a full portable copy of the app data.",
                 "Use Export > CSV when you want to inspect the bankroll in a spreadsheet.",
                 "Use Import only when you intentionally want to replace the current in-app data."

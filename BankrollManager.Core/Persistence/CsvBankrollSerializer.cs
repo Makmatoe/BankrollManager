@@ -248,7 +248,7 @@ public static class CsvBankrollSerializer
     {
         var rows = new List<string[]>
         {
-            new[] { "Date", "TournamentCashPL", "CashSessionPL", "TicketPL", "TotalCashPL", "TotalValuePL", "Sessions", "RunningMonthCashPL", "RunningLifetimeCashBankroll", "RunningLifetimeBankrollValue" }
+            new[] { "Date", "TournamentCashPL", "CashSessionPL", "TicketPL", "TotalCashPL", "TotalValuePL", "Sessions", "Hours", "CashPerHour", "ValuePerHour", "RunningMonthCashPL", "RunningLifetimeCashBankroll", "RunningLifetimeBankrollValue" }
         };
         rows.AddRange(BankrollCalculator.GetDailySummaries(data).Select(summary => new[]
         {
@@ -259,6 +259,9 @@ public static class CsvBankrollSerializer
             Money(summary.TotalProfitLoss),
             Money(summary.TotalValueProfitLoss),
             summary.NumberOfSessions.ToString(Culture),
+            summary.HoursPlayed.ToString("0.####", Culture),
+            Money(summary.CashPerHour),
+            Money(summary.ValuePerHour),
             Money(summary.RunningMonthProfitLoss),
             Money(summary.RunningLifetimeBankroll),
             Money(summary.RunningLifetimeBankrollValue)
@@ -274,7 +277,7 @@ public static class CsvBankrollSerializer
             {
                 "Month", "Deposits", "Withdrawals", "TournamentCashPL", "CashSessionPL",
                 "TicketPL", "TotalCashPL", "TotalValuePL", "Tournaments", "CashSessions", "AverageTournamentBuyIn",
-                "BiggestWin", "BiggestLoss", "StopLossBreaches", "Notes"
+                "Hours", "CashPerHour", "ValuePerHour", "BiggestWin", "BiggestLoss", "StopLossBreaches", "Notes"
             }
         };
         rows.AddRange(BankrollCalculator.GetMonthlySummaries(data).Select(summary => new[]
@@ -290,6 +293,9 @@ public static class CsvBankrollSerializer
             summary.NumberOfTournaments.ToString(Culture),
             summary.NumberOfCashSessions.ToString(Culture),
             Money(summary.AverageTournamentBuyIn),
+            summary.HoursPlayed.ToString("0.####", Culture),
+            Money(summary.CashPerHour),
+            Money(summary.ValuePerHour),
             Money(summary.BiggestWin),
             Money(summary.BiggestLoss),
             summary.StopLossBreaches.ToString(Culture),

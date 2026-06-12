@@ -99,6 +99,9 @@ public sealed partial class MainForm
         AddTextColumn(_dailyGrid, "TotalValueProfitLoss", "Value P/L", 110);
         AddTextColumn(_dailyGrid, "TotalProfitLoss", "Total Cash P/L", 125);
         AddTextColumn(_dailyGrid, "NumberOfSessions", "Sessions", 88);
+        AddTextColumn(_dailyGrid, "HoursPlayed", "Hours", 82);
+        AddTextColumn(_dailyGrid, "CashPerHour", "Cash / Hr", 105);
+        AddTextColumn(_dailyGrid, "ValuePerHour", "Value / Hr", 105);
         AddTextColumn(_dailyGrid, "RunningMonthProfitLoss", "Running Month P/L", 150);
         AddTextColumn(_dailyGrid, "RunningLifetimeBankrollValue", "Running Value", 140);
         AddTextColumn(_dailyGrid, "RunningLifetimeBankroll", "Running Cash", 130);
@@ -370,6 +373,9 @@ public sealed partial class MainForm
         AddTextColumn(_monthlyGrid, "TotalPokerProfitLoss", "Total Cash P/L", 125);
         AddTextColumn(_monthlyGrid, "NumberOfTournaments", "Tournaments", 105);
         AddTextColumn(_monthlyGrid, "NumberOfCashSessions", "Cash Sessions", 115);
+        AddTextColumn(_monthlyGrid, "HoursPlayed", "Hours", 82);
+        AddTextColumn(_monthlyGrid, "CashPerHour", "Cash / Hr", 105);
+        AddTextColumn(_monthlyGrid, "ValuePerHour", "Value / Hr", 105);
         AddTextColumn(_monthlyGrid, "AverageTournamentBuyIn", "Avg Buy-in", 110);
         AddTextColumn(_monthlyGrid, "BiggestWin", "Biggest Win", 110);
         AddTextColumn(_monthlyGrid, "BiggestLoss", "Biggest Loss", 110);

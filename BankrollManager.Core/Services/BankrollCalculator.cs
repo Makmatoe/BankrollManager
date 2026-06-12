@@ -432,6 +432,7 @@ public static class BankrollCalculator
                 totalProfitLoss,
                 data.TournamentEntries.Count(entry => entry.Date == date)
                     + data.CashSessions.Count(entry => entry.Date == date),
+                HoursPlayedForDate(data, date),
                 runningMonthProfitLoss,
                 bankrollByDate.GetValueOrDefault(date, data.Settings.StartingBankroll),
                 bankrollValueByDate.GetValueOrDefault(date, data.Settings.StartingBankroll)));
@@ -710,6 +711,7 @@ public static class BankrollCalculator
             tournamentProfitLoss + cashProfitLoss,
             tournamentEntries.Count,
             cashSessions.Count,
+            HoursPlayedForRange(data, month, nextMonth),
             tournamentEntries.Count == 0 ? 0m : tournamentEntries.Average(entry => entry.BuyIn),
             netResults.Count == 0 ? 0m : netResults.Max(),
             netResults.Count == 0 ? 0m : netResults.Min(),
@@ -742,6 +744,7 @@ public static class BankrollCalculator
             tournamentProfitLoss + cashProfitLoss,
             tournamentEntries.Count,
             cashSessions.Count,
+            HoursPlayedForRange(data, new DateOnly(year, 1, 1), new DateOnly(year + 1, 1, 1)),
             tournamentEntries.Count == 0 ? 0m : tournamentEntries.Average(entry => entry.BuyIn),
             netResults.Count == 0 ? 0m : netResults.Max(),
             netResults.Count == 0 ? 0m : netResults.Min(),
@@ -919,6 +922,70 @@ public static class BankrollCalculator
             })
             .Sum(TournamentTicketSettlementAmount);
         return registrationAmount + settlementReturns;
+    }
+
+    private static decimal HoursPlayedForDate(BankrollData data, DateOnly date)
+    {
+        return data.TournamentEntries
+            .Where(entry => entry.Date == date)
+            .Sum(TournamentHours)
+            + data.CashSessions
+                .Where(entry => entry.Date == date)
+                .Sum(CashSessionHours);
+    }
+
+    private static decimal HoursPlayedForRange(BankrollData data, DateOnly startInclusive, DateOnly endExclusive)
+    {
+        return data.TournamentEntries
+            .Where(entry => entry.Date >= startInclusive && entry.Date < endExclusive)
+            .Sum(TournamentHours)
+            + data.CashSessions
+                .Where(entry => entry.Date >= startInclusive && entry.Date < endExclusive)
+                .Sum(CashSessionHours);
+    }
+
+    private static decimal TournamentHours(TournamentEntry entry)
+    {
+        if (entry.Status != TournamentStatus.Finished
+            || entry.RegistrationTime is not { } registeredAt
+            || entry.FinishedTime is not { } finishedAt)
+        {
+            return 0m;
+        }
+
+        var finishedDate = entry.FinishedDate ?? entry.Date;
+        return HoursBetween(entry.Date, registeredAt, finishedDate, finishedAt);
+    }
+
+    private static decimal CashSessionHours(CashSession entry)
+    {
+        if (entry.Minutes is > 0)
+        {
+            return entry.Minutes.Value / 60m;
+        }
+
+        if (entry.Status != CashSessionStatus.Finished
+            || entry.SessionTime is not { } startedAt
+            || entry.ClosedDate is not { } closedDate
+            || entry.ClosedTime is not { } closedAt)
+        {
+            return 0m;
+        }
+
+        return HoursBetween(entry.Date, startedAt, closedDate, closedAt);
+    }
+
+    private static decimal HoursBetween(
+        DateOnly startDate,
+        TimeOnly startTime,
+        DateOnly endDate,
+        TimeOnly endTime)
+    {
+        var started = startDate.ToDateTime(startTime);
+        var ended = endDate.ToDateTime(endTime);
+        return ended > started
+            ? (decimal)(ended - started).TotalHours
+            : 0m;
     }
 
     private static TimeOnly EffectiveTime(TimeOnly? time)

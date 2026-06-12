@@ -1,9 +1,21 @@
 using System.ComponentModel;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("BankrollManager.UiTests")]
 
 namespace BankrollManager.App;
 
 internal sealed class SortableBindingList<T> : BindingList<T>
 {
+    private static readonly IReadOnlyDictionary<string, string[]> DateTimeTieBreakers =
+        new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["Date"] = ["Time", "RegistrationTime", "SessionTime"],
+            ["FinishedDate"] = ["FinishedTime"],
+            ["ClosedDate"] = ["ClosedTime"]
+        };
+
     private bool _isSorted;
     private ListSortDirection _sortDirection = ListSortDirection.Descending;
     private PropertyDescriptor? _sortProperty;
@@ -28,7 +40,7 @@ internal sealed class SortableBindingList<T> : BindingList<T>
             return;
         }
 
-        list.Sort((left, right) => CompareValues(property.GetValue(left), property.GetValue(right), direction));
+        list.Sort((left, right) => CompareItems(left, right, property, direction));
         _sortProperty = property;
         _sortDirection = direction;
         _isSorted = true;
@@ -61,6 +73,33 @@ internal sealed class SortableBindingList<T> : BindingList<T>
 
         var result = CompareValues(left, right);
         return direction == ListSortDirection.Ascending ? result : -result;
+    }
+
+    private static int CompareItems(T left, T right, PropertyDescriptor property, ListSortDirection direction)
+    {
+        var result = CompareValues(property.GetValue(left), property.GetValue(right), direction);
+        if (result != 0 || !DateTimeTieBreakers.TryGetValue(property.Name, out var timePropertyNames))
+        {
+            return result;
+        }
+
+        return CompareTimes(left, right, timePropertyNames, direction);
+    }
+
+    private static int CompareTimes(T left, T right, IEnumerable<string> propertyNames, ListSortDirection direction)
+    {
+        foreach (var propertyName in propertyNames)
+        {
+            var property = typeof(T).GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+            if (property is null || property.PropertyType != typeof(TimeOnly?) && property.PropertyType != typeof(TimeOnly))
+            {
+                continue;
+            }
+
+            return CompareValues(property.GetValue(left), property.GetValue(right), direction);
+        }
+
+        return 0;
     }
 
     private static int CompareValues(object? left, object? right)

@@ -173,6 +173,54 @@ public sealed class BankrollCalculatorTests
     }
 
     [TestMethod]
+    public void SummariesTrackHoursPlayedAndHourlyRate()
+    {
+        var date = new DateOnly(2026, 6, 9);
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings { StartingBankroll = 100m },
+            TournamentEntries =
+            [
+                new TournamentEntry
+                {
+                    Date = date,
+                    RegistrationTime = new TimeOnly(10, 0),
+                    FinishedDate = date,
+                    FinishedTime = new TimeOnly(12, 0),
+                    Status = TournamentStatus.Finished,
+                    BuyIn = 4m,
+                    ActualBullets = 1,
+                    CashPrize = 10m
+                }
+            ],
+            CashSessions =
+            [
+                new CashSession
+                {
+                    Date = date,
+                    SessionTime = new TimeOnly(14, 0),
+                    ClosedDate = date,
+                    ClosedTime = new TimeOnly(15, 30),
+                    StartStackBuyIn = 5m,
+                    Cashout = 8m
+                }
+            ]
+        };
+
+        var daily = BankrollCalculator.GetDailySummaries(data).Single(summary => summary.Date == date);
+        var monthly = BankrollCalculator.GetMonthlySummaries(data).Single(summary => summary.Month == new DateOnly(2026, 6, 1));
+        var yearly = BankrollCalculator.GetYearlySummaries(data).Single(summary => summary.Year == 2026);
+
+        AssertMoney(3.5m, daily.HoursPlayed);
+        AssertMoney(9m, daily.TotalProfitLoss);
+        AssertMoney(2.57m, daily.CashPerHour);
+        AssertMoney(3.5m, monthly.HoursPlayed);
+        AssertMoney(2.57m, monthly.CashPerHour);
+        AssertMoney(3.5m, yearly.HoursPlayed);
+        AssertMoney(2.57m, yearly.CashPerHour);
+    }
+
+    [TestMethod]
     public void RiskPercentageUsesEventRiskAgainstAvailableBankroll()
     {
         AssertMoney(2.5m, BankrollCalculator.RiskPercentage(2.5m, 100m));

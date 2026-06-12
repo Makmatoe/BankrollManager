@@ -396,9 +396,11 @@ public sealed partial class MainForm : Form
         strip.Items.Add(BuildCommandButton("About", ShowAbout));
         strip.Items.Add(BuildCommandButton("Backup", BackupData));
         strip.Items.Add(BuildCommandButton("Tutorial", () => StartTutorial()));
+        strip.Items.Add(BuildCommandButton("ChatGPT", ExportChatGpt));
         strip.Items.Add(new ToolStripSeparator());
         strip.Items.Add(BuildCommandDropDown(
             "Export",
+            ("ChatGPT", ExportChatGpt),
             ("JSON", ExportJson),
             ("CSV", ExportCsv)));
         strip.Items.Add(BuildCommandDropDown(

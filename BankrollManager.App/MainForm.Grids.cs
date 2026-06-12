@@ -48,6 +48,9 @@ public sealed partial class MainForm
             AddTextColumn(grid, "TotalPokerProfitLoss", "Total Cash P/L", 125);
             AddTextColumn(grid, "NumberOfTournaments", "Tournaments", 105);
             AddTextColumn(grid, "NumberOfCashSessions", "Cash Sessions", 115);
+            AddTextColumn(grid, "HoursPlayed", "Hours", 82);
+            AddTextColumn(grid, "CashPerHour", "Cash / Hr", 105);
+            AddTextColumn(grid, "ValuePerHour", "Value / Hr", 105);
             AddTextColumn(grid, "AverageTournamentBuyIn", "Avg Buy-in", 110);
             AddTextColumn(grid, "BiggestWin", "Biggest Win", 110);
             AddTextColumn(grid, "BiggestLoss", "Biggest Loss", 110);
@@ -152,6 +155,11 @@ public sealed partial class MainForm
                 e.Value = $"{decimalValue:P1}";
                 e.FormattingApplied = true;
             }
+            else if (property == "HoursPlayed")
+            {
+                e.Value = $"{decimalValue:0.##}";
+                e.FormattingApplied = true;
+            }
             else if (property.Contains("BB", StringComparison.OrdinalIgnoreCase) && property != "BigBlindAmount")
             {
                 e.Value = $"{decimalValue:0.##}";
@@ -168,6 +176,7 @@ public sealed partial class MainForm
                 || property.Contains("Net", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("Change", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("Biggest", StringComparison.OrdinalIgnoreCase)
+                || property.EndsWith("PerHour", StringComparison.OrdinalIgnoreCase)
                 || property.Contains("ROI", StringComparison.OrdinalIgnoreCase)
                 || property == "Amount"
                 || property == "WalletCashBalance"
@@ -319,7 +328,7 @@ public sealed partial class MainForm
             || property.Contains("AddOns", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Average", StringComparison.OrdinalIgnoreCase)
             || property.Contains("Biggest", StringComparison.OrdinalIgnoreCase)
-            || property is "Hands" or "Minutes" or "Count" or "Year" or "Placement" or "FieldSize" or "DailyEntryCap" or "CooldownDays"
+            || property is "Hands" or "Minutes" or "HoursPlayed" or "Count" or "Year" or "Placement" or "FieldSize" or "DailyEntryCap" or "CooldownDays"
             || property.Contains("Bullets", StringComparison.OrdinalIgnoreCase);
     }
 }

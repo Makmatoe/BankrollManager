@@ -170,6 +170,22 @@ public sealed partial class MainForm
         _statusLabel.Text = $"JSON exported: {dialog.FileName}";
     }
 
+    private void ExportChatGpt()
+    {
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "Markdown files (*.md)|*.md|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+            FileName = $"bankroll-chatgpt-export-{DateTime.Now:yyyyMMdd-HHmmss}.md"
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        ChatGptBankrollExporter.ExportToFile(_data, dialog.FileName, DateTime.Now);
+        _statusLabel.Text = $"ChatGPT export created: {dialog.FileName}";
+    }
+
     private void ImportJson()
     {
         using var dialog = new OpenFileDialog

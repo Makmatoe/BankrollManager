@@ -30,11 +30,14 @@ public sealed record DailySummary(
     decimal TicketProfitLoss,
     decimal TotalProfitLoss,
     int NumberOfSessions,
+    decimal HoursPlayed,
     decimal RunningMonthProfitLoss,
     decimal RunningLifetimeBankroll,
     decimal RunningLifetimeBankrollValue)
 {
     public decimal TotalValueProfitLoss => TotalProfitLoss + TicketProfitLoss;
+    public decimal CashPerHour => HoursPlayed > 0m ? TotalProfitLoss / HoursPlayed : 0m;
+    public decimal ValuePerHour => HoursPlayed > 0m ? TotalValueProfitLoss / HoursPlayed : 0m;
 }
 
 public sealed record MonthlySummary(
@@ -47,6 +50,7 @@ public sealed record MonthlySummary(
     decimal TotalPokerProfitLoss,
     int NumberOfTournaments,
     int NumberOfCashSessions,
+    decimal HoursPlayed,
     decimal AverageTournamentBuyIn,
     decimal BiggestWin,
     decimal BiggestLoss,
@@ -54,6 +58,8 @@ public sealed record MonthlySummary(
     string Notes)
 {
     public decimal TotalValueProfitLoss => TotalPokerProfitLoss + TicketProfitLoss;
+    public decimal CashPerHour => HoursPlayed > 0m ? TotalPokerProfitLoss / HoursPlayed : 0m;
+    public decimal ValuePerHour => HoursPlayed > 0m ? TotalValueProfitLoss / HoursPlayed : 0m;
 }
 
 public sealed record YearlySummary(
@@ -66,6 +72,7 @@ public sealed record YearlySummary(
     decimal TotalPokerProfitLoss,
     int NumberOfTournaments,
     int NumberOfCashSessions,
+    decimal HoursPlayed,
     decimal AverageTournamentBuyIn,
     decimal BiggestWin,
     decimal BiggestLoss,
@@ -73,6 +80,8 @@ public sealed record YearlySummary(
     string Notes)
 {
     public decimal TotalValueProfitLoss => TotalPokerProfitLoss + TicketProfitLoss;
+    public decimal CashPerHour => HoursPlayed > 0m ? TotalPokerProfitLoss / HoursPlayed : 0m;
+    public decimal ValuePerHour => HoursPlayed > 0m ? TotalValueProfitLoss / HoursPlayed : 0m;
 }
 
 public sealed record ComparisonSummary(
