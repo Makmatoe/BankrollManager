@@ -28,6 +28,7 @@ public sealed partial class MainForm
         LoadSettingsControls();
         RefreshDecisionPlatformChoices(includeCurrent: true);
         RefreshDecision();
+        RefreshTournamentEv();
     }
 
     private void RefreshDataSources()

@@ -28,6 +28,7 @@ public sealed partial class MainForm
             "Month" => 68,
             "Year" => 58,
             "Decide" => 70,
+            "EV Check" => 88,
             "Settings" => 78,
             _ => 88
         };

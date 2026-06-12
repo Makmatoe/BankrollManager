@@ -182,6 +182,22 @@ public sealed partial class MainForm : Form
     private TextBox _decisionAlternative = null!;
     private TextBox _decisionThresholds = null!;
     private TextBox _decisionWarnings = null!;
+    private TextBox _tournamentEvName = null!;
+    private NumericUpDown _tournamentEvBuyIn = null!;
+    private ComboBox _tournamentEvPrizeType = null!;
+    private NumericUpDown _tournamentEvNumberOfTickets = null!;
+    private NumericUpDown _tournamentEvTicketValue = null!;
+    private NumericUpDown _tournamentEvManualPrizeValue = null!;
+    private NumericUpDown _tournamentEvCurrentEntries = null!;
+    private NumericUpDown _tournamentEvTicketDiscount = null!;
+    private Label _tournamentEvStatusLabel = null!;
+    private Label _tournamentEvPrizeValueLabel = null!;
+    private Label _tournamentEvGrossLabel = null!;
+    private Label _tournamentEvNetLabel = null!;
+    private Label _tournamentEvRoiLabel = null!;
+    private Label _tournamentEvBreakevenLabel = null!;
+    private Label _tournamentEvPositiveUntilLabel = null!;
+    private Label _tournamentEvNegativeFromLabel = null!;
 
     public MainForm()
         : this(new JsonBankrollRepository())
@@ -300,6 +316,7 @@ public sealed partial class MainForm : Form
             ("Month", BuildMonthlyTab()),
             ("Year", BuildYearlyTab()),
             ("Decide", BuildDecisionTab()),
+            ("EV Check", BuildTournamentEvTab()),
             ("Settings", BuildSettingsTab())
         };
         _navigationPages = pages;

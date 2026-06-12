@@ -23,6 +23,7 @@ public sealed class MainFormSmokeTests
         "Month",
         "Year",
         "Decide",
+        "EV Check",
         "Settings"
     ];
 
