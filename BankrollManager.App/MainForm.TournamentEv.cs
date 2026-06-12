@@ -17,12 +17,15 @@ public sealed partial class MainForm
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
+            ColumnCount = 3,
+            RowCount = 1,
             BackColor = Theme.Back,
             Padding = new Padding(8)
         };
-        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 380));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 340));
+        root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 440));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var formScroller = new Panel
         {
@@ -40,7 +43,7 @@ public sealed partial class MainForm
             ColumnCount = 2,
             BackColor = Theme.Back
         };
-        form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 142));
+        form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
         form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         formScroller.Controls.Add(form);
 
@@ -77,7 +80,10 @@ public sealed partial class MainForm
             Margin = new Padding(0)
         };
         _tournamentEvCheckButton = Theme.Button("Check EV");
+        _tournamentEvCheckButton.AutoSize = false;
         _tournamentEvCheckButton.BackColor = Theme.CommandPrimary;
+        _tournamentEvCheckButton.Height = 32;
+        _tournamentEvCheckButton.Width = 96;
         _tournamentEvCheckButton.Click += (_, _) => RefreshTournamentEv();
         actions.Controls.Add(_tournamentEvCheckButton);
         AddTournamentEvInputRow(form, string.Empty, actions);
@@ -109,22 +115,24 @@ public sealed partial class MainForm
         }
 
         var result = Theme.Card();
-        result.Dock = DockStyle.Fill;
+        result.Dock = DockStyle.Top;
+        result.Height = 338;
         result.Margin = new Padding(8, 0, 0, 0);
         var resultLayout = new TableLayoutPanel
         {
-            Dock = DockStyle.Fill,
+            Dock = DockStyle.Top,
+            AutoSize = true,
             ColumnCount = 2,
             BackColor = Theme.Panel
         };
-        resultLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+        resultLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 174));
         resultLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         result.Controls.Add(resultLayout);
         root.Controls.Add(result, 1, 0);
 
         _tournamentEvStatusLabel = BuildTournamentEvStatusLabel();
         var statusRow = resultLayout.RowCount++;
-        resultLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        resultLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
         resultLayout.Controls.Add(_tournamentEvStatusLabel, 0, statusRow);
         resultLayout.SetColumnSpan(_tournamentEvStatusLabel, 2);
 
@@ -265,7 +273,7 @@ public sealed partial class MainForm
     private static void AddTournamentEvTitleRow(TableLayoutPanel layout, string text)
     {
         var row = layout.RowCount++;
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
         var label = Theme.Label(text, Theme.SubHeaderFont, Theme.Text);
         label.AutoSize = false;
         label.Dock = DockStyle.Fill;
@@ -278,7 +286,7 @@ public sealed partial class MainForm
     private static void AddTournamentEvInputRow(TableLayoutPanel layout, string label, Control control)
     {
         var row = layout.RowCount++;
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
 
         var labelControl = Theme.Label(label, Theme.BodyFont, Theme.Muted);
         labelControl.AutoSize = false;
@@ -289,7 +297,7 @@ public sealed partial class MainForm
         labelControl.TextAlign = ContentAlignment.MiddleLeft;
         labelControl.UseMnemonic = false;
 
-        control.Margin = new Padding(2, 3, 2, 3);
+        control.Margin = new Padding(2, 1, 2, 1);
         control.Dock = DockStyle.Fill;
         layout.Controls.Add(labelControl, 0, row);
         layout.Controls.Add(control, 1, row);
@@ -301,7 +309,7 @@ public sealed partial class MainForm
         {
             AutoSize = false,
             Dock = DockStyle.Fill,
-            Font = new Font("Segoe UI", 18f, FontStyle.Bold),
+            Font = new Font("Segoe UI", 16f, FontStyle.Bold),
             ForeColor = Theme.Text,
             BackColor = Theme.Panel,
             TextAlign = ContentAlignment.MiddleCenter,
@@ -314,7 +322,7 @@ public sealed partial class MainForm
     private static Label AddTournamentEvResultRow(TableLayoutPanel layout, string labelText)
     {
         var row = layout.RowCount++;
-        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 34));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
 
         var label = Theme.Label(labelText, Theme.BodyFont, Theme.Muted);
         label.AutoSize = false;
