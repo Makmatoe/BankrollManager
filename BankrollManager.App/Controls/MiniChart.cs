@@ -10,6 +10,8 @@ public enum MiniChartKind
 
 public sealed record MiniChartPoint(string Label, decimal Value, object? Tag = null, string? Tooltip = null);
 
+internal readonly record struct MiniChartTrend(decimal StartValue, decimal EndValue, decimal Slope);
+
 public sealed class MiniChartPointActivatedEventArgs(MiniChartPoint point, int index) : EventArgs
 {
     public MiniChartPoint Point { get; } = point;
@@ -100,13 +102,8 @@ public sealed class MiniChart : Control
             return;
         }
 
-        var min = Math.Min(0m, _points.Min(point => point.Value));
-        var max = Math.Max(0m, _points.Max(point => point.Value));
-        if (min == max)
-        {
-            min -= 1m;
-            max += 1m;
-        }
+        var trend = CalculateTrend(_points);
+        var (min, max) = ChartScale(trend);
 
         DrawGrid(e.Graphics, area, min, max);
         DrawZeroLine(e.Graphics, area, min, max);
@@ -120,6 +117,7 @@ public sealed class MiniChart : Control
             DrawBars(e.Graphics, area, min, max);
         }
 
+        DrawTrendLine(e.Graphics, area, min, max, trend);
         DrawChartLabels(e.Graphics, area, min, max);
     }
 
@@ -191,6 +189,34 @@ public sealed class MiniChart : Control
                 graphics.DrawEllipse(outline, point.X - radius, point.Y - radius, radius * 2, radius * 2);
             }
         }
+    }
+
+    private void DrawTrendLine(Graphics graphics, Rectangle area, decimal min, decimal max, MiniChartTrend? trend)
+    {
+        if (trend is not { } line)
+        {
+            return;
+        }
+
+        var y1 = ScaleY(line.StartValue, area, min, max);
+        var y2 = ScaleY(line.EndValue, area, min, max);
+        using var pen = new Pen(Theme.Warning, 1.8f)
+        {
+            DashStyle = DashStyle.Dash
+        };
+        graphics.DrawLine(pen, area.Left, y1, area.Right, y2);
+
+        using var brush = new SolidBrush(Theme.Warning);
+        using var format = new StringFormat
+        {
+            Alignment = StringAlignment.Near,
+            LineAlignment = StringAlignment.Center,
+            Trimming = StringTrimming.EllipsisCharacter,
+            FormatFlags = StringFormatFlags.NoWrap
+        };
+        var label = line.Slope == 0m ? "Trend flat" : $"Trend {(line.Slope > 0m ? "+" : string.Empty)}{line.Slope:0.##}/pt";
+        var labelRect = new RectangleF(area.Left, Padding.Top + 28, Math.Min(160, area.Width), 18);
+        graphics.DrawString(label, Theme.SmallFont, brush, labelRect, format);
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -333,15 +359,67 @@ public sealed class MiniChart : Control
             return false;
         }
 
-        min = Math.Min(0m, _points.Min(point => point.Value));
-        max = Math.Max(0m, _points.Max(point => point.Value));
+        var (scaleMin, scaleMax) = ChartScale(CalculateTrend(_points));
+        min = scaleMin;
+        max = scaleMax;
+
+        return true;
+    }
+
+    private (decimal Min, decimal Max) ChartScale(MiniChartTrend? trend)
+    {
+        var min = Math.Min(0m, _points.Min(point => point.Value));
+        var max = Math.Max(0m, _points.Max(point => point.Value));
+        if (trend is { } line)
+        {
+            min = Math.Min(min, Math.Min(line.StartValue, line.EndValue));
+            max = Math.Max(max, Math.Max(line.StartValue, line.EndValue));
+        }
+
         if (min == max)
         {
             min -= 1m;
             max += 1m;
         }
 
-        return true;
+        return (min, max);
+    }
+
+    internal static MiniChartTrend? CalculateTrend(IReadOnlyList<MiniChartPoint> points)
+    {
+        ArgumentNullException.ThrowIfNull(points);
+        if (points.Count < 3)
+        {
+            return null;
+        }
+
+        var count = points.Count;
+        var sumX = 0m;
+        var sumY = 0m;
+        var sumXY = 0m;
+        var sumXX = 0m;
+        for (var index = 0; index < count; index++)
+        {
+            var x = (decimal)index;
+            var y = points[index].Value;
+            sumX += x;
+            sumY += y;
+            sumXY += x * y;
+            sumXX += x * x;
+        }
+
+        var denominator = count * sumXX - sumX * sumX;
+        if (denominator == 0m)
+        {
+            return null;
+        }
+
+        var slope = (count * sumXY - sumX * sumY) / denominator;
+        var intercept = (sumY - slope * sumX) / count;
+        return new MiniChartTrend(
+            intercept,
+            intercept + slope * (count - 1),
+            slope);
     }
 
     private int HitTestPoint(Point location)
