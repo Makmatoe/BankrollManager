@@ -20,13 +20,66 @@ public sealed class TournamentEvCalculatorTests
         });
 
         AssertMoney(2.00m, result.TotalPrizeValue);
+        AssertMoney(0.40m, result.MaxSinglePrizeValue);
+        AssertMoney(0.05m, result.UncappedGrossEv);
         AssertMoney(0.05m, result.GrossEv);
         AssertMoney(0.01m, result.NetEv);
         AssertMoney(0.25m, result.Roi);
         AssertMoney(50m, result.ExactBreakEvenEntries);
+        Assert.IsTrue(result.CanBreakEven);
         Assert.AreEqual(49L, result.MaxPositiveEntries);
         Assert.AreEqual(51L, result.NegativeEvStartsAt);
         Assert.AreEqual(TournamentEvStatus.Positive, result.Status);
+    }
+
+    [TestMethod]
+    public void TicketsModeCapsCurrentEvAtSingleTicketValue()
+    {
+        var result = TournamentEvCalculator.Evaluate(new TournamentEvRequest
+        {
+            BuyIn = 0.40m,
+            PrizeType = TournamentEvPrizeType.Tickets,
+            NumberOfTickets = 5,
+            TicketValue = 0.40m,
+            CurrentEntries = 1
+        });
+
+        AssertMoney(2.00m, result.TotalPrizeValue);
+        AssertMoney(0.40m, result.MaxSinglePrizeValue);
+        AssertMoney(2.00m, result.UncappedGrossEv);
+        AssertMoney(0.40m, result.GrossEv);
+        AssertMoney(0m, result.NetEv);
+        AssertMoney(0m, result.Roi);
+        AssertMoney(5m, result.ExactBreakEvenEntries);
+        Assert.IsTrue(result.CanBreakEven);
+        Assert.AreEqual(0L, result.MaxPositiveEntries);
+        Assert.AreEqual(6L, result.NegativeEvStartsAt);
+        Assert.AreEqual(TournamentEvStatus.Breakeven, result.Status);
+    }
+
+    [TestMethod]
+    public void TicketsModeCannotBreakEvenWhenTicketValueIsBelowBuyIn()
+    {
+        var result = TournamentEvCalculator.Evaluate(new TournamentEvRequest
+        {
+            BuyIn = 0.50m,
+            PrizeType = TournamentEvPrizeType.Tickets,
+            NumberOfTickets = 5,
+            TicketValue = 0.40m,
+            CurrentEntries = 1
+        });
+
+        AssertMoney(2.00m, result.TotalPrizeValue);
+        AssertMoney(0.40m, result.MaxSinglePrizeValue);
+        AssertMoney(2.00m, result.UncappedGrossEv);
+        AssertMoney(0.40m, result.GrossEv);
+        AssertMoney(-0.10m, result.NetEv);
+        AssertMoney(-0.20m, result.Roi);
+        AssertMoney(0m, result.ExactBreakEvenEntries);
+        Assert.IsFalse(result.CanBreakEven);
+        Assert.AreEqual(0L, result.MaxPositiveEntries);
+        Assert.AreEqual(1L, result.NegativeEvStartsAt);
+        Assert.AreEqual(TournamentEvStatus.Negative, result.Status);
     }
 
     [TestMethod]
@@ -45,6 +98,7 @@ public sealed class TournamentEvCalculatorTests
         AssertMoney(0m, result.NetEv);
         AssertMoney(0m, result.Roi);
         AssertMoney(50m, result.ExactBreakEvenEntries);
+        Assert.IsTrue(result.CanBreakEven);
         Assert.AreEqual(49L, result.MaxPositiveEntries);
         Assert.AreEqual(51L, result.NegativeEvStartsAt);
         Assert.AreEqual(TournamentEvStatus.Breakeven, result.Status);
@@ -65,6 +119,7 @@ public sealed class TournamentEvCalculatorTests
         AssertMoney(60m, result.TotalPrizeValue);
         Assert.IsLessThan(0m, result.NetEv);
         AssertMoney(30m, result.ExactBreakEvenEntries);
+        Assert.IsTrue(result.CanBreakEven);
         Assert.AreEqual(29L, result.MaxPositiveEntries);
         Assert.AreEqual(31L, result.NegativeEvStartsAt);
         Assert.AreEqual(TournamentEvStatus.Negative, result.Status);
@@ -84,6 +139,8 @@ public sealed class TournamentEvCalculatorTests
         });
 
         AssertMoney(30m, result.TotalPrizeValue);
+        AssertMoney(5m, result.MaxSinglePrizeValue);
+        AssertMoney(1.50m, result.UncappedGrossEv);
         AssertMoney(1.50m, result.GrossEv);
         AssertMoney(-0.50m, result.NetEv);
         AssertMoney(-0.25m, result.Roi);
@@ -107,6 +164,8 @@ public sealed class TournamentEvCalculatorTests
         });
 
         AssertMoney(10m, result.TotalPrizeValue);
+        AssertMoney(10m, result.MaxSinglePrizeValue);
+        AssertMoney(2m, result.UncappedGrossEv);
         AssertMoney(2m, result.GrossEv);
         AssertMoney(0m, result.NetEv);
         Assert.AreEqual(TournamentEvStatus.Breakeven, result.Status);
@@ -127,6 +186,7 @@ public sealed class TournamentEvCalculatorTests
         AssertMoney(0m, result.TotalPrizeValue);
         AssertMoney(-1m, result.NetEv);
         AssertMoney(0m, result.ExactBreakEvenEntries);
+        Assert.IsFalse(result.CanBreakEven);
         Assert.AreEqual(0L, result.MaxPositiveEntries);
         Assert.AreEqual(1L, result.NegativeEvStartsAt);
         Assert.AreEqual(TournamentEvStatus.Negative, result.Status);
@@ -146,9 +206,12 @@ public sealed class TournamentEvCalculatorTests
         });
 
         AssertMoney(0m, result.TotalPrizeValue);
+        AssertMoney(0m, result.MaxSinglePrizeValue);
+        AssertMoney(0m, result.UncappedGrossEv);
         AssertMoney(0m, result.GrossEv);
         AssertMoney(0m, result.NetEv);
         AssertMoney(0m, result.Roi);
+        Assert.IsTrue(result.CanBreakEven);
         Assert.AreEqual(0L, result.MaxPositiveEntries);
         Assert.AreEqual(0L, result.NegativeEvStartsAt);
         Assert.AreEqual(TournamentEvStatus.Breakeven, result.Status);
@@ -169,6 +232,8 @@ public sealed class TournamentEvCalculatorTests
         });
 
         AssertMoney(60m, result.TotalPrizeValue);
+        AssertMoney(60m, result.MaxSinglePrizeValue);
+        AssertMoney(3m, result.UncappedGrossEv);
         AssertMoney(3m, result.GrossEv);
         AssertMoney(1m, result.NetEv);
         AssertMoney(0.50m, result.Roi);

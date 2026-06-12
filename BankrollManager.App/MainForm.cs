@@ -190,8 +190,11 @@ public sealed partial class MainForm : Form
     private NumericUpDown _tournamentEvManualPrizeValue = null!;
     private NumericUpDown _tournamentEvCurrentEntries = null!;
     private NumericUpDown _tournamentEvTicketDiscount = null!;
+    private Button _tournamentEvCheckButton = null!;
     private Label _tournamentEvStatusLabel = null!;
     private Label _tournamentEvPrizeValueLabel = null!;
+    private Label _tournamentEvMaxPrizeLabel = null!;
+    private Label _tournamentEvUncappedGrossLabel = null!;
     private Label _tournamentEvGrossLabel = null!;
     private Label _tournamentEvNetLabel = null!;
     private Label _tournamentEvRoiLabel = null!;

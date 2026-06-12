@@ -34,7 +34,7 @@ The verify script runs the full solution test suite with artifacts written under
 ## Publish
 
 ```powershell
-.\scripts\publish.ps1 -Version v0.4.4
+.\scripts\publish.ps1 -Version v0.4.5
 ```
 
 The publish script creates a self-contained `win-x64` package under `.verify\release` and Velopack installer/update assets under `.verify\release\velopack`. GitHub Actions also has a Release workflow: run it manually with a version label to produce artifacts, or push a `v*` tag to build the package and create a GitHub Release.

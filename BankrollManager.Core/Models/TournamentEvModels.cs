@@ -27,10 +27,13 @@ public sealed class TournamentEvRequest
 
 public sealed record TournamentEvResult(
     decimal TotalPrizeValue,
+    decimal MaxSinglePrizeValue,
+    decimal UncappedGrossEv,
     decimal GrossEv,
     decimal NetEv,
     decimal Roi,
     decimal ExactBreakEvenEntries,
+    bool CanBreakEven,
     long NegativeEvStartsAt,
     long MaxPositiveEntries,
     TournamentEvStatus Status);
