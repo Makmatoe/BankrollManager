@@ -153,6 +153,30 @@ public static class TournamentPresetService
         };
     }
 
+    public static TournamentEntry CreateQuickEntry(
+        TournamentPreset preset,
+        DateOnly date,
+        TimeOnly registrationTime,
+        bool finished,
+        decimal winAmount)
+    {
+        var entry = CreateEntry(preset, date.ToDateTime(registrationTime));
+        ClearFinishedOutcome(entry);
+
+        entry.Date = date;
+        entry.RegistrationTime = registrationTime;
+        entry.Status = finished ? TournamentStatus.Finished : TournamentStatus.Registered;
+        entry.FinishedDate = finished ? date : null;
+        entry.FinishedTime = finished ? registrationTime : null;
+
+        if (finished)
+        {
+            ApplyQuickWinAmount(entry, Math.Max(0m, winAmount));
+        }
+
+        return entry;
+    }
+
     public static string DisplayName(TournamentPreset preset, BankrollSettings settings)
     {
         var label = CleanName(preset.Name);
@@ -252,6 +276,73 @@ public static class TournamentPresetService
         target.PreGameFocus = source.PreGameFocus;
         target.Tags = source.Tags;
         target.Notes = source.Notes;
+    }
+
+    private static void ClearFinishedOutcome(TournamentEntry entry)
+    {
+        entry.BountyTicketValue = 0m;
+        entry.TicketValueWon = 0m;
+        entry.CashPrize = 0m;
+        entry.TournamentDollarsWon = 0m;
+        entry.CashDollarsWon = 0m;
+        entry.RegularCashPrize = 0m;
+        entry.MysteryBountyPrize = 0m;
+        entry.BountyPhaseReached = false;
+        entry.KnockoutsAfterBountyPhase = null;
+        entry.MysteryBountyNotes = string.Empty;
+        entry.BountyPrize = 0m;
+        entry.Knockouts = null;
+        entry.MultiplierHit = 0m;
+        entry.PrizeWon = 0m;
+        entry.FlipPhaseWon = false;
+        entry.GoPhaseReached = false;
+        entry.RushStageSurvived = false;
+        entry.BattleRoyaleFinalTableReached = false;
+        entry.TicketWon = false;
+        entry.Qualified = false;
+        entry.TicketConvertedRealized = false;
+        entry.Placement = null;
+        entry.ITM = false;
+        entry.FinalTable = false;
+    }
+
+    private static void ApplyQuickWinAmount(TournamentEntry entry, decimal winAmount)
+    {
+        if (winAmount <= 0m)
+        {
+            return;
+        }
+
+        if (IsSatelliteFormat(entry.Format))
+        {
+            entry.TicketValueWon = winAmount;
+            entry.TicketWon = true;
+            if (string.IsNullOrWhiteSpace(entry.TargetEventName) && entry.TargetEventBuyIn <= 0m)
+            {
+                entry.TargetEventBuyIn = winAmount;
+            }
+        }
+        else if (entry.Format is TournamentFormat.SpinAndGold
+            or TournamentFormat.FlipAndGo
+            or TournamentFormat.MysteryBattleRoyale)
+        {
+            entry.PrizeWon = winAmount;
+        }
+        else
+        {
+            entry.CashPrize = winAmount;
+        }
+
+        entry.ITM = true;
+    }
+
+    private static bool IsSatelliteFormat(TournamentFormat format)
+    {
+        return format is TournamentFormat.Satellite
+            or TournamentFormat.TurboSatellite
+            or TournamentFormat.TargetStackSatellite
+            or TournamentFormat.FlashSatellite
+            or TournamentFormat.WSOPExpress;
     }
 
     private static string AppendTag(string tags, string tag)

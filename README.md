@@ -34,10 +34,12 @@ The verify script runs the full solution test suite with artifacts written under
 ## Publish
 
 ```powershell
-.\scripts\publish.ps1 -Version v0.4.8
+.\scripts\publish.ps1 -Version v0.4.9
 ```
 
 The publish script creates a self-contained `win-x64` package under `.verify\release` and Velopack installer/update assets under `.verify\release\velopack`. GitHub Actions also has a Release workflow: run it manually with a version label to produce artifacts, or push a `v*` tag to build the package and create a GitHub Release.
+
+For the full Codex release flow, including version bumps, commits, tags, pushes, and workflow checks, see `RELEASE.md`.
 
 Install `BankrollManager-win-Setup.exe` from a GitHub Release to enable in-app updates. The app's Updates button checks GitHub Releases, downloads the newest Velopack package, applies it, and restarts the app. Portable/debug copies can still run, but they cannot update themselves.
 

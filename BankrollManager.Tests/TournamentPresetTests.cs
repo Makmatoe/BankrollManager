@@ -2,6 +2,7 @@
 using BankrollManager.Core.Models;
 using BankrollManager.Core.Persistence;
 using BankrollManager.Core.Services;
+using BankrollManager.Core.Validation;
 using static BankrollManager.Tests.TestAssertions;
 
 namespace BankrollManager.Tests;
@@ -117,5 +118,74 @@ public sealed class TournamentPresetTests
         Assert.AreEqual(first.Id, second.Id);
         AssertMoney(0.50m, presets[0].TicketValueWon);
     }
-}
 
+    [TestMethod]
+    public void TournamentPresetQuickEntryClearsPresetResultsForRegisteredEntries()
+    {
+        var source = new TournamentEntry
+        {
+            Platform = Platform.Unibet,
+            Category = TournamentCategory.MainGrind,
+            Format = TournamentFormat.MTT,
+            EventName = "Daily",
+            BuyIn = 1.10m,
+            ActualBullets = 1,
+            CashPrize = 12.50m,
+            TicketValueWon = 5m,
+            ITM = true,
+            Placement = 1
+        };
+        var preset = TournamentPresetService.CreateFromEntry(
+            source,
+            "Daily",
+            new DateTime(2026, 6, 9, 12, 0, 0, DateTimeKind.Utc));
+
+        var entry = TournamentPresetService.CreateQuickEntry(
+            preset,
+            new DateOnly(2026, 6, 10),
+            new TimeOnly(19, 30),
+            finished: false,
+            winAmount: 99m);
+
+        Assert.AreEqual(TournamentStatus.Registered, entry.Status);
+        Assert.AreEqual(new DateOnly(2026, 6, 10), entry.Date);
+        Assert.AreEqual(new TimeOnly(19, 30), entry.RegistrationTime);
+        Assert.IsNull(entry.FinishedDate);
+        Assert.IsNull(entry.FinishedTime);
+        AssertMoney(0m, entry.CashPrize);
+        AssertMoney(0m, entry.TicketValueWon);
+        Assert.IsFalse(entry.ITM);
+        Assert.IsNull(entry.Placement);
+        CollectionAssert.AreEqual(Array.Empty<string>(), EntryValidator.Validate(entry));
+    }
+
+    [TestMethod]
+    public void TournamentPresetQuickEntryAppliesWinAmountToFinishedSatellite()
+    {
+        var preset = new TournamentPreset
+        {
+            Name = "Target satellite",
+            Platform = Platform.Unibet,
+            Category = TournamentCategory.FlipSatellite,
+            Format = TournamentFormat.Satellite,
+            BuyIn = 1m,
+            ActualBullets = 1
+        };
+
+        var entry = TournamentPresetService.CreateQuickEntry(
+            preset,
+            new DateOnly(2026, 6, 10),
+            new TimeOnly(20, 15),
+            finished: true,
+            winAmount: 11m);
+
+        Assert.AreEqual(TournamentStatus.Finished, entry.Status);
+        Assert.AreEqual(new DateOnly(2026, 6, 10), entry.FinishedDate);
+        Assert.AreEqual(new TimeOnly(20, 15), entry.FinishedTime);
+        AssertMoney(11m, entry.TicketValueWon);
+        Assert.IsTrue(entry.TicketWon);
+        AssertMoney(11m, entry.TargetEventBuyIn);
+        Assert.IsTrue(entry.ITM);
+        CollectionAssert.AreEqual(Array.Empty<string>(), EntryValidator.Validate(entry));
+    }
+}

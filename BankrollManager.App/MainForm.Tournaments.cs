@@ -19,6 +19,7 @@ public sealed partial class MainForm
         AddGridButton(buttons, "Add", AddTournament);
         AddGridButton(buttons, "Edit", EditTournament);
         AddGridButton(buttons, "Use Preset", UseTournamentPreset);
+        AddGridButton(buttons, "Quick Add", QuickAddTournaments);
         AddGridButton(buttons, "Save Preset", SaveTournamentPreset);
         _tournamentDetailsButton = AddGridButton(buttons, "Details", ToggleTournamentDetails);
         AddGridButton(buttons, "Start", StartTournament);
@@ -296,6 +297,37 @@ public sealed partial class MainForm
         preset.LastUsedUtc = DateTime.UtcNow;
         preset.UpdatedUtc = DateTime.UtcNow;
         SaveData($"Tournament added from {TournamentPresetService.DisplayName(preset, _data.Settings)}.");
+    }
+
+    private void QuickAddTournaments()
+    {
+        if (_data.TournamentPresets.Count == 0)
+        {
+            MessageBox.Show(
+                "Save a tournament as a preset first.",
+                "No presets",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        if (PromptTournamentQuickAddSetup() is not { } setup)
+        {
+            return;
+        }
+
+        using var dialog = new TournamentQuickAddDialog(setup.Preset, _data.Settings, setup.Count);
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        _data.TournamentEntries.AddRange(dialog.Entries);
+        setup.Preset.LastUsedUtc = DateTime.UtcNow;
+        setup.Preset.UpdatedUtc = DateTime.UtcNow;
+
+        var addedText = dialog.Entries.Count == 1 ? "Tournament added" : $"{dialog.Entries.Count} tournaments added";
+        SaveData($"{addedText} from {TournamentPresetService.DisplayName(setup.Preset, _data.Settings)}.");
     }
 
     private void SaveTournamentPreset()

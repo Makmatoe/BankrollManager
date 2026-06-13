@@ -1,5 +1,6 @@
 using System.Reflection;
 using BankrollManager.App;
+using BankrollManager.App.Forms;
 using BankrollManager.Core.Models;
 using BankrollManager.Core.Persistence;
 using BankrollManager.Core.Services;
@@ -44,6 +45,48 @@ public sealed class MainFormSmokeTests
                 RunOnStaThread(() => SmokeMainForm(mode, size));
             }
         }
+    }
+
+    [TestMethod]
+    [TestCategory("UI")]
+    public void TournamentQuickAddDialogRendersTwentyRows()
+    {
+        RunOnStaThread(() =>
+        {
+            Theme.Configure(AppearanceMode.Dark);
+            using var dialog = new TournamentQuickAddDialog(
+                new TournamentPreset
+                {
+                    Name = "Daily",
+                    Platform = Platform.Unibet,
+                    Category = TournamentCategory.MainGrind,
+                    Format = TournamentFormat.MTT,
+                    BuyIn = 1.10m,
+                    ActualBullets = 1
+                },
+                new BankrollSettings(),
+                20)
+            {
+                StartPosition = FormStartPosition.Manual,
+                ShowInTaskbar = false,
+                Size = new Size(900, 760),
+                Location = new Point(60, 60)
+            };
+
+            dialog.Show();
+            Application.DoEvents();
+            dialog.PerformLayout();
+
+            AssertVisibleControlsHaveSaneBounds(dialog, "Quick add dialog");
+            AssertRenderedBitmapHasContent(dialog, "Quick add dialog");
+
+            var rowCount = EnumerateVisibleControls(dialog)
+                .OfType<Label>()
+                .Count(label => label.Text.StartsWith("Tournament ", StringComparison.Ordinal)
+                    && !label.Text.Contains(" of ", StringComparison.Ordinal));
+            Assert.AreEqual(20, rowCount);
+            dialog.Close();
+        });
     }
 
     private static void SmokeMainForm(AppearanceMode appearanceMode, Size size)

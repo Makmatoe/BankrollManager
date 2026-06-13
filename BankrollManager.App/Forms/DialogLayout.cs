@@ -15,7 +15,7 @@ internal static class DialogLayout
         }
     }
 
-    public static TableLayoutPanel Create(Form form, Action save)
+    public static TableLayoutPanel Create(Form form, Action save, string saveText = "Save")
     {
         var root = new TableLayoutPanel
         {
@@ -56,7 +56,7 @@ internal static class DialogLayout
         };
         root.Controls.Add(footer, 0, 1);
 
-        var ok = Theme.Button("Save");
+        var ok = Theme.Button(saveText);
         ok.Click += (_, _) => save();
         var cancel = Theme.Button("Cancel");
         cancel.Click += (_, _) =>

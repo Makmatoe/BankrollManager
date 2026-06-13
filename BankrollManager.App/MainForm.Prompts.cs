@@ -101,13 +101,7 @@ public sealed partial class MainForm
 
     private TournamentPreset? PromptTournamentPreset()
     {
-        var items = _data.TournamentPresets
-            .Where(preset => _data.Settings.IsPlatformEnabled(preset.Platform))
-            .Select(preset => new TournamentPresetListItem(
-                preset,
-                TournamentPresetService.DisplayName(preset, _data.Settings)))
-            .OrderBy(item => item.Text, NaturalSortComparer.Instance)
-            .ToArray();
+        var items = BuildTournamentPresetItems();
         if (items.Length == 0)
         {
             return null;
@@ -150,6 +144,70 @@ public sealed partial class MainForm
         DialogLayout.AddRow(layout, "Preset", presets);
 
         return form.ShowDialog(this) == DialogResult.OK ? result : null;
+    }
+
+    private TournamentQuickAddSetup? PromptTournamentQuickAddSetup()
+    {
+        var items = BuildTournamentPresetItems();
+        if (items.Length == 0)
+        {
+            return null;
+        }
+
+        TournamentQuickAddSetup? result = null;
+        using var form = new Form
+        {
+            Text = "Quick Add Tournaments",
+            Size = new Size(640, 260),
+            MinimumSize = new Size(560, 230),
+            StartPosition = FormStartPosition.CenterParent,
+            BackColor = Theme.Back,
+            ForeColor = Theme.Text,
+            Font = Theme.BodyFont
+        };
+
+        var presets = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            BackColor = Theme.PanelAlt,
+            ForeColor = Theme.Text,
+            FlatStyle = FlatStyle.Flat,
+            Font = Theme.BodyFont
+        };
+        presets.Items.AddRange(items);
+        presets.SelectedIndex = 0;
+
+        var count = Theme.IntBox(1, 200);
+        count.Minimum = 1m;
+        count.Maximum = 200m;
+        count.Value = 1m;
+
+        var layout = DialogLayout.Create(form, () =>
+        {
+            if (presets.SelectedItem is not TournamentPresetListItem selected)
+            {
+                return;
+            }
+
+            result = new TournamentQuickAddSetup(selected.Preset, (int)count.Value);
+            form.DialogResult = DialogResult.OK;
+            form.Close();
+        }, "Next");
+        DialogLayout.AddRow(layout, "Preset", presets);
+        DialogLayout.AddRow(layout, "How many", count);
+
+        return form.ShowDialog(this) == DialogResult.OK ? result : null;
+    }
+
+    private TournamentPresetListItem[] BuildTournamentPresetItems()
+    {
+        return _data.TournamentPresets
+            .Where(preset => _data.Settings.IsPlatformEnabled(preset.Platform))
+            .Select(preset => new TournamentPresetListItem(
+                preset,
+                TournamentPresetService.DisplayName(preset, _data.Settings)))
+            .OrderBy(item => item.Text, NaturalSortComparer.Instance)
+            .ToArray();
     }
 
     private TicketBuyInPromptResult? PromptTicketBuyIn(
@@ -254,10 +312,12 @@ public sealed partial class MainForm
             return tag;
         }
 
-            return tags.Contains(tag, StringComparison.OrdinalIgnoreCase) ? tags.Trim() : $"{tags.Trim()}, {tag}";
+        return tags.Contains(tag, StringComparison.OrdinalIgnoreCase) ? tags.Trim() : $"{tags.Trim()}, {tag}";
     }
 
     private sealed record TicketBuyInPromptResult(Platform Platform, decimal Amount);
+
+    private sealed record TournamentQuickAddSetup(TournamentPreset Preset, int Count);
 
     private sealed record TicketPlatformPromptItem(Platform Platform, decimal AvailableTicketValue, string Text)
     {

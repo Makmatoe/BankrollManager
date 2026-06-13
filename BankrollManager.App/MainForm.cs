@@ -185,13 +185,20 @@ public sealed partial class MainForm : Form
     private TextBox _tournamentEvName = null!;
     private NumericUpDown _tournamentEvBuyIn = null!;
     private ComboBox _tournamentEvPrizeType = null!;
+    private ComboBox _tournamentEvTournamentType = null!;
     private NumericUpDown _tournamentEvNumberOfTickets = null!;
     private NumericUpDown _tournamentEvTicketValue = null!;
     private NumericUpDown _tournamentEvManualPrizeValue = null!;
     private NumericUpDown _tournamentEvCurrentEntries = null!;
+    private NumericUpDown _tournamentEvTotalEntries = null!;
+    private NumericUpDown _tournamentEvPaidPlaces = null!;
     private NumericUpDown _tournamentEvTicketDiscount = null!;
+    private NumericUpDown _tournamentEvSampleSize = null!;
+    private NumericUpDown _tournamentEvBankrollSize = null!;
+    private TextBox _tournamentEvPayoutStructure = null!;
     private Button _tournamentEvCheckButton = null!;
     private Label _tournamentEvStatusLabel = null!;
+    private Label _tournamentEvVarianceRatingLabel = null!;
     private Label _tournamentEvPrizeValueLabel = null!;
     private Label _tournamentEvMaxPrizeLabel = null!;
     private Label _tournamentEvUncappedGrossLabel = null!;
@@ -201,6 +208,15 @@ public sealed partial class MainForm : Form
     private Label _tournamentEvBreakevenLabel = null!;
     private Label _tournamentEvPositiveUntilLabel = null!;
     private Label _tournamentEvNegativeFromLabel = null!;
+    private Label _tournamentEvVarianceEvLabel = null!;
+    private Label _tournamentEvVarianceRoiLabel = null!;
+    private Label _tournamentEvCashProbabilityLabel = null!;
+    private Label _tournamentEvStdDevLabel = null!;
+    private Label _tournamentEvStdDevBuyInsLabel = null!;
+    private Label _tournamentEvExpectedAfterSampleLabel = null!;
+    private Label _tournamentEvLikelyRangeLabel = null!;
+    private Label _tournamentEvChanceNotAheadLabel = null!;
+    private Label _tournamentEvBankrollSwingLabel = null!;
 
     public MainForm()
         : this(new JsonBankrollRepository())

@@ -53,23 +53,41 @@ public sealed partial class MainForm
         _tournamentEvBuyIn = Theme.MoneyBox(0.04m);
         _tournamentEvBuyIn.Minimum = 0.01m;
         _tournamentEvPrizeType = BuildTournamentEvPrizeTypeBox();
+        _tournamentEvTournamentType = BuildTournamentEvTournamentTypeBox();
         _tournamentEvNumberOfTickets = Theme.IntBox(5);
         _tournamentEvTicketValue = Theme.MoneyBox(0.40m);
         _tournamentEvTicketValue.Minimum = 0m;
         _tournamentEvManualPrizeValue = Theme.MoneyBox(2.00m);
         _tournamentEvManualPrizeValue.Minimum = 0m;
-        _tournamentEvCurrentEntries = Theme.IntBox(1);
+        _tournamentEvCurrentEntries = Theme.IntBox(50);
         _tournamentEvCurrentEntries.Minimum = 1m;
+        _tournamentEvTotalEntries = Theme.IntBox(50);
+        _tournamentEvTotalEntries.Minimum = 1m;
+        _tournamentEvPaidPlaces = Theme.IntBox(5);
         _tournamentEvTicketDiscount = PercentBox(100m);
+        _tournamentEvSampleSize = Theme.IntBox(100, 100_000);
+        _tournamentEvSampleSize.Minimum = 1m;
+        _tournamentEvBankrollSize = Theme.MoneyBox(0m);
+        _tournamentEvBankrollSize.Minimum = 0m;
+        _tournamentEvPayoutStructure = Theme.TextBox(multiline: true);
+        _tournamentEvPayoutStructure.Height = 84;
 
         AddTournamentEvInputRow(form, "Tournament", _tournamentEvName);
         AddTournamentEvInputRow(form, "Buy-in", _tournamentEvBuyIn);
+        AddTournamentEvInputRow(form, "Type", _tournamentEvTournamentType);
         AddTournamentEvInputRow(form, "Prize type", _tournamentEvPrizeType);
         AddTournamentEvInputRow(form, "Tickets paid", _tournamentEvNumberOfTickets);
         AddTournamentEvInputRow(form, "Ticket value", _tournamentEvTicketValue);
         AddTournamentEvInputRow(form, "Cash prize pool", _tournamentEvManualPrizeValue);
         AddTournamentEvInputRow(form, "Entries now", _tournamentEvCurrentEntries);
+        AddTournamentEvInputRow(form, "Total entries", _tournamentEvTotalEntries);
+        AddTournamentEvInputRow(form, "Paid places", _tournamentEvPaidPlaces);
+        AddTournamentEvHelpRow(form, "For re-entry tournaments, use total entries/buy-ins if available.");
         AddTournamentEvInputRow(form, "Ticket value %", _tournamentEvTicketDiscount);
+        AddTournamentEvInputRow(form, "Sample size", _tournamentEvSampleSize);
+        AddTournamentEvInputRow(form, "Bankroll", _tournamentEvBankrollSize);
+        AddTournamentEvTallInputRow(form, "Payouts", _tournamentEvPayoutStructure, 88);
+        AddTournamentEvHelpRow(form, "+EV does not mean guaranteed short-term profit. Higher field size and top-heavy payouts increase variance and can create long downswings even when the tournament is profitable.");
 
         var actions = new FlowLayoutPanel
         {
@@ -93,11 +111,17 @@ public sealed partial class MainForm
             _tournamentEvName,
             _tournamentEvBuyIn,
             _tournamentEvPrizeType,
+            _tournamentEvTournamentType,
             _tournamentEvNumberOfTickets,
             _tournamentEvTicketValue,
             _tournamentEvManualPrizeValue,
             _tournamentEvCurrentEntries,
-            _tournamentEvTicketDiscount
+            _tournamentEvTotalEntries,
+            _tournamentEvPaidPlaces,
+            _tournamentEvTicketDiscount,
+            _tournamentEvSampleSize,
+            _tournamentEvBankrollSize,
+            _tournamentEvPayoutStructure
         })
         {
             switch (control)
@@ -146,6 +170,38 @@ public sealed partial class MainForm
         _tournamentEvPositiveUntilLabel = AddTournamentEvResultRow(resultLayout, "Positive until");
         _tournamentEvNegativeFromLabel = AddTournamentEvResultRow(resultLayout, "Negative EV from");
 
+        var variance = Theme.Card();
+        variance.Dock = DockStyle.Top;
+        variance.Height = 366;
+        variance.Margin = new Padding(8, 0, 0, 0);
+        var varianceLayout = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 2,
+            BackColor = Theme.Panel
+        };
+        varianceLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
+        varianceLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        variance.Controls.Add(varianceLayout);
+        root.Controls.Add(variance, 2, 0);
+
+        _tournamentEvVarianceRatingLabel = BuildTournamentEvStatusLabel();
+        var varianceStatusRow = varianceLayout.RowCount++;
+        varianceLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 42));
+        varianceLayout.Controls.Add(_tournamentEvVarianceRatingLabel, 0, varianceStatusRow);
+        varianceLayout.SetColumnSpan(_tournamentEvVarianceRatingLabel, 2);
+
+        _tournamentEvVarianceEvLabel = AddTournamentEvResultRow(varianceLayout, "EV / tournament");
+        _tournamentEvVarianceRoiLabel = AddTournamentEvResultRow(varianceLayout, "ROI %");
+        _tournamentEvCashProbabilityLabel = AddTournamentEvResultRow(varianceLayout, "Win/cash probability");
+        _tournamentEvStdDevLabel = AddTournamentEvResultRow(varianceLayout, "Std dev / tournament");
+        _tournamentEvStdDevBuyInsLabel = AddTournamentEvResultRow(varianceLayout, "Std dev in buy-ins");
+        _tournamentEvExpectedAfterSampleLabel = AddTournamentEvResultRow(varianceLayout, "Expected after N");
+        _tournamentEvLikelyRangeLabel = AddTournamentEvResultRow(varianceLayout, "Likely range after N");
+        _tournamentEvChanceNotAheadLabel = AddTournamentEvResultRow(varianceLayout, "Chance still down");
+        _tournamentEvBankrollSwingLabel = AddTournamentEvResultRow(varianceLayout, "1 SD / bankroll");
+
         RefreshTournamentEv();
         return root;
     }
@@ -158,7 +214,7 @@ public sealed partial class MainForm
         }
 
         var request = BuildTournamentEvRequest();
-        UpdateTournamentEvInputState(request.PrizeType);
+        UpdateTournamentEvInputState(request.PrizeType, request.TournamentType);
 
         var result = TournamentEvCalculator.Evaluate(request);
         _tournamentEvStatusLabel.Text = TournamentEvStatusText(result.Status);
@@ -177,6 +233,27 @@ public sealed partial class MainForm
             : "No breakeven";
         _tournamentEvPositiveUntilLabel.Text = FormatPositiveEntries(result.MaxPositiveEntries);
         _tournamentEvNegativeFromLabel.Text = FormatEntries(result.NegativeEvStartsAt);
+
+        var variance = result.Variance;
+        _tournamentEvVarianceRatingLabel.Text = VarianceRatingText(variance.Rating);
+        _tournamentEvVarianceRatingLabel.ForeColor = VarianceRatingForeColor(variance.Rating);
+        _tournamentEvVarianceRatingLabel.BackColor = VarianceRatingBackColor(variance.Rating);
+        _tournamentEvVarianceEvLabel.Text = Money(variance.EvPerTournament);
+        _tournamentEvVarianceEvLabel.ForeColor = SignColor(variance.EvPerTournament);
+        _tournamentEvVarianceRoiLabel.Text = FormatPercent(variance.Roi);
+        _tournamentEvVarianceRoiLabel.ForeColor = SignColor(variance.Roi);
+        _tournamentEvCashProbabilityLabel.Text = FormatPercent(variance.WinOrCashProbability);
+        _tournamentEvStdDevLabel.Text = Money(variance.StandardDeviation);
+        _tournamentEvStdDevBuyInsLabel.Text = $"{variance.StandardDeviationInBuyIns:0.00} BI";
+        _tournamentEvExpectedAfterSampleLabel.Text = Money(variance.ExpectedProfitAfterSample);
+        _tournamentEvExpectedAfterSampleLabel.ForeColor = SignColor(variance.ExpectedProfitAfterSample);
+        _tournamentEvLikelyRangeLabel.Text =
+            $"{Money(variance.LikelyResultLowAfterSample)} to {Money(variance.LikelyResultHighAfterSample)}";
+        _tournamentEvChanceNotAheadLabel.Text =
+            $"{FormatPercent(variance.ChanceNotAheadAfterSample)} {(variance.ChanceNotAheadIsExact ? "exact" : "approx")}";
+        _tournamentEvBankrollSwingLabel.Text = request.BankrollSize > 0m
+            ? FormatPercent(variance.BankrollSwingPercentAfterSample)
+            : "-";
         _statusLabel.Text = "Tournament EV checked.";
     }
 
@@ -190,47 +267,21 @@ public sealed partial class MainForm
         var selectedPrizeType = _tournamentEvPrizeType.SelectedItem is TournamentEvPrizeTypeOption option
             ? option.PrizeType
             : TournamentEvPrizeType.Tickets;
-        UpdateTournamentEvInputState(selectedPrizeType);
-        MarkTournamentEvPending();
+        var selectedTournamentType = _tournamentEvTournamentType.SelectedItem is TournamentEvTournamentTypeOption typeOption
+            ? typeOption.TournamentType
+            : TournamentEvTournamentType.FlatTicketSatellite;
+        UpdateTournamentEvInputState(selectedPrizeType, selectedTournamentType);
+        RefreshTournamentEv();
     }
 
-    private void UpdateTournamentEvInputState(TournamentEvPrizeType prizeType)
+    private void UpdateTournamentEvInputState(TournamentEvPrizeType prizeType, TournamentEvTournamentType tournamentType)
     {
         var ticketsMode = prizeType == TournamentEvPrizeType.Tickets;
         _tournamentEvNumberOfTickets.Enabled = ticketsMode;
         _tournamentEvTicketValue.Enabled = ticketsMode;
         _tournamentEvTicketDiscount.Enabled = ticketsMode;
         _tournamentEvManualPrizeValue.Enabled = !ticketsMode;
-    }
-
-    private void MarkTournamentEvPending()
-    {
-        if (_tournamentEvStatusLabel is null)
-        {
-            return;
-        }
-
-        _tournamentEvStatusLabel.Text = "Check EV";
-        _tournamentEvStatusLabel.ForeColor = Theme.Muted;
-        _tournamentEvStatusLabel.BackColor = Theme.PanelAlt;
-        foreach (var label in TournamentEvResultLabels())
-        {
-            label.Text = "-";
-            label.ForeColor = Theme.Text;
-        }
-    }
-
-    private IEnumerable<Label> TournamentEvResultLabels()
-    {
-        yield return _tournamentEvPrizeValueLabel;
-        yield return _tournamentEvMaxPrizeLabel;
-        yield return _tournamentEvUncappedGrossLabel;
-        yield return _tournamentEvGrossLabel;
-        yield return _tournamentEvNetLabel;
-        yield return _tournamentEvRoiLabel;
-        yield return _tournamentEvBreakevenLabel;
-        yield return _tournamentEvPositiveUntilLabel;
-        yield return _tournamentEvNegativeFromLabel;
+        _tournamentEvPayoutStructure.Enabled = tournamentType != TournamentEvTournamentType.FlatTicketSatellite;
     }
 
     private TournamentEvRequest BuildTournamentEvRequest()
@@ -238,17 +289,26 @@ public sealed partial class MainForm
         var selectedPrizeType = _tournamentEvPrizeType.SelectedItem is TournamentEvPrizeTypeOption option
             ? option.PrizeType
             : TournamentEvPrizeType.Tickets;
+        var selectedTournamentType = _tournamentEvTournamentType.SelectedItem is TournamentEvTournamentTypeOption typeOption
+            ? typeOption.TournamentType
+            : TournamentEvTournamentType.FlatTicketSatellite;
 
         return new TournamentEvRequest
         {
             TournamentName = _tournamentEvName.Text.Trim(),
             BuyIn = _tournamentEvBuyIn.Value,
             PrizeType = selectedPrizeType,
+            TournamentType = selectedTournamentType,
             NumberOfTickets = (int)_tournamentEvNumberOfTickets.Value,
             TicketValue = _tournamentEvTicketValue.Value,
             ManualPrizeValue = _tournamentEvManualPrizeValue.Value,
             CurrentEntries = (int)_tournamentEvCurrentEntries.Value,
-            TicketValueDiscountPercent = _tournamentEvTicketDiscount.Value
+            TotalEntries = (int)_tournamentEvTotalEntries.Value,
+            PaidPlaces = (int)_tournamentEvPaidPlaces.Value,
+            TicketValueDiscountPercent = _tournamentEvTicketDiscount.Value,
+            SampleSize = (int)_tournamentEvSampleSize.Value,
+            BankrollSize = _tournamentEvBankrollSize.Value,
+            PayoutStructure = _tournamentEvPayoutStructure.Text
         };
     }
 
@@ -266,6 +326,27 @@ public sealed partial class MainForm
         };
         box.Items.Add(new TournamentEvPrizeTypeOption(TournamentEvPrizeType.Tickets, "Tickets"));
         box.Items.Add(new TournamentEvPrizeTypeOption(TournamentEvPrizeType.CashPrizePool, "Cash Prize Pool"));
+        box.SelectedIndex = 0;
+        return box;
+    }
+
+    private static ComboBox BuildTournamentEvTournamentTypeBox()
+    {
+        var box = new ComboBox
+        {
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            BackColor = Theme.PanelAlt,
+            ForeColor = Theme.Text,
+            FlatStyle = FlatStyle.Flat,
+            Font = Theme.BodyFont,
+            Width = 190,
+            Height = Theme.ControlHeight
+        };
+        box.Items.Add(new TournamentEvTournamentTypeOption(TournamentEvTournamentType.FlatTicketSatellite, "Flat Ticket/Satellite"));
+        box.Items.Add(new TournamentEvTournamentTypeOption(TournamentEvTournamentType.NormalMtt, "Normal MTT"));
+        box.Items.Add(new TournamentEvTournamentTypeOption(TournamentEvTournamentType.TopHeavyMtt, "Top-Heavy MTT"));
+        box.Items.Add(new TournamentEvTournamentTypeOption(TournamentEvTournamentType.WinnerTakeAll, "Winner-Take-All"));
+        box.Items.Add(new TournamentEvTournamentTypeOption(TournamentEvTournamentType.CustomPayouts, "Custom Payouts"));
         box.SelectedIndex = 0;
         return box;
     }
@@ -301,6 +382,42 @@ public sealed partial class MainForm
         control.Dock = DockStyle.Fill;
         layout.Controls.Add(labelControl, 0, row);
         layout.Controls.Add(control, 1, row);
+    }
+
+    private static void AddTournamentEvTallInputRow(TableLayoutPanel layout, string label, Control control, int height)
+    {
+        var row = layout.RowCount++;
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, height));
+
+        var labelControl = Theme.Label(label, Theme.BodyFont, Theme.Muted);
+        labelControl.AutoSize = false;
+        labelControl.AutoEllipsis = true;
+        labelControl.Dock = DockStyle.Fill;
+        labelControl.Margin = new Padding(0);
+        labelControl.Padding = new Padding(0, 4, 8, 0);
+        labelControl.TextAlign = ContentAlignment.TopLeft;
+        labelControl.UseMnemonic = false;
+
+        control.Margin = new Padding(2, 1, 2, 5);
+        control.Dock = DockStyle.Fill;
+        layout.Controls.Add(labelControl, 0, row);
+        layout.Controls.Add(control, 1, row);
+    }
+
+    private static void AddTournamentEvHelpRow(TableLayoutPanel layout, string text)
+    {
+        var row = layout.RowCount++;
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 54));
+
+        var label = Theme.Label(text, Theme.SmallFont, Theme.Warning);
+        label.AutoSize = false;
+        label.Dock = DockStyle.Fill;
+        label.Margin = new Padding(0, 0, 2, 6);
+        label.Padding = new Padding(0, 2, 0, 0);
+        label.TextAlign = ContentAlignment.MiddleLeft;
+        label.UseMnemonic = false;
+        layout.Controls.Add(label, 0, row);
+        layout.SetColumnSpan(label, 2);
     }
 
     private static Label BuildTournamentEvStatusLabel()
@@ -387,6 +504,47 @@ public sealed partial class MainForm
         };
     }
 
+    private static string VarianceRatingText(TournamentEvVarianceRating rating)
+    {
+        return rating switch
+        {
+            TournamentEvVarianceRating.Low => "Low Variance",
+            TournamentEvVarianceRating.Medium => "Medium Variance",
+            TournamentEvVarianceRating.High => "High Variance",
+            TournamentEvVarianceRating.Extreme => "Extreme Variance",
+            _ => string.Empty
+        };
+    }
+
+    private static Color VarianceRatingBackColor(TournamentEvVarianceRating rating)
+    {
+        return rating switch
+        {
+            TournamentEvVarianceRating.Low => Theme.PositiveSurface,
+            TournamentEvVarianceRating.Medium => Theme.AccentSurface,
+            TournamentEvVarianceRating.High => Theme.WarningSurface,
+            TournamentEvVarianceRating.Extreme => Theme.NegativeSurface,
+            _ => Theme.Panel
+        };
+    }
+
+    private static Color VarianceRatingForeColor(TournamentEvVarianceRating rating)
+    {
+        return rating switch
+        {
+            TournamentEvVarianceRating.Low => Theme.Positive,
+            TournamentEvVarianceRating.Medium => Theme.Accent,
+            TournamentEvVarianceRating.High => Theme.Warning,
+            TournamentEvVarianceRating.Extreme => Theme.Negative,
+            _ => Theme.Text
+        };
+    }
+
+    private static string FormatPercent(decimal value)
+    {
+        return value.ToString("P1", CultureInfo.CurrentCulture);
+    }
+
     private static string FormatEntryCount(decimal value)
     {
         var format = value == decimal.Truncate(value) ? "0" : "0.##";
@@ -418,6 +576,14 @@ public sealed partial class MainForm
     }
 
     private sealed record TournamentEvPrizeTypeOption(TournamentEvPrizeType PrizeType, string Text)
+    {
+        public override string ToString()
+        {
+            return Text;
+        }
+    }
+
+    private sealed record TournamentEvTournamentTypeOption(TournamentEvTournamentType TournamentType, string Text)
     {
         public override string ToString()
         {
