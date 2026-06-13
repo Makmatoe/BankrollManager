@@ -82,6 +82,99 @@ public sealed partial class MainForm
         return host;
     }
 
+    private static Control BuildPagedGrid(DataGridView grid, IGridLoadController loadController)
+    {
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            BackColor = Theme.Back,
+            Margin = new Padding(0)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.Controls.Add(grid, 0, 0);
+        root.Controls.Add(BuildGridLoadBar(loadController), 0, 1);
+        return root;
+    }
+
+    private static Control BuildPagedGridWithEmptyState(
+        DataGridView grid,
+        IGridLoadController loadController,
+        out Label emptyState,
+        string text)
+    {
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            RowCount = 2,
+            BackColor = Theme.Back,
+            Margin = new Padding(0)
+        };
+        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.Controls.Add(BuildGridWithEmptyState(grid, out emptyState, text), 0, 0);
+        root.Controls.Add(BuildGridLoadBar(loadController), 0, 1);
+        return root;
+    }
+
+    private static Control BuildGridLoadBar(IGridLoadController loadController)
+    {
+        var bar = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Theme.Back,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = true,
+            Padding = new Padding(0, 6, 0, 0),
+            Margin = new Padding(0)
+        };
+
+        var status = Theme.Label(string.Empty, Theme.SmallFont, Theme.Muted);
+        status.AutoSize = false;
+        status.Width = 180;
+        status.Height = Theme.ControlHeight;
+        status.TextAlign = ContentAlignment.MiddleLeft;
+        status.Margin = new Padding(0, 4, 8, 0);
+
+        var loadMore = Theme.Button("Load more");
+        loadMore.AutoSize = false;
+        loadMore.Width = 110;
+        loadMore.Click += (_, _) => loadController.ShowMore();
+
+        var showAll = Theme.Button("Show all");
+        showAll.AutoSize = false;
+        showAll.Width = 96;
+        showAll.Click += (_, _) => loadController.ShowAll();
+
+        void UpdateState()
+        {
+            status.Text = loadController.TotalCount == 0
+                ? "No rows"
+                : loadController.CanShowMore
+                    ? $"Showing {loadController.VisibleCount:N0} of {loadController.TotalCount:N0}"
+                    : $"Showing all {loadController.TotalCount:N0}";
+            loadMore.Enabled = loadController.CanShowMore;
+            showAll.Enabled = loadController.CanShowMore;
+        }
+
+        loadController.ViewChanged += (_, _) =>
+        {
+            if (!bar.IsDisposed)
+            {
+                UpdateState();
+            }
+        };
+        UpdateState();
+
+        bar.Controls.Add(status);
+        bar.Controls.Add(loadMore);
+        bar.Controls.Add(showAll);
+        return bar;
+    }
+
     private static Label BuildEmptyStateLabel(string text)
     {
         return new Label

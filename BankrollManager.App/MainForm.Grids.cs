@@ -14,7 +14,10 @@ namespace BankrollManager.App;
 public sealed partial class MainForm
 {
 
-    private DataGridView CreateGrid(BindingSource source, bool readOnly = true)
+    private const int GridFitSampleRows = 80;
+    private const int GridFitPadding = 24;
+
+    private DataGridView CreateGrid(BindingSource source, bool readOnly = true, IGridLoadController? loadController = null)
     {
         var grid = new DataGridView
         {
@@ -24,12 +27,16 @@ public sealed partial class MainForm
             DataSource = source,
             AllowUserToAddRows = false,
             AllowUserToDeleteRows = false,
-            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None
+            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None,
+            ShowCellToolTips = true,
+            Tag = loadController
         };
         Theme.ApplyGrid(grid);
         grid.CellFormatting += GridCellFormatting;
         grid.CellParsing += GridCellParsing;
         grid.ColumnHeaderMouseClick += GridColumnHeaderMouseClick;
+        grid.DataBindingComplete += (_, _) => FitGridColumns(grid);
+        grid.SizeChanged += (_, _) => FitGridColumns(grid);
         return grid;
     }
 
@@ -232,7 +239,7 @@ public sealed partial class MainForm
         }
     }
 
-    private static void GridColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
+    private void GridColumnHeaderMouseClick(object? sender, DataGridViewCellMouseEventArgs e)
     {
         if (sender is not DataGridView grid || e.ColumnIndex < 0)
         {
@@ -258,26 +265,187 @@ public sealed partial class MainForm
             ? ListSortDirection.Ascending
             : ListSortDirection.Descending;
 
+        if (grid.Tag is IGridLoadController loadController
+            && loadController.TryApplySort(column.DataPropertyName, direction))
+        {
+            ApplySortGlyph(grid, column, sortOrder);
+            FitGridColumns(grid);
+            return;
+        }
+
         grid.Sort(column, direction);
+        ApplySortGlyph(grid, column, sortOrder);
+        FitGridColumns(grid);
+    }
+
+    private static void ApplySortGlyph(DataGridView grid, DataGridViewColumn sortedColumn, SortOrder sortOrder)
+    {
         foreach (DataGridViewColumn gridColumn in grid.Columns)
         {
             gridColumn.HeaderCell.SortGlyphDirection = SortOrder.None;
         }
 
-        column.HeaderCell.SortGlyphDirection = sortOrder;
+        sortedColumn.HeaderCell.SortGlyphDirection = sortOrder;
+    }
+
+    private void FitGridColumns(DataGridView grid)
+    {
+        if (grid.IsDisposed || grid.Columns.Count == 0 || grid.ClientSize.Width <= 0)
+        {
+            return;
+        }
+
+        var columns = grid.Columns
+            .Cast<DataGridViewColumn>()
+            .Where(column => column.Visible)
+            .ToList();
+        if (columns.Count == 0)
+        {
+            return;
+        }
+
+        var rows = grid.Rows
+            .Cast<DataGridViewRow>()
+            .Where(row => !row.IsNewRow)
+            .Take(GridFitSampleRows)
+            .ToList();
+        var widths = new Dictionary<DataGridViewColumn, int>();
+
+        grid.SuspendLayout();
+        try
+        {
+            foreach (var column in columns)
+            {
+                var layout = GetColumnLayout(column);
+                var width = MeasureGridText(column.HeaderText, grid.ColumnHeadersDefaultCellStyle.Font ?? grid.Font);
+                foreach (var row in rows)
+                {
+                    var text = TrimGridMeasureText(Convert.ToString(row.Cells[column.Index].FormattedValue, CultureInfo.CurrentCulture));
+                    width = Math.Max(width, MeasureGridText(text, grid.Font));
+                }
+
+                widths[column] = Math.Clamp(width, layout.MinimumWidth, layout.MaximumWidth);
+            }
+
+            var availableWidth = grid.ClientSize.Width
+                - grid.RowHeadersWidth
+                - SystemInformation.VerticalScrollBarWidth
+                - 8;
+            if (availableWidth > 0)
+            {
+                FitWidthsToAvailableSpace(columns, widths, availableWidth);
+            }
+
+            foreach (var column in columns)
+            {
+                column.Width = Math.Max(column.MinimumWidth, widths[column]);
+            }
+        }
+        finally
+        {
+            grid.ResumeLayout();
+        }
+    }
+
+    private static void FitWidthsToAvailableSpace(
+        IReadOnlyList<DataGridViewColumn> columns,
+        Dictionary<DataGridViewColumn, int> widths,
+        int availableWidth)
+    {
+        var totalWidth = widths.Values.Sum();
+        if (totalWidth > availableWidth)
+        {
+            var overflow = totalWidth - availableWidth;
+            var shrinkColumns = columns
+                .OrderByDescending(column => GetColumnLayout(column).Flexible)
+                .ThenByDescending(column => widths[column])
+                .ToList();
+
+            foreach (var column in shrinkColumns)
+            {
+                var layout = GetColumnLayout(column);
+                var shrink = Math.Min(overflow, widths[column] - layout.MinimumWidth);
+                if (shrink <= 0)
+                {
+                    continue;
+                }
+
+                widths[column] -= shrink;
+                overflow -= shrink;
+                if (overflow <= 0)
+                {
+                    break;
+                }
+            }
+
+            return;
+        }
+
+        var remaining = availableWidth - totalWidth;
+        while (remaining > 0)
+        {
+            var flexibleColumns = columns
+                .Where(column => GetColumnLayout(column).Flexible && widths[column] < GetColumnLayout(column).MaximumWidth)
+                .ToList();
+            if (flexibleColumns.Count == 0)
+            {
+                break;
+            }
+
+            var share = Math.Max(1, remaining / flexibleColumns.Count);
+            foreach (var column in flexibleColumns)
+            {
+                var layout = GetColumnLayout(column);
+                var grow = Math.Min(share, layout.MaximumWidth - widths[column]);
+                widths[column] += grow;
+                remaining -= grow;
+                if (remaining <= 0)
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    private static int MeasureGridText(string? text, Font font)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return GridFitPadding;
+        }
+
+        return TextRenderer.MeasureText(text, font).Width + GridFitPadding;
+    }
+
+    private static string TrimGridMeasureText(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
+
+        return text.Length > 90 ? text[..90] : text;
+    }
+
+    private static GridColumnLayout GetColumnLayout(DataGridViewColumn column)
+    {
+        return column.Tag as GridColumnLayout
+            ?? new GridColumnLayout(column.MinimumWidth, column.MinimumWidth, Math.Max(column.Width, column.MinimumWidth), Flexible: false);
     }
 
     private static void AddTextColumn(DataGridView grid, string property, string header, int width, bool readOnly = true)
     {
+        var layout = BuildColumnLayout(property, width);
         var column = new DataGridViewTextBoxColumn
         {
             DataPropertyName = property,
             HeaderText = header,
-            MinimumWidth = width,
+            MinimumWidth = layout.MinimumWidth,
             Width = width,
             ReadOnly = readOnly,
             AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
-            SortMode = DataGridViewColumnSortMode.Programmatic
+            SortMode = DataGridViewColumnSortMode.Programmatic,
+            Tag = layout
         };
 
         if (IsRightAlignedColumn(property))
@@ -291,17 +459,67 @@ public sealed partial class MainForm
 
     private static void AddCheckColumn(DataGridView grid, string property, string header, int width)
     {
+        var layout = new GridColumnLayout(width, Math.Min(width, 48), Math.Max(width, 64), Flexible: false);
         grid.Columns.Add(new DataGridViewCheckBoxColumn
         {
             DataPropertyName = property,
             HeaderText = header,
-            MinimumWidth = width,
+            MinimumWidth = layout.MinimumWidth,
             Width = width,
             ReadOnly = true,
             AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
-            SortMode = DataGridViewColumnSortMode.Programmatic
+            SortMode = DataGridViewColumnSortMode.Programmatic,
+            Tag = layout
         });
     }
+
+    private static GridColumnLayout BuildColumnLayout(string property, int preferredWidth)
+    {
+        var flexible = IsFlexibleColumn(property);
+        var minimumWidth = property switch
+        {
+            "Notes" or "Description" or "MistakeLesson" or "PreGameFocus" => 120,
+            "EventName" or "Name" or "Summary" => 130,
+            "Action" => 96,
+            "Rule" or "RuleCheckResult" => 82,
+            "Date" or "FinishedDate" or "ClosedDate" or "LastUpdatedDate" or "Month" => 82,
+            "Time" or "RegistrationTime" or "FinishedTime" or "ClosedTime" or "SessionTime" => 62,
+            "Status" or "Type" or "Platform" or "Category" or "Format" => 78,
+            _ when IsRightAlignedColumn(property) => Math.Min(preferredWidth, 68),
+            _ => Math.Min(preferredWidth, 76)
+        };
+        var maximumWidth = property switch
+        {
+            "Notes" => 360,
+            "Description" or "MistakeLesson" or "PreGameFocus" => 320,
+            "EventName" or "Name" or "Summary" => 360,
+            "Action" => 240,
+            "Tags" => 220,
+            "Rule" or "RuleCheckResult" => 180,
+            _ when flexible => Math.Max(preferredWidth + 120, 220),
+            _ when IsRightAlignedColumn(property) => Math.Max(preferredWidth, 140),
+            _ => Math.Max(preferredWidth, 180)
+        };
+
+        return new GridColumnLayout(preferredWidth, minimumWidth, Math.Max(maximumWidth, minimumWidth), flexible);
+    }
+
+    private static bool IsFlexibleColumn(string property)
+    {
+        return property is "Notes"
+            or "Description"
+            or "MistakeLesson"
+            or "PreGameFocus"
+            or "Tags"
+            or "EventName"
+            or "Name"
+            or "Summary"
+            or "Action"
+            or "Rule"
+            or "RuleCheckResult";
+    }
+
+    private sealed record GridColumnLayout(int PreferredWidth, int MinimumWidth, int MaximumWidth, bool Flexible);
 
     private static bool IsRightAlignedColumn(string property)
     {

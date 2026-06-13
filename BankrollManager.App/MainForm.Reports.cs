@@ -23,7 +23,8 @@ public sealed partial class MainForm
             Padding = new Padding(8)
         };
 
-        _timelineGrid = CreateGrid(_timelineSource);
+        _timelineLoader = new GridLoadController<AuditTimelineEntry>(_timelineSource);
+        _timelineGrid = CreateGrid(_timelineSource, loadController: _timelineLoader);
         AddTextColumn(_timelineGrid, "Date", "Date", 100);
         AddTextColumn(_timelineGrid, "Time", "Time", 70);
         AddTextColumn(_timelineGrid, "Type", "Type", 105);
@@ -33,7 +34,7 @@ public sealed partial class MainForm
         AddTextColumn(_timelineGrid, "BankrollBefore", "Cash BR Before", 125);
         AddTextColumn(_timelineGrid, "BankrollAfter", "Cash BR After", 125);
         AddTextColumn(_timelineGrid, "Rule", "Rule", 110);
-        root.Controls.Add(_timelineGrid, 0, 0);
+        root.Controls.Add(BuildPagedGrid(_timelineGrid, _timelineLoader), 0, 0);
         return root;
     }
 
@@ -44,7 +45,8 @@ public sealed partial class MainForm
         AddGridButton(buttons, "Edit", EditLedger);
         AddGridButton(buttons, "Delete", DeleteLedger);
 
-        _ledgerGrid = CreateGrid(_ledgerSource);
+        _ledgerLoader = new GridLoadController<LedgerEntry>(_ledgerSource);
+        _ledgerGrid = CreateGrid(_ledgerSource, loadController: _ledgerLoader);
         _ledgerGrid.CellDoubleClick += (_, _) => EditLedger();
         AddTextColumn(_ledgerGrid, "Date", "Date", 92);
         AddTextColumn(_ledgerGrid, "Type", "Type", 110);
@@ -55,8 +57,9 @@ public sealed partial class MainForm
         AddTextColumn(_ledgerGrid, "BankrollBefore", "Cash BR Before", 125);
         AddTextColumn(_ledgerGrid, "BankrollAfter", "Cash BR After", 120);
         AddTextColumn(_ledgerGrid, "Notes", "Notes", 320);
-        root.Controls.Add(BuildGridWithEmptyState(
+        root.Controls.Add(BuildPagedGridWithEmptyState(
             _ledgerGrid,
+            _ledgerLoader,
             out _ledgerEmptyState,
             "No ledger entries yet. Add a deposit, withdrawal, bonus, rakeback, or correction here."), 0, 1);
         return root;

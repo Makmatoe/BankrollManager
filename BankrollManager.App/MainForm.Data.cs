@@ -61,11 +61,11 @@ public sealed partial class MainForm
         try
         {
             ReplaceSource(_overviewAttentionSource, viewData.AttentionItems);
-            ReplaceSource(
-                _tournamentSource,
+            _tournamentLoader.SetRows(
                 _data.TournamentEntries
                     .OrderByDescending(entry => entry.Date)
-                    .ThenByDescending(entry => entry.RegistrationTime ?? TimeOnly.MinValue));
+                    .ThenByDescending(entry => entry.RegistrationTime ?? TimeOnly.MinValue),
+                IsNavigationPageSelected("MTTs"));
             ReplaceSource(
                 _overviewOpenTournamentSource,
                 _data.TournamentEntries
@@ -79,13 +79,15 @@ public sealed partial class MainForm
                     .OrderByDescending(entry => entry.Date)
                     .ThenByDescending(entry => entry.Time ?? TimeOnly.MinValue)
                     .Take(12));
-            ReplaceSource(
-                _cashSource,
+            _cashLoader.SetRows(
                 _data.CashSessions
                     .OrderByDescending(entry => entry.Date)
-                    .ThenByDescending(entry => entry.SessionTime ?? TimeOnly.MinValue));
-            ReplaceSource(_ledgerSource, _data.LedgerEntries.OrderByDescending(entry => entry.Date));
-            ReplaceSource(_timelineSource, viewData.AuditTimeline);
+                    .ThenByDescending(entry => entry.SessionTime ?? TimeOnly.MinValue),
+                IsNavigationPageSelected("Cash"));
+            _ledgerLoader.SetRows(
+                _data.LedgerEntries.OrderByDescending(entry => entry.Date),
+                IsNavigationPageSelected("Ledger"));
+            _timelineLoader.SetRows(viewData.AuditTimeline, IsNavigationPageSelected("Timeline"));
             ReplaceSource(_dailySource, viewData.DailySummaries.OrderByDescending(summary => summary.Date));
             ReplaceSource(_monthlySource, viewData.MonthlySummaries.OrderByDescending(summary => summary.Month));
             ReplaceSource(_yearlySource, viewData.YearlySummaries.OrderByDescending(summary => summary.Year));
@@ -108,6 +110,44 @@ public sealed partial class MainForm
         UpdateTournamentInspector();
         UpdateCashInspector();
         RefreshSelectedDaySelection();
+    }
+
+    private bool IsNavigationPageSelected(string title)
+    {
+        return _navigationPages.Count > _selectedNavigationIndex
+            && string.Equals(_navigationPages[_selectedNavigationIndex].Title, title, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void LoadNavigationPageData(string title)
+    {
+        if (string.Equals(title, "MTTs", StringComparison.OrdinalIgnoreCase))
+        {
+            _tournamentLoader.Load();
+            UpdateTournamentInspector();
+            FitGridColumns(_tournamentGrid);
+            return;
+        }
+
+        if (string.Equals(title, "Cash", StringComparison.OrdinalIgnoreCase))
+        {
+            _cashLoader.Load();
+            UpdateCashInspector();
+            FitGridColumns(_cashGrid);
+            return;
+        }
+
+        if (string.Equals(title, "Ledger", StringComparison.OrdinalIgnoreCase))
+        {
+            _ledgerLoader.Load();
+            FitGridColumns(_ledgerGrid);
+            return;
+        }
+
+        if (string.Equals(title, "Timeline", StringComparison.OrdinalIgnoreCase))
+        {
+            _timelineLoader.Load();
+            FitGridColumns(_timelineGrid);
+        }
     }
 
     private IEnumerable<DataGridView> RefreshableDataGrids()

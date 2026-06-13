@@ -28,7 +28,8 @@ public sealed partial class MainForm
         AddGridButton(buttons, "Ticket Won", MarkTournamentTicketWon);
         AddGridButton(buttons, "Delete", DeleteTournament);
 
-        _tournamentGrid = CreateGrid(_tournamentSource);
+        _tournamentLoader = new GridLoadController<TournamentEntry>(_tournamentSource);
+        _tournamentGrid = CreateGrid(_tournamentSource, loadController: _tournamentLoader);
         _tournamentGrid.CellDoubleClick += (_, _) => EditTournament();
         _tournamentGrid.SelectionChanged += (_, _) => UpdateTournamentInspector();
         AddTextColumn(_tournamentGrid, "Date", "Date", 92);
@@ -84,8 +85,9 @@ public sealed partial class MainForm
         };
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
-        content.Controls.Add(BuildGridWithEmptyState(
+        content.Controls.Add(BuildPagedGridWithEmptyState(
             _tournamentGrid,
+            _tournamentLoader,
             out _tournamentEmptyState,
             "No tournaments yet. Add one manually or use Decide to evaluate the next registration."), 0, 0);
         content.Controls.Add(BuildTournamentInspector(), 0, 1);
@@ -163,6 +165,8 @@ public sealed partial class MainForm
         {
             _tournamentDetailsButton.Text = _tournamentDetailColumnsVisible ? "Compact" : "Details";
         }
+
+        FitGridColumns(_tournamentGrid);
     }
 
     private void UpdateTournamentInspector()

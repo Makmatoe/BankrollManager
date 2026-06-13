@@ -38,13 +38,15 @@ public sealed partial class MainForm
         }
 
         SelectNavigationPage("Timeline");
-        if (!SelectGridRow<AuditTimelineEntry>(
+        if (!SelectGridRow(
+            _timelineLoader,
             _timelineSource,
             _timelineGrid,
             entry => entry.Date == runningPoint.Date
                 && string.Equals(entry.Name, runningPoint.Label, StringComparison.OrdinalIgnoreCase)))
         {
-            SelectGridRow<AuditTimelineEntry>(
+            SelectGridRow(
+                _timelineLoader,
                 _timelineSource,
                 _timelineGrid,
                 entry => entry.Date == runningPoint.Date);
@@ -81,6 +83,17 @@ public sealed partial class MainForm
         }
 
         SelectNavigationPage(_contentHost, _navigationPages, _navigationButtons, index.Value);
+    }
+
+    private static bool SelectGridRow<T>(
+        GridLoadController<T> loadController,
+        BindingSource source,
+        DataGridView grid,
+        Predicate<T> predicate)
+        where T : class
+    {
+        return loadController.EnsureVisible(predicate)
+            && SelectGridRow(source, grid, predicate);
     }
 
     private static bool SelectGridRow<T>(

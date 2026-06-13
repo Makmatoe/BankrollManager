@@ -30,6 +30,10 @@ public sealed partial class MainForm : Form
     private readonly BindingSource _overviewOpenTournamentSource = new();
     private readonly BindingSource _overviewRecentActivitySource = new();
     private readonly Dictionary<string, KpiCard> _kpiValues = [];
+    private GridLoadController<TournamentEntry> _tournamentLoader = null!;
+    private GridLoadController<CashSession> _cashLoader = null!;
+    private GridLoadController<LedgerEntry> _ledgerLoader = null!;
+    private GridLoadController<AuditTimelineEntry> _timelineLoader = null!;
     private static readonly HashSet<string> CompactTournamentColumns = new(StringComparer.Ordinal)
     {
         "Date",
@@ -561,6 +565,8 @@ public sealed partial class MainForm : Form
             buttons[index].Font = Theme.BodyFont;
             buttons[index].Invalidate();
         }
+
+        LoadNavigationPageData(pages[selectedIndex].Title);
     }
 
 }

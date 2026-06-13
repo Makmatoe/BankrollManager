@@ -75,7 +75,7 @@ internal sealed class SortableBindingList<T> : BindingList<T>
         return direction == ListSortDirection.Ascending ? result : -result;
     }
 
-    private static int CompareItems(T left, T right, PropertyDescriptor property, ListSortDirection direction)
+    internal static int CompareItems(T left, T right, PropertyDescriptor property, ListSortDirection direction)
     {
         var result = CompareValues(property.GetValue(left), property.GetValue(right), direction);
         if (result != 0 || !DateTimeTieBreakers.TryGetValue(property.Name, out var timePropertyNames))

@@ -23,7 +23,8 @@ public sealed partial class MainForm
         _cashDetailsButton = AddGridButton(buttons, "Details", ToggleCashDetails);
         AddGridButton(buttons, "Delete", DeleteCash);
 
-        _cashGrid = CreateGrid(_cashSource);
+        _cashLoader = new GridLoadController<CashSession>(_cashSource);
+        _cashGrid = CreateGrid(_cashSource, loadController: _cashLoader);
         _cashGrid.CellDoubleClick += (_, _) => EditCash();
         _cashGrid.SelectionChanged += (_, _) => UpdateCashInspector();
         AddTextColumn(_cashGrid, "Date", "Date", 92);
@@ -65,8 +66,9 @@ public sealed partial class MainForm
         };
         content.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         content.RowStyles.Add(new RowStyle(SizeType.Absolute, 156));
-        content.Controls.Add(BuildGridWithEmptyState(
+        content.Controls.Add(BuildPagedGridWithEmptyState(
             _cashGrid,
+            _cashLoader,
             out _cashEmptyState,
             "No cash sessions yet. Start an active session or log a closed one when you are ready."), 0, 0);
         content.Controls.Add(BuildCashInspector(), 0, 1);
@@ -128,6 +130,8 @@ public sealed partial class MainForm
         {
             _cashDetailsButton.Text = _cashDetailColumnsVisible ? "Compact" : "Details";
         }
+
+        FitGridColumns(_cashGrid);
     }
 
     private void UpdateCashInspector()
