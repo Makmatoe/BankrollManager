@@ -278,10 +278,11 @@ internal static class Theme
         grid.Font = BodyFont;
         grid.RowHeadersWidth = 24;
         grid.RowTemplate.MinimumHeight = 32;
-        grid.AllowUserToResizeRows = true;
+        grid.RowTemplate.Height = 32;
+        grid.AllowUserToResizeRows = false;
         grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         grid.MultiSelect = false;
-        grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+        grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None;
     }
 
     private static void ApplyPalette(bool useDark)

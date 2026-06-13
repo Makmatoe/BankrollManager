@@ -387,13 +387,39 @@ public static class BankrollCalculator
     public static List<DailySummary> GetDailySummaries(BankrollData data)
     {
         data.EnsureDefaults();
-        var dates = data.TournamentEntries.Select(entry => entry.Date)
-            .Concat(data.TournamentEntries.Where(HasTournamentSettlement).Select(TournamentSettlementDate))
-            .Concat(data.CashSessions.Select(entry => entry.Date))
-            .Concat(data.LedgerEntries.Select(entry => entry.Date))
-            .Distinct()
-            .Order()
-            .ToList();
+        var dates = new HashSet<DateOnly>(data.LedgerEntries.Select(entry => entry.Date));
+        var tournamentProfitByDate = new Dictionary<DateOnly, decimal>();
+        var cashProfitByDate = new Dictionary<DateOnly, decimal>();
+        var ticketProfitByDate = new Dictionary<DateOnly, decimal>();
+        var sessionCountByDate = new Dictionary<DateOnly, int>();
+        var hoursByDate = new Dictionary<DateOnly, decimal>();
+
+        foreach (var entry in data.TournamentEntries)
+        {
+            dates.Add(entry.Date);
+            AddDecimal(tournamentProfitByDate, entry.Date, TournamentRegistrationAmount(entry));
+            AddDecimal(ticketProfitByDate, entry.Date, TournamentTicketRegistrationAmount(entry));
+            AddInt(sessionCountByDate, entry.Date, 1);
+            AddDecimal(hoursByDate, entry.Date, TournamentHours(entry));
+
+            if (!HasTournamentSettlement(entry))
+            {
+                continue;
+            }
+
+            var settlementDate = TournamentSettlementDate(entry);
+            dates.Add(settlementDate);
+            AddDecimal(tournamentProfitByDate, settlementDate, entry.ReturnAmount);
+            AddDecimal(ticketProfitByDate, settlementDate, TournamentTicketSettlementAmount(entry));
+        }
+
+        foreach (var entry in data.CashSessions)
+        {
+            dates.Add(entry.Date);
+            AddDecimal(cashProfitByDate, entry.Date, entry.NetProfit);
+            AddInt(sessionCountByDate, entry.Date, 1);
+            AddDecimal(hoursByDate, entry.Date, CashSessionHours(entry));
+        }
 
         var runningPoints = GetRunningBankroll(data);
         var bankrollByDate = runningPoints
@@ -407,7 +433,7 @@ public static class BankrollCalculator
         var currentMonth = DateOnly.MinValue;
         var runningMonthProfitLoss = 0m;
 
-        foreach (var date in dates)
+        foreach (var date in dates.Order())
         {
             var month = new DateOnly(date.Year, date.Month, 1);
             if (month != currentMonth)
@@ -416,11 +442,9 @@ public static class BankrollCalculator
                 runningMonthProfitLoss = 0m;
             }
 
-            var tournamentProfitLoss = TournamentProfitLossForDate(data, date);
-            var cashProfitLoss = data.CashSessions
-                .Where(entry => entry.Date == date)
-                .Sum(entry => entry.NetProfit);
-            var ticketProfitLoss = TicketProfitLossForDate(data, date);
+            var tournamentProfitLoss = tournamentProfitByDate.GetValueOrDefault(date);
+            var cashProfitLoss = cashProfitByDate.GetValueOrDefault(date);
+            var ticketProfitLoss = ticketProfitByDate.GetValueOrDefault(date);
             var totalProfitLoss = tournamentProfitLoss + cashProfitLoss;
             runningMonthProfitLoss += totalProfitLoss;
 
@@ -430,47 +454,146 @@ public static class BankrollCalculator
                 cashProfitLoss,
                 ticketProfitLoss,
                 totalProfitLoss,
-                data.TournamentEntries.Count(entry => entry.Date == date)
-                    + data.CashSessions.Count(entry => entry.Date == date),
-                HoursPlayedForDate(data, date),
+                sessionCountByDate.GetValueOrDefault(date),
+                hoursByDate.GetValueOrDefault(date),
                 runningMonthProfitLoss,
                 bankrollByDate.GetValueOrDefault(date, data.Settings.StartingBankroll),
                 bankrollValueByDate.GetValueOrDefault(date, data.Settings.StartingBankroll)));
         }
 
         return summaries;
+
+        static void AddDecimal(Dictionary<DateOnly, decimal> values, DateOnly date, decimal amount)
+        {
+            values[date] = values.GetValueOrDefault(date) + amount;
+        }
+
+        static void AddInt(Dictionary<DateOnly, int> values, DateOnly date, int amount)
+        {
+            values[date] = values.GetValueOrDefault(date) + amount;
+        }
     }
 
     public static List<MonthlySummary> GetMonthlySummaries(BankrollData data)
     {
-        data.EnsureDefaults();
-        var months = data.LedgerEntries.Select(entry => new DateOnly(entry.Date.Year, entry.Date.Month, 1))
-            .Concat(data.TournamentEntries.Select(entry => new DateOnly(entry.Date.Year, entry.Date.Month, 1)))
-            .Concat(data.TournamentEntries.Where(HasTournamentSettlement).Select(entry =>
-            {
-                var date = TournamentSettlementDate(entry);
-                return new DateOnly(date.Year, date.Month, 1);
-            }))
-            .Concat(data.CashSessions.Select(entry => new DateOnly(entry.Date.Year, entry.Date.Month, 1)))
-            .Distinct()
-            .Order()
-            .ToList();
+        return GetMonthlySummaries(data, GetDailySummaries(data));
+    }
 
-        return months.Select(month => BuildMonthlySummary(data, month)).ToList();
+    public static List<MonthlySummary> GetMonthlySummaries(BankrollData data, IReadOnlyList<DailySummary> dailySummaries)
+    {
+        data.EnsureDefaults();
+        var dailyByMonth = dailySummaries
+            .GroupBy(summary => MonthOf(summary.Date))
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var ledgerByMonth = data.LedgerEntries
+            .GroupBy(entry => MonthOf(entry.Date))
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var tournamentByMonth = data.TournamentEntries
+            .GroupBy(entry => MonthOf(entry.Date))
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var cashByMonth = data.CashSessions
+            .GroupBy(entry => MonthOf(entry.Date))
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var months = dailyByMonth.Keys
+            .Concat(ledgerByMonth.Keys)
+            .Concat(tournamentByMonth.Keys)
+            .Concat(cashByMonth.Keys)
+            .Distinct()
+            .Order();
+
+        return months.Select(month =>
+        {
+            var daily = dailyByMonth.GetValueOrDefault(month) ?? [];
+            var ledgerEntries = ledgerByMonth.GetValueOrDefault(month) ?? [];
+            var tournamentEntries = tournamentByMonth.GetValueOrDefault(month) ?? [];
+            var cashSessions = cashByMonth.GetValueOrDefault(month) ?? [];
+            var netResults = tournamentEntries
+                .Select(entry => entry.TotalValueProfitLoss)
+                .Concat(cashSessions.Select(entry => entry.NetProfit))
+                .ToList();
+            var dailyStopLossLimit = data.Settings.DailyStopLossAmount;
+            var tournamentProfitLoss = daily.Sum(summary => summary.TournamentProfitLoss);
+            var cashProfitLoss = daily.Sum(summary => summary.CashProfitLoss);
+            var ticketProfitLoss = daily.Sum(summary => summary.TicketProfitLoss);
+
+            return new MonthlySummary(
+                month,
+                ledgerEntries.Where(entry => entry.Type == LedgerType.Deposit).Sum(entry => Math.Abs(entry.Amount)),
+                ledgerEntries.Where(entry => entry.Type == LedgerType.Withdrawal).Sum(entry => Math.Abs(entry.Amount)),
+                tournamentProfitLoss,
+                cashProfitLoss,
+                ticketProfitLoss,
+                tournamentProfitLoss + cashProfitLoss,
+                tournamentEntries.Count,
+                cashSessions.Count,
+                daily.Sum(summary => summary.HoursPlayed),
+                tournamentEntries.Count == 0 ? 0m : tournamentEntries.Average(entry => entry.BuyIn),
+                netResults.Count == 0 ? 0m : netResults.Max(),
+                netResults.Count == 0 ? 0m : netResults.Min(),
+                dailyStopLossLimit <= 0m ? 0 : daily.Count(summary => summary.TotalProfitLoss <= -dailyStopLossLimit),
+                string.Empty);
+        }).ToList();
     }
 
     public static List<YearlySummary> GetYearlySummaries(BankrollData data)
     {
-        data.EnsureDefaults();
-        var years = data.LedgerEntries.Select(entry => entry.Date.Year)
-            .Concat(data.TournamentEntries.Select(entry => entry.Date.Year))
-            .Concat(data.TournamentEntries.Where(HasTournamentSettlement).Select(entry => TournamentSettlementDate(entry).Year))
-            .Concat(data.CashSessions.Select(entry => entry.Date.Year))
-            .Distinct()
-            .Order()
-            .ToList();
+        return GetYearlySummaries(data, GetDailySummaries(data));
+    }
 
-        return years.Select(year => BuildYearlySummary(data, year)).ToList();
+    public static List<YearlySummary> GetYearlySummaries(BankrollData data, IReadOnlyList<DailySummary> dailySummaries)
+    {
+        data.EnsureDefaults();
+        var dailyByYear = dailySummaries
+            .GroupBy(summary => summary.Date.Year)
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var ledgerByYear = data.LedgerEntries
+            .GroupBy(entry => entry.Date.Year)
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var tournamentByYear = data.TournamentEntries
+            .GroupBy(entry => entry.Date.Year)
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var cashByYear = data.CashSessions
+            .GroupBy(entry => entry.Date.Year)
+            .ToDictionary(group => group.Key, group => group.ToList());
+        var years = dailyByYear.Keys
+            .Concat(ledgerByYear.Keys)
+            .Concat(tournamentByYear.Keys)
+            .Concat(cashByYear.Keys)
+            .Distinct()
+            .Order();
+
+        return years.Select(year =>
+        {
+            var daily = dailyByYear.GetValueOrDefault(year) ?? [];
+            var ledgerEntries = ledgerByYear.GetValueOrDefault(year) ?? [];
+            var tournamentEntries = tournamentByYear.GetValueOrDefault(year) ?? [];
+            var cashSessions = cashByYear.GetValueOrDefault(year) ?? [];
+            var netResults = tournamentEntries
+                .Select(entry => entry.TotalValueProfitLoss)
+                .Concat(cashSessions.Select(entry => entry.NetProfit))
+                .ToList();
+            var dailyStopLossLimit = data.Settings.DailyStopLossAmount;
+            var tournamentProfitLoss = daily.Sum(summary => summary.TournamentProfitLoss);
+            var cashProfitLoss = daily.Sum(summary => summary.CashProfitLoss);
+            var ticketProfitLoss = daily.Sum(summary => summary.TicketProfitLoss);
+
+            return new YearlySummary(
+                year,
+                ledgerEntries.Where(entry => entry.Type == LedgerType.Deposit).Sum(entry => Math.Abs(entry.Amount)),
+                ledgerEntries.Where(entry => entry.Type == LedgerType.Withdrawal).Sum(entry => Math.Abs(entry.Amount)),
+                tournamentProfitLoss,
+                cashProfitLoss,
+                ticketProfitLoss,
+                tournamentProfitLoss + cashProfitLoss,
+                tournamentEntries.Count,
+                cashSessions.Count,
+                daily.Sum(summary => summary.HoursPlayed),
+                tournamentEntries.Count == 0 ? 0m : tournamentEntries.Average(entry => entry.BuyIn),
+                netResults.Count == 0 ? 0m : netResults.Max(),
+                netResults.Count == 0 ? 0m : netResults.Min(),
+                dailyStopLossLimit <= 0m ? 0 : daily.Count(summary => summary.TotalProfitLoss <= -dailyStopLossLimit),
+                string.Empty);
+        }).ToList();
     }
 
     public static List<PlatformSummary> GetPlatformSummaries(BankrollData data)
@@ -586,8 +709,12 @@ public static class BankrollCalculator
 
     public static DashboardSummary GetDashboardSummary(BankrollData data, DateOnly today)
     {
+        return GetDashboardSummary(data, today, GetDailySummaries(data));
+    }
+
+    public static DashboardSummary GetDashboardSummary(BankrollData data, DateOnly today, IReadOnlyList<DailySummary> dailySummaries)
+    {
         data.EnsureDefaults();
-        var dailySummaries = GetDailySummaries(data);
         var monthStart = data.Settings.ActiveMonthStart;
         var thisMonthProfitLoss = dailySummaries
             .Where(summary => summary.Date >= monthStart)
@@ -615,7 +742,7 @@ public static class BankrollCalculator
             thisMonthValueProfitLoss,
             bestDay,
             worstDay,
-            StopLossService.GetStatus(data, today),
+            StopLossService.GetStatus(data, today, dailySummaries),
             GetBankrollTier(data));
     }
 
@@ -623,6 +750,9 @@ public static class BankrollCalculator
     {
         data.EnsureDefaults();
         var runningBankroll = data.Settings.StartingBankroll;
+        var ledgerById = data.LedgerEntries.ToDictionary(entry => entry.Id);
+        var tournamentById = data.TournamentEntries.ToDictionary(entry => entry.Id);
+        var cashById = data.CashSessions.ToDictionary(entry => entry.Id);
 
         var events = new List<TrackingEvent>();
         events.AddRange(data.LedgerEntries.Select(entry => new TrackingEvent(entry.Date, null, 0, entry.Id, "Ledger")));
@@ -640,7 +770,7 @@ public static class BankrollCalculator
         {
             if (item.Kind == "Ledger")
             {
-                var ledgerEntry = data.LedgerEntries.First(entry => entry.Id == item.Id);
+                var ledgerEntry = ledgerById[item.Id];
                 ledgerEntry.BankrollBefore = runningBankroll;
                 runningBankroll += SignedLedgerAmount(ledgerEntry);
                 ledgerEntry.BankrollAfter = runningBankroll;
@@ -649,7 +779,7 @@ public static class BankrollCalculator
 
             if (item.Kind == "TournamentRegistration")
             {
-                var tournamentEntry = data.TournamentEntries.First(entry => entry.Id == item.Id);
+                var tournamentEntry = tournamentById[item.Id];
                 tournamentEntry.BankrollBefore = runningBankroll;
                 tournamentEntry.RiskPercentageOfBankrollAtRegistration = RiskPercentage(tournamentEntry.CashCost, runningBankroll);
                 tournamentEntry.RuleCheckResult = RuleEngine.EvaluateHistoricalRisk(
@@ -667,13 +797,13 @@ public static class BankrollCalculator
 
             if (item.Kind == "TournamentSettlement")
             {
-                var tournamentEntry = data.TournamentEntries.First(entry => entry.Id == item.Id);
+                var tournamentEntry = tournamentById[item.Id];
                 runningBankroll += tournamentEntry.ReturnAmount;
                 tournamentEntry.BankrollAfter = runningBankroll;
                 continue;
             }
 
-            var cashSession = data.CashSessions.First(entry => entry.Id == item.Id);
+            var cashSession = cashById[item.Id];
             cashSession.BankrollBefore = runningBankroll;
             cashSession.RiskPercentageOfBankrollAtSessionStart = RiskPercentage(cashSession.SessionCost, runningBankroll);
             cashSession.RuleCheckResult = RuleEngine.EvaluateHistoricalRisk(
@@ -688,73 +818,6 @@ public static class BankrollCalculator
             runningBankroll += cashSession.NetProfit;
             cashSession.BankrollAfter = runningBankroll;
         }
-    }
-
-    private static MonthlySummary BuildMonthlySummary(BankrollData data, DateOnly month)
-    {
-        var nextMonth = month.AddMonths(1);
-        var ledgerEntries = data.LedgerEntries.Where(entry => entry.Date >= month && entry.Date < nextMonth).ToList();
-        var tournamentEntries = data.TournamentEntries.Where(entry => entry.Date >= month && entry.Date < nextMonth).ToList();
-        var cashSessions = data.CashSessions.Where(entry => entry.Date >= month && entry.Date < nextMonth).ToList();
-        var netResults = tournamentEntries.Select(entry => entry.TotalValueProfitLoss).Concat(cashSessions.Select(entry => entry.NetProfit)).ToList();
-        var dailyStopLossLimit = data.Settings.DailyStopLossAmount;
-        var stopLossBreaches = dailyStopLossLimit <= 0m
-            ? 0
-            : GetDailySummaries(data)
-                .Count(summary => summary.Date >= month && summary.Date < nextMonth && summary.TotalProfitLoss <= -dailyStopLossLimit);
-
-        var tournamentProfitLoss = TournamentProfitLossForRange(data, month, nextMonth);
-        var cashProfitLoss = cashSessions.Sum(entry => entry.NetProfit);
-        var ticketProfitLoss = TicketProfitLossForRange(data, month, nextMonth);
-        return new MonthlySummary(
-            month,
-            ledgerEntries.Where(entry => entry.Type == LedgerType.Deposit).Sum(entry => Math.Abs(entry.Amount)),
-            ledgerEntries.Where(entry => entry.Type == LedgerType.Withdrawal).Sum(entry => Math.Abs(entry.Amount)),
-            tournamentProfitLoss,
-            cashProfitLoss,
-            ticketProfitLoss,
-            tournamentProfitLoss + cashProfitLoss,
-            tournamentEntries.Count,
-            cashSessions.Count,
-            HoursPlayedForRange(data, month, nextMonth),
-            tournamentEntries.Count == 0 ? 0m : tournamentEntries.Average(entry => entry.BuyIn),
-            netResults.Count == 0 ? 0m : netResults.Max(),
-            netResults.Count == 0 ? 0m : netResults.Min(),
-            stopLossBreaches,
-            string.Empty);
-    }
-
-    private static YearlySummary BuildYearlySummary(BankrollData data, int year)
-    {
-        var ledgerEntries = data.LedgerEntries.Where(entry => entry.Date.Year == year).ToList();
-        var tournamentEntries = data.TournamentEntries.Where(entry => entry.Date.Year == year).ToList();
-        var cashSessions = data.CashSessions.Where(entry => entry.Date.Year == year).ToList();
-        var netResults = tournamentEntries.Select(entry => entry.TotalValueProfitLoss).Concat(cashSessions.Select(entry => entry.NetProfit)).ToList();
-        var dailyStopLossLimit = data.Settings.DailyStopLossAmount;
-        var stopLossBreaches = dailyStopLossLimit <= 0m
-            ? 0
-            : GetDailySummaries(data)
-                .Count(summary => summary.Date.Year == year && summary.TotalProfitLoss <= -dailyStopLossLimit);
-
-        var tournamentProfitLoss = TournamentProfitLossForRange(data, new DateOnly(year, 1, 1), new DateOnly(year + 1, 1, 1));
-        var cashProfitLoss = cashSessions.Sum(entry => entry.NetProfit);
-        var ticketProfitLoss = TicketProfitLossForRange(data, new DateOnly(year, 1, 1), new DateOnly(year + 1, 1, 1));
-        return new YearlySummary(
-            year,
-            ledgerEntries.Where(entry => entry.Type == LedgerType.Deposit).Sum(entry => Math.Abs(entry.Amount)),
-            ledgerEntries.Where(entry => entry.Type == LedgerType.Withdrawal).Sum(entry => Math.Abs(entry.Amount)),
-            tournamentProfitLoss,
-            cashProfitLoss,
-            ticketProfitLoss,
-            tournamentProfitLoss + cashProfitLoss,
-            tournamentEntries.Count,
-            cashSessions.Count,
-            HoursPlayedForRange(data, new DateOnly(year, 1, 1), new DateOnly(year + 1, 1, 1)),
-            tournamentEntries.Count == 0 ? 0m : tournamentEntries.Average(entry => entry.BuyIn),
-            netResults.Count == 0 ? 0m : netResults.Max(),
-            netResults.Count == 0 ? 0m : netResults.Min(),
-            stopLossBreaches,
-            string.Empty);
     }
 
     private static string GetBankrollTier(BankrollData data)
@@ -875,78 +938,9 @@ public static class BankrollCalculator
         return string.IsNullOrWhiteSpace(name) ? entry.Format.ToString() : name;
     }
 
-    private static decimal TournamentProfitLossForDate(BankrollData data, DateOnly date)
+    private static DateOnly MonthOf(DateOnly date)
     {
-        var registrationAmount = data.TournamentEntries
-            .Where(entry => entry.Date == date)
-            .Sum(TournamentRegistrationAmount);
-        var settlementReturns = data.TournamentEntries
-            .Where(entry => HasTournamentSettlement(entry) && TournamentSettlementDate(entry) == date)
-            .Sum(entry => entry.ReturnAmount);
-        return registrationAmount + settlementReturns;
-    }
-
-    private static decimal TicketProfitLossForDate(BankrollData data, DateOnly date)
-    {
-        var registrationAmount = data.TournamentEntries
-            .Where(entry => entry.Date == date)
-            .Sum(TournamentTicketRegistrationAmount);
-        var settlementReturns = data.TournamentEntries
-            .Where(entry => HasTournamentSettlement(entry) && TournamentSettlementDate(entry) == date)
-            .Sum(TournamentTicketSettlementAmount);
-        return registrationAmount + settlementReturns;
-    }
-
-    private static decimal TournamentProfitLossForRange(BankrollData data, DateOnly startInclusive, DateOnly endExclusive)
-    {
-        var registrationAmount = data.TournamentEntries
-            .Where(entry => entry.Date >= startInclusive && entry.Date < endExclusive)
-            .Sum(TournamentRegistrationAmount);
-        var settlementReturns = data.TournamentEntries
-            .Where(entry => HasTournamentSettlement(entry))
-            .Where(entry =>
-            {
-                var settlementDate = TournamentSettlementDate(entry);
-                return settlementDate >= startInclusive && settlementDate < endExclusive;
-            })
-            .Sum(entry => entry.ReturnAmount);
-        return registrationAmount + settlementReturns;
-    }
-
-    private static decimal TicketProfitLossForRange(BankrollData data, DateOnly startInclusive, DateOnly endExclusive)
-    {
-        var registrationAmount = data.TournamentEntries
-            .Where(entry => entry.Date >= startInclusive && entry.Date < endExclusive)
-            .Sum(TournamentTicketRegistrationAmount);
-        var settlementReturns = data.TournamentEntries
-            .Where(HasTournamentSettlement)
-            .Where(entry =>
-            {
-                var settlementDate = TournamentSettlementDate(entry);
-                return settlementDate >= startInclusive && settlementDate < endExclusive;
-            })
-            .Sum(TournamentTicketSettlementAmount);
-        return registrationAmount + settlementReturns;
-    }
-
-    private static decimal HoursPlayedForDate(BankrollData data, DateOnly date)
-    {
-        return data.TournamentEntries
-            .Where(entry => entry.Date == date)
-            .Sum(TournamentHours)
-            + data.CashSessions
-                .Where(entry => entry.Date == date)
-                .Sum(CashSessionHours);
-    }
-
-    private static decimal HoursPlayedForRange(BankrollData data, DateOnly startInclusive, DateOnly endExclusive)
-    {
-        return data.TournamentEntries
-            .Where(entry => entry.Date >= startInclusive && entry.Date < endExclusive)
-            .Sum(TournamentHours)
-            + data.CashSessions
-                .Where(entry => entry.Date >= startInclusive && entry.Date < endExclusive)
-                .Sum(CashSessionHours);
+        return new DateOnly(date.Year, date.Month, 1);
     }
 
     private static decimal TournamentHours(TournamentEntry entry)

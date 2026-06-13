@@ -22,8 +22,9 @@ public sealed partial class MainForm
         }
 
         BankrollCalculator.RecalculateTrackingFields(_data);
-        RefreshDataSources();
-        RefreshDashboard();
+        var viewData = BuildViewData();
+        RefreshDataSources(viewData);
+        RefreshDashboard(viewData);
         RefreshEmptyStates();
         LoadSettingsControls();
         RefreshDecisionPlatformChoices(includeCurrent: true);
@@ -31,47 +32,134 @@ public sealed partial class MainForm
         RefreshTournamentEv();
     }
 
-    private void RefreshDataSources()
+    private BankrollViewData BuildViewData()
     {
+        var today = DateOnly.FromDateTime(DateTime.Today);
         var auditTimeline = BankrollCalculator.GetAuditTimeline(_data);
         var platformSummaries = BankrollCalculator.GetPlatformSummaries(_data).OrderBy(summary => summary.Name).ToList();
-        _overviewAttentionSource.DataSource = new SortableBindingList<AttentionItem>(
-            NeedsAttentionService.GetItems(_data, DateOnly.FromDateTime(DateTime.Today), platformSummaries));
-        _tournamentSource.DataSource = new SortableBindingList<TournamentEntry>(_data.TournamentEntries
-            .OrderByDescending(entry => entry.Date)
-            .ThenByDescending(entry => entry.RegistrationTime ?? TimeOnly.MinValue)
-            .ToList());
-        _overviewOpenTournamentSource.DataSource = new SortableBindingList<TournamentEntry>(_data.TournamentEntries
-            .Where(entry => entry.Status != TournamentStatus.Finished)
-            .OrderBy(entry => entry.Date)
-            .ThenBy(entry => entry.RegistrationTime ?? TimeOnly.MinValue)
-            .Take(12)
-            .ToList());
-        _overviewRecentActivitySource.DataSource = new SortableBindingList<AuditTimelineEntry>(auditTimeline
-            .OrderByDescending(entry => entry.Date)
-            .ThenByDescending(entry => entry.Time ?? TimeOnly.MinValue)
-            .Take(12)
-            .ToList());
-        _cashSource.DataSource = new SortableBindingList<CashSession>(_data.CashSessions
-            .OrderByDescending(entry => entry.Date)
-            .ThenByDescending(entry => entry.SessionTime ?? TimeOnly.MinValue)
-            .ToList());
-        _ledgerSource.DataSource = new SortableBindingList<LedgerEntry>(_data.LedgerEntries.OrderByDescending(entry => entry.Date).ToList());
-        _timelineSource.DataSource = new SortableBindingList<AuditTimelineEntry>(auditTimeline);
-        _dailySource.DataSource = new SortableBindingList<DailySummary>(BankrollCalculator.GetDailySummaries(_data).OrderByDescending(summary => summary.Date).ToList());
-        _monthlySource.DataSource = new SortableBindingList<MonthlySummary>(BankrollCalculator.GetMonthlySummaries(_data).OrderByDescending(summary => summary.Month).ToList());
-        _yearlySource.DataSource = new SortableBindingList<YearlySummary>(BankrollCalculator.GetYearlySummaries(_data).OrderByDescending(summary => summary.Year).ToList());
-        _platformSource.DataSource = new SortableBindingList<PlatformSummary>(platformSummaries);
-        _walletSource.DataSource = new SortableBindingList<PlatformSummary>(platformSummaries);
-        _formatSource.DataSource = new SortableBindingList<ComparisonSummary>(BankrollCalculator.GetFormatComparison(_data).OrderBy(summary => summary.Name).ToList());
-        _categorySource.DataSource = new SortableBindingList<ComparisonSummary>(BankrollCalculator.GetCategoryComparison(_data).OrderBy(summary => summary.Name).ToList());
-        _categoryRulesSource.DataSource = new SortableBindingList<CategoryRuleSettings>(_data.Settings.CategoryRules
-            .OrderBy(rule => rule.Category.ToString(), NaturalSortComparer.Instance)
-            .ToList());
+        var dailySummaries = BankrollCalculator.GetDailySummaries(_data);
+        return new BankrollViewData(
+            auditTimeline,
+            platformSummaries,
+            dailySummaries,
+            BankrollCalculator.GetMonthlySummaries(_data, dailySummaries),
+            BankrollCalculator.GetYearlySummaries(_data, dailySummaries),
+            BankrollCalculator.GetRunningBankroll(_data),
+            BankrollCalculator.GetFormatComparison(_data),
+            BankrollCalculator.GetCategoryComparison(_data),
+            NeedsAttentionService.GetItems(_data, today, platformSummaries));
+    }
+
+    private void RefreshDataSources(BankrollViewData viewData)
+    {
+        var grids = RefreshableDataGrids().ToArray();
+        foreach (var grid in grids)
+        {
+            grid.SuspendLayout();
+        }
+
+        try
+        {
+            ReplaceSource(_overviewAttentionSource, viewData.AttentionItems);
+            ReplaceSource(
+                _tournamentSource,
+                _data.TournamentEntries
+                    .OrderByDescending(entry => entry.Date)
+                    .ThenByDescending(entry => entry.RegistrationTime ?? TimeOnly.MinValue));
+            ReplaceSource(
+                _overviewOpenTournamentSource,
+                _data.TournamentEntries
+                    .Where(entry => entry.Status != TournamentStatus.Finished)
+                    .OrderBy(entry => entry.Date)
+                    .ThenBy(entry => entry.RegistrationTime ?? TimeOnly.MinValue)
+                    .Take(12));
+            ReplaceSource(
+                _overviewRecentActivitySource,
+                viewData.AuditTimeline
+                    .OrderByDescending(entry => entry.Date)
+                    .ThenByDescending(entry => entry.Time ?? TimeOnly.MinValue)
+                    .Take(12));
+            ReplaceSource(
+                _cashSource,
+                _data.CashSessions
+                    .OrderByDescending(entry => entry.Date)
+                    .ThenByDescending(entry => entry.SessionTime ?? TimeOnly.MinValue));
+            ReplaceSource(_ledgerSource, _data.LedgerEntries.OrderByDescending(entry => entry.Date));
+            ReplaceSource(_timelineSource, viewData.AuditTimeline);
+            ReplaceSource(_dailySource, viewData.DailySummaries.OrderByDescending(summary => summary.Date));
+            ReplaceSource(_monthlySource, viewData.MonthlySummaries.OrderByDescending(summary => summary.Month));
+            ReplaceSource(_yearlySource, viewData.YearlySummaries.OrderByDescending(summary => summary.Year));
+            ReplaceSource(_platformSource, viewData.PlatformSummaries);
+            ReplaceSource(_walletSource, viewData.PlatformSummaries);
+            ReplaceSource(_formatSource, viewData.FormatComparison.OrderBy(summary => summary.Name));
+            ReplaceSource(_categorySource, viewData.CategoryComparison.OrderBy(summary => summary.Name));
+            ReplaceSource(
+                _categoryRulesSource,
+                _data.Settings.CategoryRules.OrderBy(rule => rule.Category.ToString(), NaturalSortComparer.Instance));
+        }
+        finally
+        {
+            foreach (var grid in grids)
+            {
+                grid.ResumeLayout();
+            }
+        }
+
         UpdateTournamentInspector();
         UpdateCashInspector();
         RefreshSelectedDaySelection();
     }
+
+    private IEnumerable<DataGridView> RefreshableDataGrids()
+    {
+        DataGridView?[] grids =
+        [
+            _overviewAttentionGrid,
+            _overviewOpenGrid,
+            _overviewActivityGrid,
+            _tournamentGrid,
+            _cashGrid,
+            _ledgerGrid,
+            _timelineGrid,
+            _dailyGrid,
+            _selectedDayTimelineGrid,
+            _monthlyGrid,
+            _yearlyGrid,
+            _platformGrid,
+            _walletGrid,
+            _formatGrid,
+            _categoryGrid,
+            _categoryRulesGrid
+        ];
+
+        return grids.OfType<DataGridView>().Where(grid => !grid.IsDisposed);
+    }
+
+    private static void ReplaceSource<T>(BindingSource source, IEnumerable<T> items)
+    {
+        source.RaiseListChangedEvents = false;
+        try
+        {
+            source.DataSource = new SortableBindingList<T>(items);
+        }
+        finally
+        {
+            source.RaiseListChangedEvents = true;
+        }
+
+        source.ResetBindings(metadataChanged: false);
+    }
+
+    private sealed record BankrollViewData(
+        List<AuditTimelineEntry> AuditTimeline,
+        List<PlatformSummary> PlatformSummaries,
+        List<DailySummary> DailySummaries,
+        List<MonthlySummary> MonthlySummaries,
+        List<YearlySummary> YearlySummaries,
+        List<RunningBankrollPoint> RunningBankroll,
+        List<ComparisonSummary> FormatComparison,
+        List<ComparisonSummary> CategoryComparison,
+        IReadOnlyList<AttentionItem> AttentionItems);
 
     private void OpenSelectedAttentionItem()
     {

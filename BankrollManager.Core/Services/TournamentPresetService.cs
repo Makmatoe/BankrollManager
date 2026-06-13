@@ -281,6 +281,8 @@ public static class TournamentPresetService
     private static void ClearFinishedOutcome(TournamentEntry entry)
     {
         entry.BountyTicketValue = 0m;
+        entry.TicketBuyInValue = 0m;
+        entry.TicketBuyInPlatform = null;
         entry.TicketValueWon = 0m;
         entry.CashPrize = 0m;
         entry.TournamentDollarsWon = 0m;
@@ -301,6 +303,7 @@ public static class TournamentPresetService
         entry.TicketWon = false;
         entry.Qualified = false;
         entry.TicketConvertedRealized = false;
+        entry.TicketUsedValue = 0m;
         entry.Placement = null;
         entry.ITM = false;
         entry.FinalTable = false;

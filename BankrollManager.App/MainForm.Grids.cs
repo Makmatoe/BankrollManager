@@ -24,7 +24,7 @@ public sealed partial class MainForm
             DataSource = source,
             AllowUserToAddRows = false,
             AllowUserToDeleteRows = false,
-            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells
+            AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None
         };
         Theme.ApplyGrid(grid);
         grid.CellFormatting += GridCellFormatting;
@@ -274,8 +274,9 @@ public sealed partial class MainForm
             DataPropertyName = property,
             HeaderText = header,
             MinimumWidth = width,
+            Width = width,
             ReadOnly = readOnly,
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
             SortMode = DataGridViewColumnSortMode.Programmatic
         };
 
@@ -295,8 +296,9 @@ public sealed partial class MainForm
             DataPropertyName = property,
             HeaderText = header,
             MinimumWidth = width,
+            Width = width,
             ReadOnly = true,
-            AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells,
+            AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
             SortMode = DataGridViewColumnSortMode.Programmatic
         });
     }

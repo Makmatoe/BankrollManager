@@ -6,11 +6,15 @@ public static class StopLossService
 {
     public static StopLossStatus GetStatus(BankrollData data, DateOnly today)
     {
+        return GetStatus(data, today, BankrollCalculator.GetDailySummaries(data));
+    }
+
+    public static StopLossStatus GetStatus(BankrollData data, DateOnly today, IReadOnlyList<DailySummary> dailySummaries)
+    {
         data.EnsureDefaults();
         var settings = data.Settings;
         settings.NormalizePlayLocks(today);
         var monthStart = settings.ActiveMonthStart;
-        var dailySummaries = BankrollCalculator.GetDailySummaries(data);
         var todayProfitLoss = dailySummaries.FirstOrDefault(summary => summary.Date == today)?.TotalProfitLoss ?? 0m;
         var thisMonthProfitLoss = dailySummaries
             .Where(summary => summary.Date >= monthStart && summary.Date <= today)

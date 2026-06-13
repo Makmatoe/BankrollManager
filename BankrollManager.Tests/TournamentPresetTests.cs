@@ -188,4 +188,49 @@ public sealed class TournamentPresetTests
         Assert.IsTrue(entry.ITM);
         CollectionAssert.AreEqual(Array.Empty<string>(), EntryValidator.Validate(entry));
     }
+
+    [TestMethod]
+    public void TournamentPresetQuickEntryClearsPresetTicketBuyInSoRiskUsesCashCost()
+    {
+        var preset = new TournamentPreset
+        {
+            Name = "Ticketed Daily",
+            Platform = Platform.Unibet,
+            Category = TournamentCategory.MainGrind,
+            Format = TournamentFormat.MTT,
+            BuyIn = 2m,
+            ActualBullets = 1,
+            TicketBuyInValue = 2m,
+            TicketBuyInPlatform = Platform.Unibet
+        };
+
+        var entry = TournamentPresetService.CreateQuickEntry(
+            preset,
+            new DateOnly(2026, 6, 10),
+            new TimeOnly(20, 15),
+            finished: false,
+            winAmount: 0m);
+
+        AssertMoney(0m, entry.TicketBuyInValue);
+        Assert.IsNull(entry.TicketBuyInPlatform);
+        AssertMoney(2m, entry.CashCost);
+
+        entry.Status = TournamentStatus.Finished;
+        entry.FinishedDate = entry.Date;
+        entry.FinishedTime = new TimeOnly(22, 0);
+        entry.CashPrize = 5m;
+
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings { StartingBankroll = 40m },
+            TournamentEntries = [entry]
+        };
+
+        BankrollCalculator.RecalculateTrackingFields(data);
+        var timeline = BankrollCalculator.GetAuditTimeline(data);
+
+        AssertMoney(5m, entry.RiskPercentageOfBankrollAtRegistration);
+        AssertMoney(2m, timeline[0].CostRisk);
+        Assert.AreEqual("Tournament Buy-in", timeline[0].Type);
+    }
 }

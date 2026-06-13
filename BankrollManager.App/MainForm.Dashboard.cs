@@ -152,10 +152,10 @@ public sealed partial class MainForm
     }
 
 
-    private void RefreshDashboard()
+    private void RefreshDashboard(BankrollViewData viewData)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var summary = BankrollCalculator.GetDashboardSummary(_data, today);
+        var summary = BankrollCalculator.GetDashboardSummary(_data, today, viewData.DailySummaries);
         SetKpi("Overall value", Money(summary.CurrentBankrollValue), summary.CurrentBankrollValue);
         SetKpi("Cash bankroll", Money(summary.CurrentBankroll), summary.CurrentBankroll);
         SetKpi("On tables", Money(summary.ActiveTableCash), summary.ActiveTableCash);
@@ -190,9 +190,9 @@ public sealed partial class MainForm
             _stopLossBanner.BackColor = summary.StopLossStatus.BreakRequired ? Theme.DangerSurface : Theme.PositiveSurface;
         }
 
-        var daily = BankrollCalculator.GetDailySummaries(_data).OrderBy(summary => summary.Date).ToList();
-        var running = BankrollCalculator.GetRunningBankroll(_data).OrderBy(point => point.Date).ToList();
-        var monthly = BankrollCalculator.GetMonthlySummaries(_data).OrderBy(summary => summary.Month).ToList();
+        var daily = viewData.DailySummaries.OrderBy(summary => summary.Date).ToList();
+        var running = viewData.RunningBankroll.OrderBy(point => point.Date).ToList();
+        var monthly = viewData.MonthlySummaries.OrderBy(summary => summary.Month).ToList();
         var dailyPoints = daily.Select(summary => new MiniChartPoint(
             summary.Date.ToString("MM-dd"),
             summary.TotalValueProfitLoss,
