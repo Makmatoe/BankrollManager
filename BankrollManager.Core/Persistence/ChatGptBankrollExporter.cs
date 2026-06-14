@@ -14,6 +14,15 @@ public static class ChatGptBankrollExporter
         File.WriteAllText(destinationPath, BuildMarkdown(data, generatedAtLocal), Encoding.UTF8);
     }
 
+    public static void ExportMonthlyReviewToFile(
+        BankrollData data,
+        DateOnly month,
+        string destinationPath,
+        DateTime generatedAtLocal)
+    {
+        File.WriteAllText(destinationPath, BuildMonthlyReviewMarkdown(data, month, generatedAtLocal), Encoding.UTF8);
+    }
+
     public static string BuildMarkdown(BankrollData data, DateTime generatedAtLocal)
     {
         data.EnsureDefaults();
@@ -361,6 +370,97 @@ public static class ChatGptBankrollExporter
         return builder.ToString();
     }
 
+    public static string BuildMonthlyReviewMarkdown(BankrollData data, DateOnly month, DateTime generatedAtLocal)
+    {
+        data.EnsureDefaults();
+        BankrollCalculator.RecalculateTrackingFields(data);
+
+        var report = MonthlyReviewService.GetReport(data, month);
+        var builder = new StringBuilder();
+        builder.AppendLine("# Bankroll Manager Monthly Review");
+        builder.AppendLine();
+        builder.AppendLine($"Generated local time: {generatedAtLocal:yyyy-MM-dd HH:mm:ss}");
+        builder.AppendLine($"Review month: {report.Month:yyyy-MM}");
+        builder.AppendLine($"Currency symbol for all money columns: {data.Settings.CurrencySymbol}");
+        builder.AppendLine();
+        builder.AppendLine("## How To Read This");
+        builder.AppendLine();
+        builder.AppendLine("- cash_pl affects the cash bankroll; value_pl includes ticket balance changes.");
+        builder.AppendLine("- Tournament registration and finish events can land on different dates.");
+        builder.AppendLine("- Format, category, and platform totals use date-based event accounting for this month.");
+        builder.AppendLine("- Notes/leaks/highlights are copied from available entry text fields.");
+        builder.AppendLine();
+
+        AppendTable(
+            builder,
+            "## Summary Metrics",
+            ["metric", "value", "notes"],
+            report.Metrics.Select(metric => new[] { metric.Metric, metric.Value, metric.Notes }));
+
+        AppendTable(
+            builder,
+            "## Results By Format",
+            GroupHeaders(),
+            report.FormatResults.Select(GroupRow));
+
+        AppendTable(
+            builder,
+            "## Results By Category",
+            GroupHeaders(),
+            report.CategoryResults.Select(GroupRow));
+
+        AppendTable(
+            builder,
+            "## Results By Platform",
+            GroupHeaders(),
+            report.PlatformResults.Select(GroupRow));
+
+        AppendTable(
+            builder,
+            "## Flip Satellite Ticket Performance",
+            GroupHeaders(),
+            report.SpecialtyResults.Select(GroupRow));
+
+        AppendTable(
+            builder,
+            "## Biggest Wins",
+            EntryHeaders(),
+            report.BiggestWins.Select(EntryRow));
+
+        AppendTable(
+            builder,
+            "## Biggest Losses",
+            EntryHeaders(),
+            report.BiggestLosses.Select(EntryRow));
+
+        AppendTable(
+            builder,
+            "## Stop Loss Breaches",
+            EntryHeaders(),
+            report.StopLossBreaches.Select(EntryRow));
+
+        AppendTable(
+            builder,
+            "## Risk Breaches",
+            EntryHeaders(),
+            report.RiskBreaches.Select(EntryRow));
+
+        AppendTable(
+            builder,
+            "## Notes Leaks Highlights",
+            ["date", "kind", "name", "area", "text"],
+            report.Notes.Select(note => new[]
+            {
+                Date(note.Date),
+                note.Kind,
+                note.Name,
+                note.Area,
+                note.Text
+            }));
+
+        return builder.ToString();
+    }
+
     private static IEnumerable<string[]> OpenExposureRows(BankrollData data)
     {
         foreach (var entry in data.TournamentEntries.Where(entry => entry.Status != TournamentStatus.Finished)
@@ -396,6 +496,62 @@ public static class ChatGptBankrollExporter
                 entry.RuleCheckResult
             ];
         }
+    }
+
+    private static string[] GroupHeaders()
+    {
+        return
+        [
+            "name", "tournament_cash_pl", "cash_session_pl", "ticket_pl", "total_cash_pl",
+            "total_value_pl", "total_cost", "count", "hours", "cash_per_hour", "value_per_hour"
+        ];
+    }
+
+    private static string[] GroupRow(MonthlyReviewGroupResult result)
+    {
+        return
+        [
+            result.Name,
+            Money(result.TournamentProfitLoss),
+            Money(result.CashProfitLoss),
+            Money(result.TicketProfitLoss),
+            Money(result.TotalCashProfitLoss),
+            Money(result.TotalValueProfitLoss),
+            Money(result.TotalCost),
+            Int(result.Count),
+            Hours(result.HoursPlayed),
+            Money(result.CashPerHour),
+            Money(result.ValuePerHour)
+        ];
+    }
+
+    private static string[] EntryHeaders()
+    {
+        return
+        [
+            "date", "time", "kind", "name", "platform", "format", "category",
+            "cash_pl", "ticket_pl", "value_pl", "risk_percent", "rule", "notes"
+        ];
+    }
+
+    private static string[] EntryRow(MonthlyReviewEntry entry)
+    {
+        return
+        [
+            Date(entry.Date),
+            NullableTime(entry.Time),
+            entry.Kind,
+            entry.Name,
+            entry.Platform,
+            entry.Format,
+            entry.Category,
+            Money(entry.CashProfitLoss),
+            Money(entry.TicketProfitLoss),
+            Money(entry.ValueProfitLoss),
+            Percent(entry.RiskPercentage),
+            entry.Rule,
+            entry.Notes
+        ];
     }
 
     private static void AppendTable(StringBuilder builder, string title, string[] headers, IEnumerable<string[]> rows)

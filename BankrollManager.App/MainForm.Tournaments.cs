@@ -20,13 +20,16 @@ public sealed partial class MainForm
         AddGridButton(buttons, "Edit", EditTournament);
         AddGridButton(buttons, "Use Preset", UseTournamentPreset);
         AddGridButton(buttons, "Quick Add", QuickAddTournaments);
+        AddGridButton(buttons, "Presets", ManageTournamentPresets);
         AddGridButton(buttons, "Save Preset", SaveTournamentPreset);
         _tournamentDetailsButton = AddGridButton(buttons, "Details", ToggleTournamentDetails);
         AddGridButton(buttons, "Start", StartTournament);
         AddGridButton(buttons, "Finish", FinishTournament);
+        AddGridButton(buttons, "Bulk Finish", BulkFinishTournaments);
         AddGridButton(buttons, "Use Ticket", UseTicketForTournament);
         AddGridButton(buttons, "Ticket Won", MarkTournamentTicketWon);
         AddGridButton(buttons, "Delete", DeleteTournament);
+        _tournamentFilterControls = AddDetailTableFilters(buttons, DetailTableKind.Tournaments, RefreshTournamentRows);
 
         _tournamentLoader = new GridLoadController<TournamentEntry>(_tournamentSource);
         _tournamentGrid = CreateGrid(_tournamentSource, loadController: _tournamentLoader);
@@ -359,6 +362,28 @@ public sealed partial class MainForm
         SaveData($"Preset saved: {TournamentPresetService.DisplayName(preset, _data.Settings)}.");
     }
 
+    private void ManageTournamentPresets()
+    {
+        if (_data.TournamentPresets.Count == 0)
+        {
+            MessageBox.Show(
+                "Save a tournament as a preset first.",
+                "No presets",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        using var dialog = new TournamentPresetManagerDialog(_data.TournamentPresets, _data.Settings);
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        _data.TournamentPresets = dialog.Presets.ToList();
+        SaveData("Tournament presets updated.");
+    }
+
     private void StartTournament()
     {
         if (Selected<TournamentEntry>(_tournamentSource) is not { } selected)
@@ -398,6 +423,43 @@ public sealed partial class MainForm
 
         CopyTournament(dialog.Entry, _data.TournamentEntries.First(entry => entry.Id == selected.Id));
         SaveData("Tournament finished.");
+    }
+
+    private void BulkFinishTournaments()
+    {
+        var candidates = _data.TournamentEntries
+            .Where(TournamentPresetService.IsBulkFinishCandidate)
+            .OrderByDescending(entry => entry.Date)
+            .ThenByDescending(entry => entry.RegistrationTime ?? TimeOnly.MinValue)
+            .ToList();
+        if (candidates.Count == 0)
+        {
+            MessageBox.Show(
+                "No open flip, Flip & Go, or satellite-style tournaments are available to finish.",
+                "Nothing to bulk finish",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return;
+        }
+
+        using var dialog = new TournamentBulkFinishDialog(candidates, _data.Settings);
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        foreach (var (entryId, request) in dialog.FinishRequests)
+        {
+            if (_data.TournamentEntries.FirstOrDefault(entry => entry.Id == entryId) is { } target)
+            {
+                TournamentPresetService.ApplyFinish(target, request);
+            }
+        }
+
+        var finishedText = dialog.FinishRequests.Count == 1
+            ? "Tournament finished."
+            : $"{dialog.FinishRequests.Count} tournaments finished.";
+        SaveData(finishedText);
     }
 
     private void UseTicketForTournament()

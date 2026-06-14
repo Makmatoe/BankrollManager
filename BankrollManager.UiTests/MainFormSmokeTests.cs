@@ -16,12 +16,14 @@ public sealed class MainFormSmokeTests
     [
         "Overview",
         "Wallets",
+        "Audit",
         "Timeline",
         "MTTs",
         "Cash",
         "Ledger",
         "Day",
         "Month",
+        "Monthly Review",
         "Year",
         "Decide",
         "EV Check",
@@ -85,6 +87,84 @@ public sealed class MainFormSmokeTests
                 .Count(label => label.Text.StartsWith("Tournament ", StringComparison.Ordinal)
                     && !label.Text.Contains(" of ", StringComparison.Ordinal));
             Assert.AreEqual(20, rowCount);
+            dialog.Close();
+        });
+    }
+
+    [TestMethod]
+    [TestCategory("UI")]
+    public void TournamentPresetManagerDialogRenders()
+    {
+        RunOnStaThread(() =>
+        {
+            Theme.Configure(AppearanceMode.Dark);
+            using var dialog = new TournamentPresetManagerDialog(
+                [
+                    new TournamentPreset
+                    {
+                        Name = "Daily",
+                        Platform = Platform.Unibet,
+                        Category = TournamentCategory.MainGrind,
+                        Format = TournamentFormat.MTT,
+                        BuyIn = 1.10m,
+                        ActualBullets = 1,
+                        IsFavorite = true
+                    }
+                ],
+                new BankrollSettings())
+            {
+                StartPosition = FormStartPosition.Manual,
+                ShowInTaskbar = false,
+                Size = new Size(820, 560),
+                Location = new Point(60, 60)
+            };
+
+            dialog.Show();
+            Application.DoEvents();
+            dialog.PerformLayout();
+
+            AssertVisibleControlsHaveSaneBounds(dialog, "Preset manager dialog");
+            AssertRenderedBitmapHasContent(dialog, "Preset manager dialog");
+            dialog.Close();
+        });
+    }
+
+    [TestMethod]
+    [TestCategory("UI")]
+    public void TournamentBulkFinishDialogRenders()
+    {
+        RunOnStaThread(() =>
+        {
+            Theme.Configure(AppearanceMode.Dark);
+            using var dialog = new TournamentBulkFinishDialog(
+                [
+                    new TournamentEntry
+                    {
+                        Date = new DateOnly(2026, 6, 10),
+                        RegistrationTime = new TimeOnly(20, 0),
+                        Status = TournamentStatus.Registered,
+                        EventName = "Target stack",
+                        Platform = Platform.GGPoker,
+                        Category = TournamentCategory.FlipSatellite,
+                        Format = TournamentFormat.TargetStackSatellite,
+                        BuyIn = 1m,
+                        ActualBullets = 1
+                    }
+                ],
+                new BankrollSettings())
+            {
+                StartPosition = FormStartPosition.Manual,
+                ShowInTaskbar = false,
+                Size = new Size(720, 560),
+                Location = new Point(60, 60)
+            };
+
+            dialog.Show();
+            Application.DoEvents();
+            dialog.PerformLayout();
+
+            AssertVisibleControlsHaveSaneBounds(dialog, "Bulk finish dialog");
+            AssertRenderedBitmapHasContent(dialog, "Bulk finish dialog");
             dialog.Close();
         });
     }

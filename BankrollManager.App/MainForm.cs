@@ -29,11 +29,29 @@ public sealed partial class MainForm : Form
     private readonly BindingSource _overviewAttentionSource = new();
     private readonly BindingSource _overviewOpenTournamentSource = new();
     private readonly BindingSource _overviewRecentActivitySource = new();
+    private readonly BindingSource _auditBreakdownSource = new();
+    private readonly BindingSource _auditPlatformSource = new();
+    private readonly BindingSource _auditIssueSource = new();
+    private readonly BindingSource _monthlyReviewMetricSource = new();
+    private readonly BindingSource _monthlyReviewFormatSource = new();
+    private readonly BindingSource _monthlyReviewCategorySource = new();
+    private readonly BindingSource _monthlyReviewPlatformSource = new();
+    private readonly BindingSource _monthlyReviewSpecialtySource = new();
+    private readonly BindingSource _monthlyReviewWinSource = new();
+    private readonly BindingSource _monthlyReviewLossSource = new();
+    private readonly BindingSource _monthlyReviewStopLossSource = new();
+    private readonly BindingSource _monthlyReviewRiskSource = new();
+    private readonly BindingSource _monthlyReviewNoteSource = new();
     private readonly Dictionary<string, KpiCard> _kpiValues = [];
     private GridLoadController<TournamentEntry> _tournamentLoader = null!;
     private GridLoadController<CashSession> _cashLoader = null!;
     private GridLoadController<LedgerEntry> _ledgerLoader = null!;
     private GridLoadController<AuditTimelineEntry> _timelineLoader = null!;
+    private DetailTableFilterControls _tournamentFilterControls = null!;
+    private DetailTableFilterControls _cashFilterControls = null!;
+    private DetailTableFilterControls _ledgerFilterControls = null!;
+    private DetailTableFilterControls _timelineFilterControls = null!;
+    private BankrollViewData? _currentViewData;
     private static readonly HashSet<string> CompactTournamentColumns = new(StringComparer.Ordinal)
     {
         "Date",
@@ -80,6 +98,22 @@ public sealed partial class MainForm : Form
     private DataGridView _overviewAttentionGrid = null!;
     private DataGridView _overviewOpenGrid = null!;
     private DataGridView _overviewActivityGrid = null!;
+    private DataGridView _auditBreakdownGrid = null!;
+    private DataGridView _auditPlatformGrid = null!;
+    private DataGridView _auditIssueGrid = null!;
+    private Label _auditStatusLabel = null!;
+    private DateTimePicker _monthlyReviewMonth = null!;
+    private Label _monthlyReviewStatusLabel = null!;
+    private DataGridView _monthlyReviewMetricGrid = null!;
+    private DataGridView _monthlyReviewFormatGrid = null!;
+    private DataGridView _monthlyReviewCategoryGrid = null!;
+    private DataGridView _monthlyReviewPlatformGrid = null!;
+    private DataGridView _monthlyReviewSpecialtyGrid = null!;
+    private DataGridView _monthlyReviewWinGrid = null!;
+    private DataGridView _monthlyReviewLossGrid = null!;
+    private DataGridView _monthlyReviewStopLossGrid = null!;
+    private DataGridView _monthlyReviewRiskGrid = null!;
+    private DataGridView _monthlyReviewNoteGrid = null!;
     private DataGridView _tournamentGrid = null!;
     private Button _tournamentDetailsButton = null!;
     private Label _tournamentInspectorTitle = null!;
@@ -331,12 +365,14 @@ public sealed partial class MainForm : Form
         {
             ("Overview", BuildDashboardTab()),
             ("Wallets", BuildWalletsTab()),
+            ("Audit", BuildDataAuditTab()),
             ("Timeline", BuildTimelineTab()),
             ("MTTs", BuildTournamentTab()),
             ("Cash", BuildCashTab()),
             ("Ledger", BuildLedgerTab()),
             ("Day", BuildDailyTab()),
             ("Month", BuildMonthlyTab()),
+            ("Monthly Review", BuildMonthlyReviewTab()),
             ("Year", BuildYearlyTab()),
             ("Decide", BuildDecisionTab()),
             ("EV Check", BuildTournamentEvTab()),
@@ -435,6 +471,7 @@ public sealed partial class MainForm : Form
         strip.Items.Add(BuildCommandButton("Updates", CheckForUpdates));
         strip.Items.Add(BuildCommandButton("About", ShowAbout));
         strip.Items.Add(BuildCommandButton("Backup", BackupData));
+        strip.Items.Add(BuildCommandButton("Restore", RestoreBackupData));
         strip.Items.Add(BuildCommandButton("Tutorial", () => StartTutorial()));
         strip.Items.Add(BuildCommandButton("ChatGPT", ExportChatGpt));
         strip.Items.Add(new ToolStripSeparator());

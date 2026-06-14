@@ -264,5 +264,18 @@ public sealed class TicketAccountingTests
         AssertMoney(0m, entry.TicketBalanceImpact);
         AssertMoney(9m, entry.TotalValueProfitLoss);
     }
-}
 
+    [TestMethod]
+    public void ReleaseScaleTicketBalanceMatchesPlatformBreakdown()
+    {
+        var data = ReleaseScaleDataFactory.Create();
+        var realizedSatellite = data.TournamentEntries.First(entry => entry.TicketConvertedRealized);
+
+        var platformTicketBalance = Enum.GetValues<Platform>()
+            .Sum(platform => BankrollCalculator.TicketBalance(data, platform));
+
+        AssertMoney(decimal.Round(BankrollCalculator.TicketBalance(data), 2), platformTicketBalance);
+        AssertMoney(0m, realizedSatellite.TicketReturnAmount);
+        AssertMoney(realizedSatellite.EffectiveTicketValueWon - realizedSatellite.CashCost, realizedSatellite.CashProfitLoss);
+    }
+}

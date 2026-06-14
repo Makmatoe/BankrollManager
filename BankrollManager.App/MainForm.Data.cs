@@ -23,6 +23,7 @@ public sealed partial class MainForm
 
         BankrollCalculator.RecalculateTrackingFields(_data);
         var viewData = BuildViewData();
+        _currentViewData = viewData;
         RefreshDataSources(viewData);
         RefreshDashboard(viewData);
         RefreshEmptyStates();
@@ -61,11 +62,7 @@ public sealed partial class MainForm
         try
         {
             ReplaceSource(_overviewAttentionSource, viewData.AttentionItems);
-            _tournamentLoader.SetRows(
-                _data.TournamentEntries
-                    .OrderByDescending(entry => entry.Date)
-                    .ThenByDescending(entry => entry.RegistrationTime ?? TimeOnly.MinValue),
-                IsNavigationPageSelected("MTTs"));
+            _tournamentLoader.SetRows(FilteredTournamentRows(), IsNavigationPageSelected("MTTs"));
             ReplaceSource(
                 _overviewOpenTournamentSource,
                 _data.TournamentEntries
@@ -79,15 +76,9 @@ public sealed partial class MainForm
                     .OrderByDescending(entry => entry.Date)
                     .ThenByDescending(entry => entry.Time ?? TimeOnly.MinValue)
                     .Take(12));
-            _cashLoader.SetRows(
-                _data.CashSessions
-                    .OrderByDescending(entry => entry.Date)
-                    .ThenByDescending(entry => entry.SessionTime ?? TimeOnly.MinValue),
-                IsNavigationPageSelected("Cash"));
-            _ledgerLoader.SetRows(
-                _data.LedgerEntries.OrderByDescending(entry => entry.Date),
-                IsNavigationPageSelected("Ledger"));
-            _timelineLoader.SetRows(viewData.AuditTimeline, IsNavigationPageSelected("Timeline"));
+            _cashLoader.SetRows(FilteredCashRows(), IsNavigationPageSelected("Cash"));
+            _ledgerLoader.SetRows(FilteredLedgerRows(), IsNavigationPageSelected("Ledger"));
+            _timelineLoader.SetRows(FilteredTimelineRows(), IsNavigationPageSelected("Timeline"));
             ReplaceSource(_dailySource, viewData.DailySummaries.OrderByDescending(summary => summary.Date));
             ReplaceSource(_monthlySource, viewData.MonthlySummaries.OrderByDescending(summary => summary.Month));
             ReplaceSource(_yearlySource, viewData.YearlySummaries.OrderByDescending(summary => summary.Year));
@@ -95,6 +86,8 @@ public sealed partial class MainForm
             ReplaceSource(_walletSource, viewData.PlatformSummaries);
             ReplaceSource(_formatSource, viewData.FormatComparison.OrderBy(summary => summary.Name));
             ReplaceSource(_categorySource, viewData.CategoryComparison.OrderBy(summary => summary.Name));
+            RefreshAuditSources();
+            RefreshMonthlyReviewSources();
             ReplaceSource(
                 _categoryRulesSource,
                 _data.Settings.CategoryRules.OrderBy(rule => rule.Category.ToString(), NaturalSortComparer.Instance));
@@ -157,6 +150,19 @@ public sealed partial class MainForm
             _overviewAttentionGrid,
             _overviewOpenGrid,
             _overviewActivityGrid,
+            _auditBreakdownGrid,
+            _auditPlatformGrid,
+            _auditIssueGrid,
+            _monthlyReviewMetricGrid,
+            _monthlyReviewFormatGrid,
+            _monthlyReviewCategoryGrid,
+            _monthlyReviewPlatformGrid,
+            _monthlyReviewSpecialtyGrid,
+            _monthlyReviewWinGrid,
+            _monthlyReviewLossGrid,
+            _monthlyReviewStopLossGrid,
+            _monthlyReviewRiskGrid,
+            _monthlyReviewNoteGrid,
             _tournamentGrid,
             _cashGrid,
             _ledgerGrid,
@@ -281,6 +287,35 @@ public sealed partial class MainForm
         var path = _repository.CreateTimestampedBackup(_data);
         _statusLabel.Text = $"Backup created: {path}";
         MessageBox.Show($"Backup created:{Environment.NewLine}{path}", "Backup", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void RestoreBackupData()
+    {
+        var backupDirectory = Path.Combine(_repository.DataDirectory, "Backups");
+        using var dialog = new OpenFileDialog
+        {
+            Filter = "JSON backup files (*.json)|*.json|All files (*.*)|*.*",
+            Title = "Restore Bankroll Backup",
+            InitialDirectory = Directory.Exists(backupDirectory) ? backupDirectory : _repository.DataDirectory
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        if (MessageBox.Show(
+            "Restore this backup over the current bankroll data? A safety backup of the current data will be created first.",
+            "Confirm restore",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning) != DialogResult.Yes)
+        {
+            return;
+        }
+
+        var restoredData = _repository.ImportJson(dialog.FileName);
+        var safetyBackupPath = _repository.CreateTimestampedBackup(_data);
+        _data = restoredData;
+        SaveData($"Backup restored. Previous data safety backup: {safetyBackupPath}");
     }
 
     private void ExportJson()

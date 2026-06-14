@@ -106,6 +106,41 @@ public sealed class GridLoadControllerTests
         Assert.IsTrue(source.Cast<TournamentEntry>().Any(entry => entry.EventName == "Event 4"));
     }
 
+    [TestMethod]
+    public void SetRowsResetsVisibleWindowAfterShowAll()
+    {
+        var source = new BindingSource();
+        var controller = new GridLoadController<TournamentEntry>(source, defaultVisibleLimit: 2, loadIncrement: 2);
+        controller.SetRows(BuildTournamentRows(5), loadNow: true);
+        controller.ShowAll();
+
+        controller.SetRows(BuildTournamentRows(4), loadNow: true);
+
+        Assert.AreEqual(4, controller.TotalCount);
+        Assert.AreEqual(2, controller.VisibleCount);
+        Assert.AreEqual(2, source.Count);
+        Assert.IsTrue(controller.CanShowMore);
+    }
+
+    [TestMethod]
+    public void ReleaseScaleRowsKeepInitialBindingSmallAndRevealDeepRows()
+    {
+        var source = new BindingSource();
+        var controller = new GridLoadController<TournamentEntry>(source);
+
+        controller.SetRows(BuildTournamentRows(10_000), loadNow: true);
+
+        Assert.AreEqual(10_000, controller.TotalCount);
+        Assert.AreEqual(GridLoadController<TournamentEntry>.DefaultVisibleLimit, controller.VisibleCount);
+        Assert.AreEqual(GridLoadController<TournamentEntry>.DefaultVisibleLimit, source.Count);
+
+        Assert.IsTrue(controller.EnsureVisible(entry => entry.EventName == "Event 8750"));
+
+        Assert.AreEqual(9_000, controller.VisibleCount);
+        Assert.AreEqual(9_000, source.Count);
+        Assert.IsTrue(source.Cast<TournamentEntry>().Any(entry => entry.EventName == "Event 8750"));
+    }
+
     private static IReadOnlyList<TournamentEntry> BuildTournamentRows(int count)
     {
         return Enumerable.Range(0, count)

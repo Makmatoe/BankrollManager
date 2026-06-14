@@ -22,6 +22,7 @@ public sealed partial class MainForm
         AddGridButton(buttons, "Edit", EditCash);
         _cashDetailsButton = AddGridButton(buttons, "Details", ToggleCashDetails);
         AddGridButton(buttons, "Delete", DeleteCash);
+        _cashFilterControls = AddDetailTableFilters(buttons, DetailTableKind.Cash, RefreshCashRows);
 
         _cashLoader = new GridLoadController<CashSession>(_cashSource);
         _cashGrid = CreateGrid(_cashSource, loadController: _cashLoader);

@@ -71,6 +71,7 @@ internal sealed class GridLoadController<T> : IGridLoadController where T : clas
         ArgumentNullException.ThrowIfNull(rows);
 
         _allRows = rows.ToList();
+        _visibleLimit = _defaultVisibleLimit;
         if (_sortProperty is not null)
         {
             SortAllRows();

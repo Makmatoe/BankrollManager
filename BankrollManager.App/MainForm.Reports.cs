@@ -15,13 +15,8 @@ public sealed partial class MainForm
 
     private Control BuildTimelineTab()
     {
-        var root = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            RowCount = 1,
-            BackColor = Theme.Back,
-            Padding = new Padding(8)
-        };
+        var root = BuildGridShell(out var filters);
+        _timelineFilterControls = AddDetailTableFilters(filters, DetailTableKind.Timeline, RefreshTimelineRows);
 
         _timelineLoader = new GridLoadController<AuditTimelineEntry>(_timelineSource);
         _timelineGrid = CreateGrid(_timelineSource, loadController: _timelineLoader);
@@ -34,7 +29,7 @@ public sealed partial class MainForm
         AddTextColumn(_timelineGrid, "BankrollBefore", "Cash BR Before", 125);
         AddTextColumn(_timelineGrid, "BankrollAfter", "Cash BR After", 125);
         AddTextColumn(_timelineGrid, "Rule", "Rule", 110);
-        root.Controls.Add(BuildPagedGrid(_timelineGrid, _timelineLoader), 0, 0);
+        root.Controls.Add(BuildPagedGrid(_timelineGrid, _timelineLoader), 0, 1);
         return root;
     }
 
@@ -44,6 +39,7 @@ public sealed partial class MainForm
         AddGridButton(buttons, "Add", AddLedger);
         AddGridButton(buttons, "Edit", EditLedger);
         AddGridButton(buttons, "Delete", DeleteLedger);
+        _ledgerFilterControls = AddDetailTableFilters(buttons, DetailTableKind.Ledger, RefreshLedgerRows);
 
         _ledgerLoader = new GridLoadController<LedgerEntry>(_ledgerSource);
         _ledgerGrid = CreateGrid(_ledgerSource, loadController: _ledgerLoader);

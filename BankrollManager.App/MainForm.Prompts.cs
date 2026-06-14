@@ -201,12 +201,11 @@ public sealed partial class MainForm
 
     private TournamentPresetListItem[] BuildTournamentPresetItems()
     {
-        return _data.TournamentPresets
-            .Where(preset => _data.Settings.IsPlatformEnabled(preset.Platform))
+        return TournamentPresetService
+            .OrderedPresets(_data.TournamentPresets.Where(preset => _data.Settings.IsPlatformEnabled(preset.Platform)))
             .Select(preset => new TournamentPresetListItem(
                 preset,
-                TournamentPresetService.DisplayName(preset, _data.Settings)))
-            .OrderBy(item => item.Text, NaturalSortComparer.Instance)
+                $"{(preset.IsFavorite ? "[Fav] " : string.Empty)}{TournamentPresetService.DisplayName(preset, _data.Settings)}"))
             .ToArray();
     }
 
