@@ -140,6 +140,7 @@ public static class EntryValidator
         ValidateSatelliteTicket(entry, errors);
 
         if (entry.Status == TournamentStatus.Finished
+            && !IsFlipTournament(entry)
             && entry.FinishedDate is { } finishedDate
             && entry.RegistrationTime is { } registrationTime
             && entry.FinishedTime is { } finishedTime
@@ -320,6 +321,13 @@ public static class EntryValidator
         {
             errors.Add("Flip & Go phase cannot be reached unless the flip phase was won.");
         }
+    }
+
+    private static bool IsFlipTournament(TournamentEntry entry)
+    {
+        return entry.Category == TournamentCategory.FlipSatellite
+            || entry.Format is TournamentFormat.Flip or TournamentFormat.FlipAndGo
+            || entry.EventTag == EventTag.FlipAndGo;
     }
 
     private static void ValidateSatelliteTicket(TournamentEntry entry, List<string> errors)

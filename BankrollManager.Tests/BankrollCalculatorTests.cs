@@ -282,6 +282,51 @@ public sealed class BankrollCalculatorTests
     }
 
     [TestMethod]
+    public void FinishedFlipsAlwaysCountAsOneMinute()
+    {
+        var date = new DateOnly(2026, 6, 9);
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings { StartingBankroll = 100m },
+            TournamentEntries =
+            [
+                new TournamentEntry
+                {
+                    Date = date,
+                    RegistrationTime = new TimeOnly(23, 55),
+                    FinishedDate = date.AddDays(1),
+                    FinishedTime = new TimeOnly(12, 0),
+                    Status = TournamentStatus.Finished,
+                    Category = TournamentCategory.FlipSatellite,
+                    Format = TournamentFormat.Flip,
+                    BuyIn = 1m,
+                    ActualBullets = 1
+                },
+                new TournamentEntry
+                {
+                    Date = date,
+                    RegistrationTime = new TimeOnly(23, 50),
+                    FinishedDate = date.AddDays(-1),
+                    FinishedTime = new TimeOnly(10, 0),
+                    Status = TournamentStatus.Finished,
+                    Format = TournamentFormat.FlipAndGo,
+                    FlipBuyInPerStack = 0.04m,
+                    FlipStacksBought = 1
+                }
+            ]
+        };
+
+        var daily = BankrollCalculator.GetDailySummaries(data).Single(summary => summary.Date == date);
+        var monthly = BankrollCalculator.GetMonthlySummaries(data).Single(summary => summary.Month == new DateOnly(2026, 6, 1));
+        var yearly = BankrollCalculator.GetYearlySummaries(data).Single(summary => summary.Year == 2026);
+
+        var expectedHours = 2m / 60m;
+        Assert.AreEqual(decimal.Round(expectedHours, 4), decimal.Round(daily.HoursPlayed, 4));
+        Assert.AreEqual(decimal.Round(expectedHours, 4), decimal.Round(monthly.HoursPlayed, 4));
+        Assert.AreEqual(decimal.Round(expectedHours, 4), decimal.Round(yearly.HoursPlayed, 4));
+    }
+
+    [TestMethod]
     public void RiskPercentageUsesEventRiskAgainstAvailableBankroll()
     {
         AssertMoney(2.5m, BankrollCalculator.RiskPercentage(2.5m, 100m));

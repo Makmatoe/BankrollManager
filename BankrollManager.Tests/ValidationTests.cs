@@ -37,6 +37,21 @@ public sealed class ValidationTests
     }
 
     [TestMethod]
+    public void FinishedFlipsDoNotRequireChronologicalFinishTime()
+    {
+        var entry = ValidTournament(TournamentFormat.Flip);
+        entry.Category = TournamentCategory.FlipSatellite;
+        entry.Date = new DateOnly(2026, 6, 10);
+        entry.RegistrationTime = new TimeOnly(23, 30);
+        entry.FinishedDate = new DateOnly(2026, 6, 9);
+        entry.FinishedTime = new TimeOnly(8, 0);
+
+        var errors = EntryValidator.Validate(entry);
+
+        AssertDoesNotHaveError(errors, "Finished date/time cannot be before");
+    }
+
+    [TestMethod]
     public void SatelliteTicketsUseTicketFieldsAndRequireTicketValue()
     {
         var entry = ValidTournament(TournamentFormat.Satellite);
@@ -150,5 +165,12 @@ public sealed class ValidationTests
         Assert.IsTrue(
             errors.Any(error => error.Contains(expectedText, StringComparison.OrdinalIgnoreCase)),
             $"Expected validation error containing '{expectedText}'. Actual: {string.Join(" | ", errors)}");
+    }
+
+    private static void AssertDoesNotHaveError(IEnumerable<string> errors, string expectedText)
+    {
+        Assert.IsFalse(
+            errors.Any(error => error.Contains(expectedText, StringComparison.OrdinalIgnoreCase)),
+            $"Did not expect validation error containing '{expectedText}'. Actual: {string.Join(" | ", errors)}");
     }
 }

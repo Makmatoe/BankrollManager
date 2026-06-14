@@ -945,8 +945,17 @@ public static class BankrollCalculator
 
     private static decimal TournamentHours(TournamentEntry entry)
     {
-        if (entry.Status != TournamentStatus.Finished
-            || entry.RegistrationTime is not { } registeredAt
+        if (entry.Status != TournamentStatus.Finished)
+        {
+            return 0m;
+        }
+
+        if (IsFlipTournament(entry))
+        {
+            return 1m / 60m;
+        }
+
+        if (entry.RegistrationTime is not { } registeredAt
             || entry.FinishedTime is not { } finishedAt)
         {
             return 0m;
@@ -954,6 +963,13 @@ public static class BankrollCalculator
 
         var finishedDate = entry.FinishedDate ?? entry.Date;
         return HoursBetween(entry.Date, registeredAt, finishedDate, finishedAt);
+    }
+
+    private static bool IsFlipTournament(TournamentEntry entry)
+    {
+        return entry.Category == TournamentCategory.FlipSatellite
+            || entry.Format is TournamentFormat.Flip or TournamentFormat.FlipAndGo
+            || entry.EventTag == EventTag.FlipAndGo;
     }
 
     private static decimal CashSessionHours(CashSession entry)
