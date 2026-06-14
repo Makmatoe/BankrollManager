@@ -347,7 +347,7 @@ public sealed partial class MainForm : Form
             BackColor = Theme.Back
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 48));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         Controls.Add(root);
 
@@ -498,7 +498,7 @@ public sealed partial class MainForm : Form
         {
             Dock = DockStyle.Fill,
             BackColor = Theme.Back,
-            Padding = new Padding(14, 6, 14, 5)
+            Padding = new Padding(14, 5, 14, 5)
         };
         shell.Paint += (_, e) =>
         {
@@ -511,7 +511,7 @@ public sealed partial class MainForm : Form
             Dock = DockStyle.Fill,
             BackColor = Theme.Back,
             FlowDirection = FlowDirection.LeftToRight,
-            WrapContents = false
+            WrapContents = true
         };
         shell.Controls.Add(navigation);
 
@@ -538,7 +538,7 @@ public sealed partial class MainForm : Form
             AutoSize = false,
             AutoEllipsis = true,
             Width = NavigationItemWidth(title),
-            Height = 36,
+            Height = 32,
             BackColor = Theme.Back,
             Cursor = Cursors.Hand,
             Font = Theme.BodyFont,
