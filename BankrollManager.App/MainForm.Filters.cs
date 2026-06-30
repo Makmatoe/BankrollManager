@@ -123,6 +123,7 @@ public sealed partial class MainForm
             Search = Theme.TextBox();
             Search.Width = 180;
             Search.Margin = new Padding(4, 4, 4, 0);
+            Search.PlaceholderText = "Search entries";
             OpenOnly = BuildCheckBox("Open");
             FinishedOnly = BuildCheckBox("Finished");
             FlipsOnly = BuildCheckBox("Flips");
@@ -213,37 +214,54 @@ public sealed partial class MainForm
 
         private static CheckBox BuildCheckBox(string text)
         {
-            return new CheckBox
+            var textWidth = TextRenderer.MeasureText(text, Theme.SmallFont).Width;
+            var checkBox = new CheckBox
             {
                 Text = text,
-                AutoSize = true,
-                BackColor = Theme.Back,
+                Appearance = Appearance.Button,
+                AutoSize = false,
+                BackColor = Theme.Panel,
                 ForeColor = Theme.Text,
+                FlatStyle = FlatStyle.Flat,
                 Font = Theme.SmallFont,
                 Height = Theme.ControlHeight,
-                Margin = new Padding(6, 9, 0, 0),
-                UseVisualStyleBackColor = false
+                Margin = new Padding(4, 4, 0, 0),
+                TextAlign = ContentAlignment.MiddleCenter,
+                UseVisualStyleBackColor = false,
+                Width = Math.Max(62, textWidth + 24)
             };
+            checkBox.FlatAppearance.BorderColor = Theme.Border;
+            checkBox.FlatAppearance.CheckedBackColor = Theme.AccentSurface;
+            checkBox.FlatAppearance.MouseDownBackColor = Theme.ButtonDown;
+            checkBox.FlatAppearance.MouseOverBackColor = Theme.PanelAlt;
+            return checkBox;
         }
 
         private void ConfigureKind(DetailTableKind kind)
         {
             if (kind is DetailTableKind.Ledger or DetailTableKind.Timeline)
             {
-                OpenOnly.Enabled = false;
-                FinishedOnly.Enabled = false;
+                DisableUnavailableFilter(OpenOnly);
+                DisableUnavailableFilter(FinishedOnly);
             }
 
             if (kind is DetailTableKind.Cash)
             {
-                FlipsOnly.Enabled = false;
-                TicketRelatedOnly.Enabled = false;
+                DisableUnavailableFilter(FlipsOnly);
+                DisableUnavailableFilter(TicketRelatedOnly);
             }
 
             if (kind is DetailTableKind.Ledger)
             {
-                HighRiskOnly.Enabled = false;
+                DisableUnavailableFilter(HighRiskOnly);
             }
+        }
+
+        private static void DisableUnavailableFilter(CheckBox checkBox)
+        {
+            checkBox.Enabled = false;
+            checkBox.ForeColor = Theme.Muted;
+            checkBox.FlatAppearance.BorderColor = Theme.PanelRaised;
         }
 
         private void WireEvents()
