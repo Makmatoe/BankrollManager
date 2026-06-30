@@ -346,8 +346,8 @@ public sealed partial class MainForm : Form
             RowCount = 3,
             BackColor = Theme.Back
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         Controls.Add(root);
 
@@ -395,7 +395,12 @@ public sealed partial class MainForm : Form
         {
             Dock = DockStyle.Fill,
             BackColor = Theme.Panel,
-            Padding = new Padding(14, 8, 14, 8)
+            Padding = new Padding(16, 8, 16, 8)
+        };
+        shell.Paint += (_, e) =>
+        {
+            using var border = new Pen(Theme.Border);
+            e.Graphics.DrawLine(border, 0, shell.Height - 1, shell.Width, shell.Height - 1);
         };
 
         var layout = new TableLayoutPanel
@@ -406,7 +411,7 @@ public sealed partial class MainForm : Form
             BackColor = Theme.Panel
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 320));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 330));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         shell.Controls.Add(layout);
 
@@ -418,11 +423,11 @@ public sealed partial class MainForm : Form
             BackColor = Theme.Panel,
             Margin = new Padding(0)
         };
-        identity.RowStyles.Add(new RowStyle(SizeType.Absolute, 25));
+        identity.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
         identity.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         layout.Controls.Add(identity, 0, 0);
 
-        var title = Theme.Label("Bankroll Manager", Theme.SubHeaderFont, Theme.Text);
+        var title = Theme.Label("Bankroll Manager", Theme.HeaderFont, Theme.Text);
         title.AutoSize = false;
         title.Dock = DockStyle.Fill;
         title.Margin = new Padding(0);
@@ -441,7 +446,7 @@ public sealed partial class MainForm : Form
         {
             Dock = DockStyle.Fill,
             BackColor = Theme.Panel,
-            Padding = new Padding(14, 5, 0, 5),
+            Padding = new Padding(14, 4, 0, 4),
             Margin = new Padding(0)
         };
         var commandStrip = BuildCommandStrip();
@@ -457,7 +462,7 @@ public sealed partial class MainForm : Form
         {
             Dock = DockStyle.Top,
             AutoSize = false,
-            Height = 42,
+            Height = 40,
             GripStyle = ToolStripGripStyle.Hidden,
             BackColor = Theme.Panel,
             CanOverflow = true,
@@ -497,19 +502,20 @@ public sealed partial class MainForm : Form
         var shell = new Panel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Back,
-            Padding = new Padding(14, 5, 14, 5)
+            BackColor = Theme.Panel,
+            Padding = new Padding(14, 8, 14, 8)
         };
         shell.Paint += (_, e) =>
         {
             using var border = new Pen(Theme.Border);
+            e.Graphics.DrawLine(border, 0, 0, shell.Width, 0);
             e.Graphics.DrawLine(border, 0, shell.Height - 1, shell.Width, shell.Height - 1);
         };
 
         var navigation = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
-            BackColor = Theme.Back,
+            BackColor = Theme.Panel,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true
         };
@@ -532,48 +538,18 @@ public sealed partial class MainForm : Form
 
     private static Label BuildNavigationButton(string title)
     {
-        var button = new Label
+        var button = new SegmentLabel
         {
             Text = title,
             AutoSize = false,
             AutoEllipsis = true,
             Width = NavigationItemWidth(title),
-            Height = 32,
-            BackColor = Theme.Back,
-            Cursor = Cursors.Hand,
+            Height = 30,
+            BackColor = Theme.Panel,
             Font = Theme.BodyFont,
-            ForeColor = Theme.Muted,
             Margin = new Padding(0, 0, 6, 0),
             Padding = new Padding(8, 0, 8, 1),
-            TextAlign = ContentAlignment.MiddleCenter,
-            UseMnemonic = false
-        };
-
-        button.Paint += (_, e) =>
-        {
-            if (button.Tag is not true)
-            {
-                return;
-            }
-
-            using var accent = new SolidBrush(Theme.Accent);
-            e.Graphics.FillRectangle(accent, 10, button.Height - 3, Math.Max(8, button.Width - 20), 3);
-        };
-        button.MouseEnter += (_, _) =>
-        {
-            if (button.Tag is not true)
-            {
-                button.BackColor = Theme.Panel;
-                button.ForeColor = Theme.Text;
-            }
-        };
-        button.MouseLeave += (_, _) =>
-        {
-            if (button.Tag is not true)
-            {
-                button.BackColor = Theme.Back;
-                button.ForeColor = Theme.Muted;
-            }
+            Outlined = false
         };
 
         return button;
@@ -597,7 +573,7 @@ public sealed partial class MainForm : Form
         {
             var selected = index == selectedIndex;
             buttons[index].Tag = selected;
-            buttons[index].BackColor = selected ? Theme.Panel : Theme.Back;
+            buttons[index].BackColor = Theme.Panel;
             buttons[index].ForeColor = selected ? Theme.Text : Theme.Muted;
             buttons[index].Font = Theme.BodyFont;
             buttons[index].Invalidate();

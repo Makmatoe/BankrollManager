@@ -75,8 +75,8 @@ internal static class Theme
             AutoSize = true,
             Height = ButtonHeight,
             MinimumSize = new Size(0, ButtonHeight),
-            Padding = new Padding(14, 0, 14, 1),
-            BackColor = PanelRaised,
+            Padding = new Padding(16, 0, 16, 1),
+            BackColor = PanelAlt,
             ForeColor = Text,
             Font = BodyFont,
             Margin = new Padding(4)
@@ -97,12 +97,11 @@ internal static class Theme
 
     public static Panel Card()
     {
-        return new Panel
+        return new CardPanel
         {
             BackColor = Panel,
-            Padding = new Padding(12),
-            Margin = new Padding(6),
-            BorderStyle = BorderStyle.FixedSingle
+            Padding = new Padding(14),
+            Margin = new Padding(6)
         };
     }
 
@@ -255,30 +254,33 @@ internal static class Theme
 
     public static void ApplyGrid(DataGridView grid)
     {
-        grid.BackgroundColor = Back;
+        grid.BackgroundColor = Panel;
         grid.BorderStyle = BorderStyle.None;
         grid.GridColor = Border;
+        grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
         grid.EnableHeadersVisualStyles = false;
-        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-        grid.ColumnHeadersDefaultCellStyle.BackColor = PanelAlt;
+        grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+        grid.ColumnHeadersDefaultCellStyle.BackColor = PanelRaised;
         grid.ColumnHeadersDefaultCellStyle.ForeColor = Text;
         grid.ColumnHeadersDefaultCellStyle.Font = SubHeaderFont;
-        grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(4, 0, 4, 0);
+        grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
         grid.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.False;
-        grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+        grid.ColumnHeadersHeight = 38;
         grid.RowHeadersDefaultCellStyle.BackColor = Panel;
         grid.RowHeadersDefaultCellStyle.ForeColor = Muted;
+        grid.RowHeadersVisible = false;
         grid.DefaultCellStyle.BackColor = Panel;
         grid.DefaultCellStyle.ForeColor = Text;
-        grid.DefaultCellStyle.Padding = new Padding(4, 0, 4, 0);
+        grid.DefaultCellStyle.Padding = new Padding(8, 0, 8, 0);
         grid.DefaultCellStyle.WrapMode = DataGridViewTriState.False;
         grid.DefaultCellStyle.SelectionBackColor = SelectionBack;
         grid.DefaultCellStyle.SelectionForeColor = Text;
         grid.AlternatingRowsDefaultCellStyle.BackColor = AlternatingRow;
         grid.Font = BodyFont;
         grid.RowHeadersWidth = 24;
-        grid.RowTemplate.MinimumHeight = 32;
-        grid.RowTemplate.Height = 32;
+        grid.RowTemplate.MinimumHeight = 34;
+        grid.RowTemplate.Height = 34;
         grid.AllowUserToResizeRows = false;
         grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
         grid.MultiSelect = false;
@@ -289,77 +291,77 @@ internal static class Theme
     {
         if (useDark)
         {
-            Back = Color.FromArgb(14, 18, 24);
-            Panel = Color.FromArgb(24, 30, 38);
-            PanelAlt = Color.FromArgb(32, 40, 51);
-            PanelRaised = Color.FromArgb(38, 48, 60);
-            Border = Color.FromArgb(55, 66, 80);
-            Text = Color.FromArgb(240, 244, 249);
-            Muted = Color.FromArgb(150, 160, 173);
-            Accent = Color.FromArgb(74, 183, 145);
-            Warning = Color.FromArgb(245, 166, 35);
-            Danger = Color.FromArgb(236, 92, 92);
-            Positive = Color.FromArgb(74, 214, 135);
-            Negative = Color.FromArgb(255, 104, 104);
-            SelectionBack = Color.FromArgb(51, 82, 105);
-            AlternatingRow = Color.FromArgb(23, 28, 36);
-            ButtonHover = Color.FromArgb(50, 63, 78);
-            ButtonDown = Color.FromArgb(60, 78, 94);
-            CommandPrimary = Color.FromArgb(35, 91, 76);
-            CommandPrimaryHover = Color.FromArgb(42, 111, 92);
-            CommandPrimaryDown = Color.FromArgb(38, 126, 100);
-            CommandPrimaryBorder = Color.FromArgb(54, 133, 110);
-            CommandDanger = Color.FromArgb(58, 34, 40);
-            CommandDangerHover = Color.FromArgb(78, 40, 46);
-            CommandDangerDown = Color.FromArgb(97, 45, 51);
-            CommandDangerBorder = Color.FromArgb(91, 52, 58);
-            CommandNeutralHover = Color.FromArgb(46, 58, 72);
-            CommandNeutralDown = Color.FromArgb(58, 72, 88);
-            CommandNeutralBorder = Color.FromArgb(79, 95, 114);
-            PositiveSurface = Color.FromArgb(24, 47, 39);
-            AccentSurface = Color.FromArgb(24, 45, 42);
-            WarningSurface = Color.FromArgb(55, 43, 22);
-            NegativeSurface = Color.FromArgb(57, 28, 31);
-            DangerSurface = Color.FromArgb(68, 30, 35);
-            ChartGrid = Color.FromArgb(44, 52, 64);
-            ChartZeroLine = Color.FromArgb(76, 87, 103);
+            Back = Color.FromArgb(18, 20, 22);
+            Panel = Color.FromArgb(29, 32, 35);
+            PanelAlt = Color.FromArgb(37, 41, 45);
+            PanelRaised = Color.FromArgb(45, 50, 55);
+            Border = Color.FromArgb(62, 69, 74);
+            Text = Color.FromArgb(239, 242, 236);
+            Muted = Color.FromArgb(162, 169, 162);
+            Accent = Color.FromArgb(83, 184, 137);
+            Warning = Color.FromArgb(225, 169, 70);
+            Danger = Color.FromArgb(231, 91, 88);
+            Positive = Color.FromArgb(93, 211, 141);
+            Negative = Color.FromArgb(239, 98, 96);
+            SelectionBack = Color.FromArgb(58, 88, 82);
+            AlternatingRow = Color.FromArgb(24, 27, 30);
+            ButtonHover = Color.FromArgb(51, 57, 62);
+            ButtonDown = Color.FromArgb(60, 70, 70);
+            CommandPrimary = Color.FromArgb(38, 94, 72);
+            CommandPrimaryHover = Color.FromArgb(45, 114, 87);
+            CommandPrimaryDown = Color.FromArgb(47, 133, 99);
+            CommandPrimaryBorder = Color.FromArgb(75, 151, 116);
+            CommandDanger = Color.FromArgb(70, 37, 40);
+            CommandDangerHover = Color.FromArgb(91, 43, 47);
+            CommandDangerDown = Color.FromArgb(111, 48, 52);
+            CommandDangerBorder = Color.FromArgb(126, 62, 67);
+            CommandNeutralHover = Color.FromArgb(53, 59, 64);
+            CommandNeutralDown = Color.FromArgb(61, 69, 74);
+            CommandNeutralBorder = Color.FromArgb(86, 95, 101);
+            PositiveSurface = Color.FromArgb(27, 53, 39);
+            AccentSurface = Color.FromArgb(27, 50, 43);
+            WarningSurface = Color.FromArgb(58, 45, 22);
+            NegativeSurface = Color.FromArgb(63, 31, 34);
+            DangerSurface = Color.FromArgb(76, 32, 36);
+            ChartGrid = Color.FromArgb(47, 53, 58);
+            ChartZeroLine = Color.FromArgb(86, 96, 98);
             return;
         }
 
-        Back = Color.FromArgb(244, 247, 250);
-        Panel = Color.White;
-        PanelAlt = Color.FromArgb(235, 240, 246);
-        PanelRaised = Color.FromArgb(225, 232, 240);
-        Border = Color.FromArgb(197, 207, 219);
-        Text = Color.FromArgb(30, 41, 59);
-        Muted = Color.FromArgb(100, 116, 139);
-        Accent = Color.FromArgb(14, 135, 99);
-        Warning = Color.FromArgb(181, 118, 23);
-        Danger = Color.FromArgb(194, 65, 65);
-        Positive = Color.FromArgb(21, 128, 61);
-        Negative = Color.FromArgb(220, 38, 38);
-        SelectionBack = Color.FromArgb(212, 232, 242);
-        AlternatingRow = Color.FromArgb(249, 251, 253);
-        ButtonHover = Color.FromArgb(214, 222, 232);
-        ButtonDown = Color.FromArgb(199, 210, 224);
-        CommandPrimary = Color.FromArgb(212, 241, 231);
-        CommandPrimaryHover = Color.FromArgb(190, 229, 216);
-        CommandPrimaryDown = Color.FromArgb(165, 214, 198);
-        CommandPrimaryBorder = Color.FromArgb(100, 176, 149);
-        CommandDanger = Color.FromArgb(252, 226, 226);
-        CommandDangerHover = Color.FromArgb(246, 206, 206);
-        CommandDangerDown = Color.FromArgb(239, 184, 184);
-        CommandDangerBorder = Color.FromArgb(214, 119, 119);
-        CommandNeutralHover = Color.FromArgb(222, 230, 239);
-        CommandNeutralDown = Color.FromArgb(206, 217, 229);
-        CommandNeutralBorder = Color.FromArgb(154, 169, 188);
-        PositiveSurface = Color.FromArgb(220, 246, 230);
-        AccentSurface = Color.FromArgb(218, 244, 237);
-        WarningSurface = Color.FromArgb(255, 239, 207);
-        NegativeSurface = Color.FromArgb(255, 224, 224);
-        DangerSurface = Color.FromArgb(255, 216, 216);
-        ChartGrid = Color.FromArgb(213, 222, 232);
-        ChartZeroLine = Color.FromArgb(159, 172, 188);
+        Back = Color.FromArgb(246, 247, 244);
+        Panel = Color.FromArgb(255, 255, 252);
+        PanelAlt = Color.FromArgb(239, 242, 238);
+        PanelRaised = Color.FromArgb(231, 236, 230);
+        Border = Color.FromArgb(204, 213, 205);
+        Text = Color.FromArgb(30, 36, 31);
+        Muted = Color.FromArgb(91, 101, 94);
+        Accent = Color.FromArgb(34, 137, 101);
+        Warning = Color.FromArgb(174, 115, 25);
+        Danger = Color.FromArgb(194, 65, 62);
+        Positive = Color.FromArgb(28, 128, 73);
+        Negative = Color.FromArgb(202, 58, 56);
+        SelectionBack = Color.FromArgb(216, 235, 224);
+        AlternatingRow = Color.FromArgb(250, 251, 248);
+        ButtonHover = Color.FromArgb(222, 229, 222);
+        ButtonDown = Color.FromArgb(207, 218, 208);
+        CommandPrimary = Color.FromArgb(210, 239, 225);
+        CommandPrimaryHover = Color.FromArgb(188, 226, 207);
+        CommandPrimaryDown = Color.FromArgb(166, 211, 190);
+        CommandPrimaryBorder = Color.FromArgb(94, 171, 136);
+        CommandDanger = Color.FromArgb(252, 226, 224);
+        CommandDangerHover = Color.FromArgb(246, 205, 203);
+        CommandDangerDown = Color.FromArgb(239, 184, 181);
+        CommandDangerBorder = Color.FromArgb(211, 116, 113);
+        CommandNeutralHover = Color.FromArgb(224, 231, 224);
+        CommandNeutralDown = Color.FromArgb(209, 219, 210);
+        CommandNeutralBorder = Color.FromArgb(150, 165, 153);
+        PositiveSurface = Color.FromArgb(220, 246, 229);
+        AccentSurface = Color.FromArgb(218, 242, 231);
+        WarningSurface = Color.FromArgb(255, 238, 205);
+        NegativeSurface = Color.FromArgb(255, 225, 223);
+        DangerSurface = Color.FromArgb(255, 216, 214);
+        ChartGrid = Color.FromArgb(214, 223, 215);
+        ChartZeroLine = Color.FromArgb(156, 170, 159);
     }
 
     private static bool SystemPrefersDark()

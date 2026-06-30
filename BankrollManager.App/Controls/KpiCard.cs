@@ -15,8 +15,8 @@ public sealed class KpiCard : Control
         BackColor = Theme.Panel;
         ForeColor = Theme.Text;
         Font = Theme.BodyFont;
-        Size = new Size(202, 92);
-        MinimumSize = new Size(170, 84);
+        Size = new Size(216, 100);
+        MinimumSize = new Size(180, 92);
         Margin = new Padding(6);
     }
 
@@ -44,7 +44,8 @@ public sealed class KpiCard : Control
         e.Graphics.DrawPath(border, path);
 
         using var accent = new SolidBrush(_accentColor);
-        e.Graphics.FillRectangle(accent, 0, 14, 4, Height - 28);
+        using var accentPath = RoundedRect(new Rectangle(12, 12, Math.Max(8, Width - 24), 4), 2);
+        e.Graphics.FillPath(accent, accentPath);
 
         using var titleBrush = new SolidBrush(Theme.Muted);
         using var valueBrush = new SolidBrush(_accentColor);
@@ -60,8 +61,8 @@ public sealed class KpiCard : Control
             LineAlignment = StringAlignment.Center
         };
 
-        var titleRect = new RectangleF(16, 14, Width - 28, 18);
-        var valueRect = new RectangleF(16, 36, Width - 28, Height - 44);
+        var titleRect = new RectangleF(16, 24, Width - 32, 18);
+        var valueRect = new RectangleF(16, 44, Width - 32, Height - 52);
         e.Graphics.DrawString(_title, Theme.SmallFont, titleBrush, titleRect, titleFormat);
         using var valueFont = FitValueFont(e.Graphics, _value, valueRect.Size);
         e.Graphics.DrawString(_value, valueFont, valueBrush, valueRect, valueFormat);
@@ -69,7 +70,7 @@ public sealed class KpiCard : Control
 
     private static Font FitValueFont(Graphics graphics, string value, SizeF size)
     {
-        var preferred = 13.5f;
+        var preferred = 15f;
         for (var fontSize = preferred; fontSize >= 9f; fontSize -= 0.5f)
         {
             var font = new Font("Segoe UI", fontSize, FontStyle.Bold);

@@ -46,7 +46,7 @@ public sealed partial class MainForm
             Dock = DockStyle.Fill,
             RowCount = 4,
             BackColor = Theme.Back,
-            Padding = new Padding(8)
+            Padding = new Padding(10)
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 124));
@@ -62,7 +62,6 @@ public sealed partial class MainForm
         _stopLossBanner.TextAlign = ContentAlignment.MiddleLeft;
         _stopLossBanner.Padding = new Padding(18, 8, 18, 8);
         _stopLossBanner.BackColor = Theme.Panel;
-        _stopLossBanner.BorderStyle = BorderStyle.FixedSingle;
         root.Controls.Add(_stopLossBanner, 0, 0);
 
         var kpis = new FlowLayoutPanel
@@ -70,7 +69,8 @@ public sealed partial class MainForm
             Dock = DockStyle.Fill,
             AutoScroll = true,
             BackColor = Theme.Back,
-            WrapContents = true
+            WrapContents = true,
+            Padding = new Padding(0, 4, 0, 4)
         };
         root.Controls.Add(kpis, 0, 1);
 
@@ -277,16 +277,23 @@ public sealed partial class MainForm
         Action? editAction = null,
         string actionText = "Edit")
     {
-        var shell = new TableLayoutPanel
+        var shell = Theme.Card();
+        shell.Dock = DockStyle.Fill;
+        shell.Padding = new Padding(12);
+        shell.Margin = new Padding(6);
+
+        var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            ColumnCount = 1,
             RowCount = 2,
             BackColor = Theme.Panel,
-            Padding = new Padding(10),
-            Margin = new Padding(6)
+            Padding = new Padding(0),
+            Margin = new Padding(0)
         };
-        shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        shell.Controls.Add(layout);
 
         var header = new TableLayoutPanel
         {
@@ -324,8 +331,8 @@ public sealed partial class MainForm
         }
 
         grid.Margin = new Padding(0);
-        shell.Controls.Add(header, 0, 0);
-        shell.Controls.Add(grid, 0, 1);
+        layout.Controls.Add(header, 0, 0);
+        layout.Controls.Add(grid, 0, 1);
         return shell;
     }
 

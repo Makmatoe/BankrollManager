@@ -112,17 +112,24 @@ public sealed partial class MainForm
 
     private Control BuildSelectedDayPanel()
     {
-        var shell = new TableLayoutPanel
+        var shell = Theme.Card();
+        shell.Dock = DockStyle.Fill;
+        shell.Padding = new Padding(12);
+        shell.Margin = new Padding(6);
+
+        var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            ColumnCount = 1,
             RowCount = 3,
             BackColor = Theme.Panel,
-            Padding = new Padding(10),
-            Margin = new Padding(6)
+            Padding = new Padding(0),
+            Margin = new Padding(0)
         };
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
-        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 76));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 190));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        shell.Controls.Add(layout);
 
         var header = new TableLayoutPanel
         {
@@ -149,7 +156,7 @@ public sealed partial class MainForm
         _selectedDayMeta.Margin = new Padding(0);
         _selectedDayMeta.TextAlign = ContentAlignment.TopLeft;
         header.Controls.Add(_selectedDayMeta, 0, 1);
-        shell.Controls.Add(header, 0, 0);
+        layout.Controls.Add(header, 0, 0);
 
         _selectedDayChart = new MiniChart
         {
@@ -158,7 +165,7 @@ public sealed partial class MainForm
             MinimumSize = new Size(180, 150)
         };
         _selectedDayChart.PointActivated += (_, e) => OpenSelectedDayChartPoint(e.Point);
-        shell.Controls.Add(_selectedDayChart, 0, 1);
+        layout.Controls.Add(_selectedDayChart, 0, 1);
 
         _selectedDayTimelineGrid = CreateGrid(_selectedDayTimelineSource);
         _selectedDayTimelineGrid.SelectionChanged += (_, _) => UpdateSelectedDayChartSelectionFromTimeline();
@@ -171,7 +178,7 @@ public sealed partial class MainForm
         AddTextColumn(_selectedDayTimelineGrid, "ValueChange", "Value", 86);
         AddTextColumn(_selectedDayTimelineGrid, "BankrollValueAfter", "Value After", 108);
         AddTextColumn(_selectedDayTimelineGrid, "Rule", "Rule", 100);
-        shell.Controls.Add(BuildGridWithEmptyState(
+        layout.Controls.Add(BuildGridWithEmptyState(
             _selectedDayTimelineGrid,
             out _selectedDayEmptyState,
             "No events for this day."), 0, 2);
@@ -450,7 +457,7 @@ public sealed partial class MainForm
     private static Label BuildSegmentButton(string title)
     {
         var measuredWidth = TextRenderer.MeasureText(title, Theme.BodyFont).Width + 30;
-        var button = new Label
+        var button = new SegmentLabel
         {
             Text = title,
             AutoSize = false,
@@ -458,43 +465,10 @@ public sealed partial class MainForm
             Width = Math.Max(96, measuredWidth),
             Height = 38,
             BackColor = Theme.Panel,
-            Cursor = Cursors.Hand,
             Font = Theme.BodyFont,
-            ForeColor = Theme.Muted,
             Margin = new Padding(0, 0, 8, 0),
             Padding = new Padding(10, 0, 10, 1),
-            TextAlign = ContentAlignment.MiddleCenter,
-            UseMnemonic = false
-        };
-
-        button.Paint += (_, e) =>
-        {
-            using var border = new Pen(Theme.Border);
-            e.Graphics.DrawRectangle(border, 0, 0, button.Width - 1, button.Height - 1);
-
-            if (button.Tag is not true)
-            {
-                return;
-            }
-
-            using var accent = new SolidBrush(Theme.Accent);
-            e.Graphics.FillRectangle(accent, 8, button.Height - 4, Math.Max(8, button.Width - 16), 3);
-        };
-        button.MouseEnter += (_, _) =>
-        {
-            if (button.Tag is not true)
-            {
-                button.BackColor = Theme.PanelAlt;
-                button.ForeColor = Theme.Text;
-            }
-        };
-        button.MouseLeave += (_, _) =>
-        {
-            if (button.Tag is not true)
-            {
-                button.BackColor = Theme.Panel;
-                button.ForeColor = Theme.Muted;
-            }
+            Outlined = true
         };
 
         return button;

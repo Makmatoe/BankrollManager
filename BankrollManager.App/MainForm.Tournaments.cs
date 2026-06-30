@@ -100,28 +100,35 @@ public sealed partial class MainForm
 
     private Control BuildTournamentInspector()
     {
-        var shell = new TableLayoutPanel
+        var shell = Theme.Card();
+        shell.Dock = DockStyle.Fill;
+        shell.Padding = new Padding(12, 8, 12, 8);
+        shell.Margin = new Padding(0, 8, 0, 0);
+
+        var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            ColumnCount = 1,
             RowCount = 4,
             BackColor = Theme.Panel,
-            Padding = new Padding(12, 8, 12, 8),
-            Margin = new Padding(0, 6, 0, 0)
+            Padding = new Padding(0),
+            Margin = new Padding(0)
         };
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
-        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
+        layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        shell.Controls.Add(layout);
 
         _tournamentInspectorTitle = BuildInspectorLabel(Theme.SubHeaderFont, Theme.Text);
         _tournamentInspectorResult = BuildInspectorLabel(Theme.BodyFont, Theme.Text);
         _tournamentInspectorMeta = BuildInspectorLabel(Theme.BodyFont, Theme.Muted);
         _tournamentInspectorNotes = BuildInspectorLabel(Theme.SmallFont, Theme.Muted);
 
-        shell.Controls.Add(_tournamentInspectorTitle, 0, 0);
-        shell.Controls.Add(_tournamentInspectorResult, 0, 1);
-        shell.Controls.Add(_tournamentInspectorMeta, 0, 2);
-        shell.Controls.Add(_tournamentInspectorNotes, 0, 3);
+        layout.Controls.Add(_tournamentInspectorTitle, 0, 0);
+        layout.Controls.Add(_tournamentInspectorResult, 0, 1);
+        layout.Controls.Add(_tournamentInspectorMeta, 0, 2);
+        layout.Controls.Add(_tournamentInspectorNotes, 0, 3);
         UpdateTournamentInspector();
         return shell;
     }

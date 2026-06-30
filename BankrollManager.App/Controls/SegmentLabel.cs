@@ -2,12 +2,11 @@ using System.Drawing.Drawing2D;
 
 namespace BankrollManager.App.Controls;
 
-internal sealed class UiButton : Button
+internal sealed class SegmentLabel : Label
 {
     private bool _hovered;
-    private bool _pressed;
 
-    public UiButton()
+    public SegmentLabel()
     {
         SetStyle(
             ControlStyles.AllPaintingInWmPaint
@@ -15,22 +14,17 @@ internal sealed class UiButton : Button
             | ControlStyles.ResizeRedraw
             | ControlStyles.UserPaint,
             true);
-        AutoSize = true;
-        FlatStyle = FlatStyle.Flat;
-        Height = Theme.ButtonHeight;
-        MinimumSize = new Size(0, Theme.ButtonHeight);
-        Padding = new Padding(16, 0, 16, 1);
+
+        AutoSize = false;
+        Cursor = Cursors.Hand;
+        Font = Theme.BodyFont;
         TextAlign = ContentAlignment.MiddleCenter;
-        UseVisualStyleBackColor = false;
+        UseMnemonic = false;
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
-    {
-        var textSize = TextRenderer.MeasureText(Text, Font);
-        return new Size(
-            Math.Max(MinimumSize.Width, textSize.Width + Padding.Horizontal + 8),
-            Math.Max(MinimumSize.Height, Theme.ButtonHeight));
-    }
+    public bool Outlined { get; set; } = true;
+
+    public int Radius { get; set; } = 8;
 
     protected override void OnMouseEnter(EventArgs e)
     {
@@ -42,27 +36,8 @@ internal sealed class UiButton : Button
     protected override void OnMouseLeave(EventArgs e)
     {
         _hovered = false;
-        _pressed = false;
         Invalidate();
         base.OnMouseLeave(e);
-    }
-
-    protected override void OnMouseDown(MouseEventArgs e)
-    {
-        if (e.Button == MouseButtons.Left)
-        {
-            _pressed = true;
-            Invalidate();
-        }
-
-        base.OnMouseDown(e);
-    }
-
-    protected override void OnMouseUp(MouseEventArgs e)
-    {
-        _pressed = false;
-        Invalidate();
-        base.OnMouseUp(e);
     }
 
     protected override void OnEnabledChanged(EventArgs e)
@@ -76,37 +51,46 @@ internal sealed class UiButton : Button
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         e.Graphics.Clear(Parent?.BackColor ?? Theme.Back);
 
+        var selected = Tag is true;
+        var drawSurface = selected || _hovered || Outlined;
         var bounds = ClientRectangle;
         bounds.Width -= 1;
         bounds.Height -= 1;
-        using var path = RoundedRectangle(bounds, 7);
 
-        var background = Enabled
-            ? _pressed
-                ? Theme.ButtonDown
-                : _hovered
-                    ? Theme.ButtonHover
-                    : BackColor
-            : Theme.PanelAlt;
-        using var backgroundBrush = new SolidBrush(background);
-        var borderColor = Enabled
-            ? _hovered || _pressed ? Theme.CommandNeutralBorder : Theme.Border
-            : Theme.PanelRaised;
-        using var borderPen = new Pen(borderColor);
-        e.Graphics.FillPath(backgroundBrush, path);
-        e.Graphics.DrawPath(borderPen, path);
+        if (drawSurface && bounds.Width > 0 && bounds.Height > 0)
+        {
+            var fillColor = Enabled
+                ? selected
+                    ? Theme.AccentSurface
+                    : _hovered
+                        ? Theme.PanelAlt
+                        : Theme.Panel
+                : Theme.Panel;
+            var borderColor = Enabled
+                ? selected
+                    ? Theme.Accent
+                    : _hovered
+                        ? Theme.CommandNeutralBorder
+                        : Theme.Border
+                : Theme.Border;
 
-        var textColor = Enabled ? ForeColor : Theme.Muted;
-        var textBounds = new Rectangle(
-            Padding.Left,
-            0,
-            Math.Max(0, Width - Padding.Horizontal),
-            Height);
+            using var path = RoundedRectangle(bounds, Radius);
+            using var fill = new SolidBrush(fillColor);
+            using var border = new Pen(borderColor);
+            e.Graphics.FillPath(fill, path);
+            e.Graphics.DrawPath(border, path);
+        }
+
+        var textColor = Enabled
+            ? selected || _hovered
+                ? Theme.Text
+                : Theme.Muted
+            : Theme.Muted;
         TextRenderer.DrawText(
             e.Graphics,
             Text,
             Font,
-            textBounds,
+            ClientRectangle,
             textColor,
             TextFormatFlags.HorizontalCenter
             | TextFormatFlags.VerticalCenter
@@ -124,7 +108,9 @@ internal sealed class UiButton : Button
     private static GraphicsPath RoundedRectangle(Rectangle bounds, int radius)
     {
         var path = new GraphicsPath();
-        var diameter = Math.Min(radius * 2, Math.Min(bounds.Width, bounds.Height));
+        var adjustedRadius = Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2);
+        var diameter = adjustedRadius * 2;
+
         if (diameter <= 0)
         {
             path.AddRectangle(bounds);

@@ -44,7 +44,7 @@ public sealed partial class MainForm
             Dock = DockStyle.Fill,
             RowCount = 2,
             BackColor = Theme.Back,
-            Padding = new Padding(12)
+            Padding = new Padding(14)
         };
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -63,7 +63,7 @@ public sealed partial class MainForm
             BackColor = Theme.Back,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
-            Padding = new Padding(0, 0, 0, 10),
+            Padding = new Padding(0, 0, 0, 12),
             Margin = new Padding(0)
         };
     }

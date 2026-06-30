@@ -328,7 +328,7 @@ public sealed partial class MainForm
             }
 
             var availableWidth = grid.ClientSize.Width
-                - grid.RowHeadersWidth
+                - (grid.RowHeadersVisible ? grid.RowHeadersWidth : 0)
                 - SystemInformation.VerticalScrollBarWidth
                 - 8;
             if (availableWidth > 0)

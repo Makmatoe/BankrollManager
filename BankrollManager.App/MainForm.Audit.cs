@@ -76,16 +76,23 @@ public sealed partial class MainForm
 
     private static Control BuildAuditSection(string title, DataGridView grid)
     {
+        var shell = Theme.Card();
+        shell.Dock = DockStyle.Fill;
+        shell.Padding = new Padding(12);
+        shell.Margin = new Padding(4);
+
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
+            ColumnCount = 1,
             RowCount = 2,
-            BackColor = Theme.Back,
+            BackColor = Theme.Panel,
             Padding = new Padding(0),
-            Margin = new Padding(4)
+            Margin = new Padding(0)
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 30));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        shell.Controls.Add(root);
 
         var label = Theme.Label(title, Theme.SubHeaderFont, Theme.Text);
         label.AutoSize = false;
@@ -94,7 +101,7 @@ public sealed partial class MainForm
         label.TextAlign = ContentAlignment.MiddleLeft;
         root.Controls.Add(label, 0, 0);
         root.Controls.Add(grid, 0, 1);
-        return root;
+        return shell;
     }
 
     private void RefreshAuditSources()

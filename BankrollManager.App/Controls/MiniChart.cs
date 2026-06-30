@@ -20,7 +20,7 @@ public sealed class MiniChartPointActivatedEventArgs(MiniChartPoint point, int i
 
 public sealed class MiniChart : Control
 {
-    private const int ChartLeftGutter = 18;
+    private const int ChartLeftGutter = 22;
     private const int ChartTopGutter = 56;
     private const int ChartRightGutter = 66;
     private const int ChartBottomGutter = 50;
@@ -36,7 +36,7 @@ public sealed class MiniChart : Control
         BackColor = Theme.Panel;
         ForeColor = Theme.Text;
         Font = Theme.SmallFont;
-        Padding = new Padding(14);
+        Padding = new Padding(16);
         MinimumSize = new Size(180, 150);
         Margin = new Padding(8);
     }
@@ -142,11 +142,14 @@ public sealed class MiniChart : Control
             var top = Math.Min(y, zeroY);
             var height = Math.Max(2, Math.Abs(y - zeroY));
             using var brush = new SolidBrush(point.Value >= 0m ? Theme.Positive : Theme.Negative);
-            graphics.FillRectangle(brush, x, top, barWidth, height);
+            using var path = RoundedRect(
+                Rectangle.Round(new RectangleF(x, top, barWidth, height)),
+                Math.Min(4, (int)Math.Max(1, barWidth / 2)));
+            graphics.FillPath(brush, path);
             if (IsPointHighlighted(index))
             {
                 using var border = new Pen(Theme.Text, 1.5f);
-                graphics.DrawRectangle(border, x, top, barWidth, height);
+                graphics.DrawPath(border, path);
             }
         }
     }
@@ -174,7 +177,12 @@ public sealed class MiniChart : Control
             return new Point(x, y);
         }).ToArray();
 
-        using var pen = new Pen(Theme.Accent, 2f);
+        using var pen = new Pen(Theme.Accent, 2.4f)
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+            LineJoin = LineJoin.Round
+        };
         graphics.DrawLines(pen, points);
         using var pointBrush = new SolidBrush(Theme.Accent);
         for (var index = 0; index < points.Length; index++)
@@ -279,7 +287,10 @@ public sealed class MiniChart : Control
 
     private static void DrawGrid(Graphics graphics, Rectangle area, decimal min, decimal max)
     {
-        using var pen = new Pen(Theme.ChartGrid);
+        using var pen = new Pen(Theme.ChartGrid)
+        {
+            DashStyle = DashStyle.Dot
+        };
         for (var index = 1; index <= 3; index++)
         {
             var y = area.Top + area.Height * index / 4;
