@@ -373,7 +373,7 @@ public sealed partial class MainForm
 
         var header = new TableLayoutPanel
         {
-            Dock = DockStyle.Top,
+            Dock = DockStyle.Fill,
             AutoSize = false,
             Height = Theme.ButtonHeight,
             ColumnCount = editAction is null ? 1 : 2,
