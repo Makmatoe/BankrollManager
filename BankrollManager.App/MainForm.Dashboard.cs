@@ -15,7 +15,7 @@ public sealed partial class MainForm
 
     private Control BuildDashboardTab()
     {
-        const int minimumDashboardHeight = 800;
+        const int minimumDashboardHeight = 920;
         var viewport = new Panel
         {
             Dock = DockStyle.Fill,
@@ -37,23 +37,24 @@ public sealed partial class MainForm
             shell.Height = Math.Max(viewport.ClientSize.Height, minimumDashboardHeight);
         };
 
-        var statsColumn = new ColumnStyle(SizeType.Absolute, 112);
+        var guardrailColumn = new ColumnStyle(SizeType.Absolute, 330);
         shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        shell.ColumnStyles.Add(statsColumn);
+        shell.ColumnStyles.Add(guardrailColumn);
 
         var root = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            RowCount = 4,
+            RowCount = 5,
             BackColor = Theme.Back,
             Padding = new Padding(10)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 62));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 124));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 224));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 132));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 292));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 244));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         shell.Controls.Add(root, 0, 0);
-        shell.Controls.Add(BuildStatsRail(statsColumn), 1, 0);
+        shell.Controls.Add(BuildGuardrailRail(), 1, 0);
 
         _stopLossBanner = Theme.Label(string.Empty, Theme.HeaderFont, Theme.Text);
         _stopLossBanner.AutoSize = false;
@@ -76,11 +77,15 @@ public sealed partial class MainForm
 
         foreach (var title in new[]
         {
-            "Overall value", "Cash bankroll", "Today value P/L", "This month value P/L", "Tickets available", "Stop-loss status"
+            "Overall value", "Cash bankroll", "Available funds", "Reserved target", "Today value P/L", "This month value P/L"
         })
         {
             AddKpi(kpis, title);
         }
+
+        _runningChart = new MiniChart { Dock = DockStyle.Fill, Margin = new Padding(6, 4, 6, 8) };
+        _runningChart.PointActivated += (_, e) => OpenRunningChartPoint(e.Point);
+        root.Controls.Add(_runningChart, 0, 2);
 
         var overview = new TableLayoutPanel
         {
@@ -92,7 +97,7 @@ public sealed partial class MainForm
         overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
         overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
         overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-        root.Controls.Add(overview, 0, 2);
+        root.Controls.Add(overview, 0, 3);
 
         _overviewAttentionGrid = CreateGrid(_overviewAttentionSource);
         _overviewAttentionGrid.CellDoubleClick += (_, _) => OpenSelectedAttentionItem();
@@ -125,28 +130,25 @@ public sealed partial class MainForm
         var charts = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 2,
+            ColumnCount = 3,
+            RowCount = 1,
             BackColor = Theme.Back
         };
-        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-        charts.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        charts.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        root.Controls.Add(charts, 0, 3);
+        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
+        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
+        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
+        charts.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+        root.Controls.Add(charts, 0, 4);
 
         _dailyChart = new MiniChart { Dock = DockStyle.Fill };
-        _runningChart = new MiniChart { Dock = DockStyle.Fill };
         _comparisonChart = new MiniChart { Dock = DockStyle.Fill };
         _monthlyChart = new MiniChart { Dock = DockStyle.Fill };
         _dailyChart.PointActivated += (_, e) => OpenDailyChartPoint(e.Point);
-        _runningChart.PointActivated += (_, e) => OpenRunningChartPoint(e.Point);
         _comparisonChart.PointActivated += (_, e) => OpenComparisonChartPoint(e.Point);
         _monthlyChart.PointActivated += (_, e) => OpenMonthlyChartPoint(e.Point);
         charts.Controls.Add(_dailyChart, 0, 0);
-        charts.Controls.Add(_runningChart, 1, 0);
-        charts.Controls.Add(_comparisonChart, 0, 1);
-        charts.Controls.Add(_monthlyChart, 1, 1);
+        charts.Controls.Add(_comparisonChart, 1, 0);
+        charts.Controls.Add(_monthlyChart, 2, 0);
 
         return viewport;
     }
@@ -156,8 +158,31 @@ public sealed partial class MainForm
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         var summary = BankrollCalculator.GetDashboardSummary(_data, today, viewData.DailySummaries);
+        var settings = _data.Settings;
+        var mainGrindRule = settings.GetRule(TournamentCategory.MainGrind);
+        var reserveTarget = summary.CurrentBankroll * settings.ReserveTargetPercent / 100m;
+        var availableFunds = Math.Max(0m, summary.CurrentBankroll - reserveTarget - summary.ActiveTableCash);
+        var suggestedUnit = summary.CurrentBankroll * mainGrindRule.MaxRiskPercent / 100m;
+        var maxSessionRisk = summary.CurrentBankroll * settings.CashSessionMaxRiskPercent / 100m;
+        var dailyCommittedRisk = DailyCommittedRisk(today);
+        var dailyRiskCap = summary.CurrentBankroll > 0m
+            ? summary.CurrentBankroll * settings.DailyRiskCapPercent / 100m
+            : 0m;
+        var activeExposure = ActiveExposure();
+        var activeExposureCap = summary.CurrentBankroll > 0m
+            ? summary.CurrentBankroll * settings.ActiveExposureCapPercent / 100m
+            : 0m;
+        var dailyStopLeft = StopLossRemaining(summary.StopLossStatus.TodayProfitLoss, summary.StopLossStatus.DailyStopLossLimit);
+        var monthlyStopLeft = StopLossRemaining(summary.StopLossStatus.ThisMonthProfitLoss, summary.StopLossStatus.MonthlyStopLossLimit);
+        var highWaterValue = viewData.RunningBankroll.Count == 0
+            ? summary.CurrentBankrollValue
+            : Math.Max(summary.CurrentBankrollValue, viewData.RunningBankroll.Max(point => point.BankrollValue));
+        var drawdown = Math.Max(0m, highWaterValue - summary.CurrentBankrollValue);
+
         SetKpi("Overall value", Money(summary.CurrentBankrollValue), summary.CurrentBankrollValue);
         SetKpi("Cash bankroll", Money(summary.CurrentBankroll), summary.CurrentBankroll);
+        SetKpi("Available funds", Money(availableFunds), availableFunds);
+        SetKpi("Reserved target", Money(reserveTarget), -reserveTarget);
         SetKpi("On tables", Money(summary.ActiveTableCash), summary.ActiveTableCash);
         SetKpi("Total deposits", Money(summary.TotalDeposits), summary.TotalDeposits);
         SetKpi("Total withdrawals", Money(summary.TotalWithdrawals), -summary.TotalWithdrawals);
@@ -174,6 +199,14 @@ public sealed partial class MainForm
         SetKpi("Best day", summary.BestDay is null ? "-" : $"{summary.BestDay.Date:yyyy-MM-dd}  {Money(summary.BestDay.TotalValueProfitLoss)}", summary.BestDay?.TotalValueProfitLoss ?? 0m);
         SetKpi("Worst day", summary.WorstDay is null ? "-" : $"{summary.WorstDay.Date:yyyy-MM-dd}  {Money(summary.WorstDay.TotalValueProfitLoss)}", summary.WorstDay?.TotalValueProfitLoss ?? 0m);
         SetKpi("Stop-loss status", summary.StopLossStatus.StatusText, summary.StopLossStatus.BreakRequired ? -1m : 1m);
+        SetKpi("Risk status", summary.StopLossStatus.StatusText, summary.StopLossStatus.BreakRequired ? -1m : 1m);
+        SetKpi("Suggested unit", Money(suggestedUnit), suggestedUnit);
+        SetKpi("Max session risk", Money(maxSessionRisk), maxSessionRisk);
+        SetKpi("Daily stop left", Money(dailyStopLeft), dailyStopLeft);
+        SetKpi("Monthly stop left", Money(monthlyStopLeft), monthlyStopLeft);
+        SetKpi("Daily risk left", Money(dailyRiskCap - dailyCommittedRisk), dailyRiskCap - dailyCommittedRisk);
+        SetKpi("Exposure left", Money(activeExposureCap - activeExposure), activeExposureCap - activeExposure);
+        SetKpi("Current drawdown", Money(drawdown), -drawdown);
         SetKpi("Protect mode", summary.StopLossStatus.ProtectModeActive ? "ACTIVE" : "Off", summary.StopLossStatus.ProtectModeActive ? -1m : 1m);
         SetKpi("Bankroll tier", summary.BankrollTier, summary.CurrentBankroll);
 
@@ -218,35 +251,79 @@ public sealed partial class MainForm
     }
 
 
-    private Control BuildStatsRail(ColumnStyle statsColumn)
+    private Control BuildGuardrailRail()
     {
-        var shell = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            RowCount = 2,
-            BackColor = Theme.Panel,
-            Padding = new Padding(6),
-            Margin = new Padding(6, 8, 0, 8)
-        };
-        shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-        var toggle = Theme.Button("Stats");
-        toggle.AutoSize = false;
-        toggle.Dock = DockStyle.Top;
-        toggle.Height = Theme.ButtonHeight;
-        toggle.Margin = new Padding(0, 0, 0, 10);
-        shell.Controls.Add(toggle, 0, 0);
-
-        var detailKpis = new FlowLayoutPanel
+        var shell = new Panel
         {
             Dock = DockStyle.Fill,
             AutoScroll = true,
             BackColor = Theme.Panel,
+            Padding = new Padding(6),
+            Margin = new Padding(6, 8, 0, 8)
+        };
+
+        var content = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            ColumnCount = 1,
+            RowCount = 4,
+            BackColor = Theme.Panel,
+            Margin = new Padding(0)
+        };
+        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        shell.Controls.Add(content);
+
+        var heading = Theme.Label("Guardrails", Theme.SubHeaderFont, Theme.Text);
+        heading.AutoSize = false;
+        heading.Dock = DockStyle.Top;
+        heading.Height = 28;
+        heading.Margin = new Padding(8, 4, 8, 8);
+        heading.TextAlign = ContentAlignment.MiddleLeft;
+        content.Controls.Add(heading, 0, 0);
+
+        var guardrails = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Theme.Panel,
+            WrapContents = true,
+            Margin = new Padding(0, 0, 0, 8)
+        };
+        content.Controls.Add(guardrails, 0, 1);
+
+        foreach (var title in new[]
+        {
+            "Risk status", "Suggested unit", "Max session risk", "Daily stop left",
+            "Monthly stop left", "Daily risk left", "Exposure left", "Current drawdown"
+        })
+        {
+            AddKpi(guardrails, title);
+        }
+
+        var toggle = Theme.Button("More stats");
+        toggle.AutoSize = false;
+        toggle.Dock = DockStyle.Top;
+        toggle.Height = Theme.ButtonHeight;
+        toggle.Margin = new Padding(8, 0, 8, 10);
+        content.Controls.Add(toggle, 0, 2);
+
+        var detailKpis = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Theme.Panel,
             WrapContents = true,
             Visible = false
         };
-        shell.Controls.Add(detailKpis, 0, 1);
+        content.Controls.Add(detailKpis, 0, 3);
 
         foreach (var title in new[]
         {
@@ -262,9 +339,8 @@ public sealed partial class MainForm
         toggle.Click += (_, _) =>
         {
             expanded = !expanded;
-            statsColumn.Width = expanded ? 360 : 112;
             detailKpis.Visible = expanded;
-            toggle.Text = expanded ? "Hide Stats" : "Stats";
+            toggle.Text = expanded ? "Hide stats" : "More stats";
             shell.Parent?.PerformLayout();
         };
 
@@ -353,5 +429,28 @@ public sealed partial class MainForm
         }
 
         label.SetData(key, text, signValue);
+    }
+
+    private decimal DailyCommittedRisk(DateOnly today)
+    {
+        return _data.TournamentEntries
+            .Where(entry => entry.Date == today)
+            .Sum(entry => entry.CashCost)
+            + _data.CashSessions
+                .Where(entry => entry.Date == today)
+                .Sum(entry => entry.SessionCost);
+    }
+
+    private decimal ActiveExposure()
+    {
+        return _data.TournamentEntries
+            .Where(entry => entry.Status != TournamentStatus.Finished)
+            .Sum(entry => entry.CashCost)
+            + _data.CashSessions.Sum(entry => entry.ActiveTableCash);
+    }
+
+    private static decimal StopLossRemaining(decimal profitLoss, decimal limit)
+    {
+        return limit > 0m ? Math.Max(0m, limit + profitLoss) : 0m;
     }
 }
