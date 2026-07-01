@@ -371,39 +371,33 @@ public sealed partial class MainForm
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         shell.Controls.Add(layout);
 
-        var header = new TableLayoutPanel
+        var header = new Panel
         {
             Dock = DockStyle.Fill,
-            AutoSize = false,
             Height = Theme.ButtonHeight,
-            ColumnCount = editAction is null ? 1 : 2,
-            RowCount = 1,
             BackColor = Theme.Panel,
             Margin = new Padding(0, 0, 0, 10)
         };
-        header.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        if (editAction is not null)
-        {
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 104));
-        }
 
         var label = Theme.Label(title, Theme.SubHeaderFont, Theme.Text);
         label.Dock = DockStyle.Fill;
         label.AutoSize = false;
         label.TextAlign = ContentAlignment.MiddleLeft;
         label.Margin = new Padding(0);
-        header.Controls.Add(label, 0, 0);
+        label.Padding = editAction is null ? new Padding(0) : new Padding(0, 0, 112, 0);
+        header.Controls.Add(label);
 
         if (editAction is not null)
         {
             var edit = Theme.Button(actionText);
             edit.AutoSize = false;
-            edit.Dock = DockStyle.Top;
+            edit.Dock = DockStyle.Right;
             edit.Height = Theme.ButtonHeight;
-            edit.Margin = new Padding(8, 0, 0, 0);
+            edit.Width = 96;
+            edit.Margin = new Padding(0);
             edit.Click += (_, _) => editAction();
-            header.Controls.Add(edit, 1, 0);
+            header.Controls.Add(edit);
+            edit.BringToFront();
         }
 
         grid.Margin = new Padding(0);
