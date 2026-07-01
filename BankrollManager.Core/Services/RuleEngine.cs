@@ -127,7 +127,7 @@ public static class RuleEngine
             return Result(
                 DecisionLabel.Pass,
                 context,
-                $"{context.Category} monthly budget is used up for the active month.",
+                $"{context.Category} monthly budget is used up for the current month.",
                 "Move to freerolls/centrolls or stop for today.");
         }
 
@@ -337,7 +337,7 @@ public static class RuleEngine
         var currentBankroll = BankrollCalculator.CurrentBankroll(data);
         var riskAmount = request.TotalPlannedRisk;
         var riskPercent = BankrollCalculator.RiskPercentage(riskAmount, currentBankroll);
-        var monthStart = settings.ActiveMonthStart;
+        var monthStart = BankrollSettings.MonthStartFor(today);
         var monthFunding = BankrollCalculator.MonthFunding(data, monthStart, today);
         var categoryBudget = monthFunding * categoryRule.MonthlyBudgetPercent / 100m;
         var budgetRemaining = BankrollCalculator.CategoryBudgetRemaining(data, category, monthStart, today);

@@ -8,7 +8,7 @@ public sealed class BankrollSettings
     public string CurrencySymbol { get; set; } = "\u20ac";
     public Platform DefaultPlatform { get; set; } = Platform.Unibet;
     public List<Platform> EnabledPlatforms { get; set; } = Enum.GetValues<Platform>().ToList();
-    public DateOnly ActiveMonthStart { get; set; } = new(2026, 6, 1);
+    public DateOnly ActiveMonthStart { get; set; } = MonthStartFor(DateOnly.FromDateTime(DateTime.Today));
     public int DefaultMaxBullets { get; set; } = 1;
     public int ActiveReviewYear { get; set; } = 2026;
     public decimal NormalMttMaxRiskPercent { get; set; } = 2.5m;
@@ -40,6 +40,11 @@ public sealed class BankrollSettings
     public DateTime? FirstRunSetupCompletedUtc { get; set; }
     public int RuleProfileVersion { get; set; }
     public List<CategoryRuleSettings> CategoryRules { get; set; } = CategoryRuleSettings.CreateDefaults();
+
+    public static DateOnly MonthStartFor(DateOnly date)
+    {
+        return new DateOnly(date.Year, date.Month, 1);
+    }
 
     public CategoryRuleSettings GetRule(TournamentCategory category)
     {

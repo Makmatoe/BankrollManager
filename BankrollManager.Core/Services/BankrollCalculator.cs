@@ -715,12 +715,12 @@ public static class BankrollCalculator
     public static DashboardSummary GetDashboardSummary(BankrollData data, DateOnly today, IReadOnlyList<DailySummary> dailySummaries)
     {
         data.EnsureDefaults();
-        var monthStart = data.Settings.ActiveMonthStart;
+        var monthStart = BankrollSettings.MonthStartFor(today);
         var thisMonthProfitLoss = dailySummaries
-            .Where(summary => summary.Date >= monthStart)
+            .Where(summary => summary.Date >= monthStart && summary.Date <= today)
             .Sum(summary => summary.TotalProfitLoss);
         var thisMonthValueProfitLoss = dailySummaries
-            .Where(summary => summary.Date >= monthStart)
+            .Where(summary => summary.Date >= monthStart && summary.Date <= today)
             .Sum(summary => summary.TotalValueProfitLoss);
         var todayProfitLoss = dailySummaries.FirstOrDefault(summary => summary.Date == today)?.TotalProfitLoss ?? 0m;
         var todayValueProfitLoss = dailySummaries.FirstOrDefault(summary => summary.Date == today)?.TotalValueProfitLoss ?? 0m;

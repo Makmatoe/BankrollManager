@@ -170,7 +170,6 @@ public sealed partial class MainForm : Form
     private TextBox _currency = null!;
     private CheckedListBox _enabledPlatforms = null!;
     private ComboBox _defaultPlatform = null!;
-    private DateTimePicker _activeMonthStart = null!;
     private NumericUpDown _startingBankroll = null!;
     private NumericUpDown _defaultMaxBullets = null!;
     private NumericUpDown _activeReviewYear = null!;

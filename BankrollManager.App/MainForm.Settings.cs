@@ -42,7 +42,6 @@ public sealed partial class MainForm
         _currency = Theme.TextBox();
         _enabledPlatforms = BuildEnabledPlatformsList();
         _defaultPlatform = Theme.EnumBox(Platform.Unibet);
-        _activeMonthStart = Theme.DatePicker(new DateOnly(2026, 6, 1));
         _startingBankroll = Theme.MoneyBox(0m);
         _defaultMaxBullets = Theme.IntBox(1, 99);
         _activeReviewYear = Theme.IntBox(2026, 9999);
@@ -73,7 +72,6 @@ public sealed partial class MainForm
         AddSettingsRow(form, "Currency", _currency);
         AddTallSettingsRow(form, "Enabled platforms", _enabledPlatforms, 112);
         AddSettingsRow(form, "Default platform", _defaultPlatform);
-        AddSettingsRow(form, "Active month start", _activeMonthStart);
         AddSettingsRow(form, "Starting cash bankroll", _startingBankroll);
         AddSettingsRow(form, "Default max bullets", _defaultMaxBullets);
         AddSettingsRow(form, "Active review year", _activeReviewYear);
@@ -156,7 +154,6 @@ public sealed partial class MainForm
             _defaultPlatform,
             PlatformCatalog.EnabledPlatforms(settings, settings.DefaultPlatform),
             settings.DefaultPlatform);
-        _activeMonthStart.Value = settings.ActiveMonthStart.ToDateTime(TimeOnly.MinValue);
         _startingBankroll.Value = ClampToBox(_startingBankroll, settings.StartingBankroll);
         _defaultMaxBullets.Value = ClampToBox(_defaultMaxBullets, settings.DefaultMaxBullets);
         _activeReviewYear.Value = ClampToBox(_activeReviewYear, settings.ActiveReviewYear);
@@ -206,7 +203,6 @@ public sealed partial class MainForm
 
         _data.Settings.EnabledPlatforms = enabledPlatforms;
         _data.Settings.DefaultPlatform = defaultPlatform;
-        _data.Settings.ActiveMonthStart = DateOnly.FromDateTime(_activeMonthStart.Value);
         _data.Settings.StartingBankroll = _startingBankroll.Value;
         _data.Settings.DefaultMaxBullets = (int)_defaultMaxBullets.Value;
         _data.Settings.ActiveReviewYear = (int)_activeReviewYear.Value;

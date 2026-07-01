@@ -217,7 +217,7 @@ public sealed partial class MainForm
                 "Settings controls the lists and limits the rest of the app uses. Disabled platforms stay out of tournament, cash, ledger, and decision pickers.",
                 [
                     "Keep only the platforms you actually use enabled.",
-                    "Set active month start, starting cash bankroll, and default bullets.",
+                    "Set starting cash bankroll, default bullets, and the limits you actually use.",
                     "Review risk caps, stop-loss, protect mode, and cooldown settings."
                 ],
                 "Open Settings",

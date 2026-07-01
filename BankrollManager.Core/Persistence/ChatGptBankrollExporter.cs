@@ -77,8 +77,8 @@ public static class ChatGptBankrollExporter
                 ["total_value_pl", Money(dashboard.TotalValueProfitLoss)],
                 ["today_cash_pl", Money(dashboard.TodayProfitLoss)],
                 ["today_value_pl", Money(dashboard.TodayValueProfitLoss)],
-                ["active_month_cash_pl", Money(dashboard.ThisMonthProfitLoss)],
-                ["active_month_value_pl", Money(dashboard.ThisMonthValueProfitLoss)],
+                ["current_month_cash_pl", Money(dashboard.ThisMonthProfitLoss)],
+                ["current_month_value_pl", Money(dashboard.ThisMonthValueProfitLoss)],
                 ["bankroll_tier", dashboard.BankrollTier]
             ]);
 
@@ -108,7 +108,7 @@ public static class ChatGptBankrollExporter
                 ["starting_bankroll", Money(data.Settings.StartingBankroll)],
                 ["default_platform", data.Settings.DefaultPlatform.ToString()],
                 ["enabled_platforms", string.Join(", ", data.Settings.GetEnabledPlatforms())],
-                ["active_month_start", Date(data.Settings.ActiveMonthStart)],
+                ["current_month_start", Date(BankrollSettings.MonthStartFor(today))],
                 ["default_max_bullets", Int(data.Settings.DefaultMaxBullets)],
                 ["active_review_year", Int(data.Settings.ActiveReviewYear)],
                 ["normal_mtt_max_risk_percent", Percent(data.Settings.NormalMttMaxRiskPercent)],

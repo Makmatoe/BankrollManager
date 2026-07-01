@@ -234,6 +234,35 @@ public sealed class BankrollCalculatorTests
     }
 
     [TestMethod]
+    public void DashboardSummaryUsesCalendarMonthStartAutomatically()
+    {
+        var today = new DateOnly(2026, 6, 9);
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings
+            {
+                ActiveMonthStart = new DateOnly(2026, 1, 1),
+                StartingBankroll = 100m,
+                ProtectModeBelowBankroll = 0m,
+                DailyStopLossAmount = 0m,
+                MonthlyPokerStopLossPercent = 0m
+            },
+            TournamentEntries =
+            [
+                new TournamentEntry { Date = new DateOnly(2026, 5, 31), BuyIn = 10m, ActualBullets = 1 },
+                new TournamentEntry { Date = new DateOnly(2026, 6, 1), BuyIn = 3m, ActualBullets = 1 },
+                new TournamentEntry { Date = today, BuyIn = 5m, ActualBullets = 1, CashPrize = 10m },
+                new TournamentEntry { Date = new DateOnly(2026, 6, 20), BuyIn = 1m, ActualBullets = 1, CashPrize = 101m }
+            ]
+        };
+
+        var dashboard = BankrollCalculator.GetDashboardSummary(data, today);
+
+        AssertMoney(2m, dashboard.ThisMonthProfitLoss);
+        AssertMoney(2m, dashboard.ThisMonthValueProfitLoss);
+    }
+
+    [TestMethod]
     public void SummariesTrackHoursPlayedAndHourlyRate()
     {
         var date = new DateOnly(2026, 6, 9);

@@ -246,6 +246,80 @@ public sealed class RuleEngineTests
     }
 
     [TestMethod]
+    public void StopLossUsesCalendarMonthStartAutomatically()
+    {
+        var today = new DateOnly(2026, 6, 9);
+        var data = new BankrollData
+        {
+            Settings = new BankrollSettings
+            {
+                ActiveMonthStart = new DateOnly(2026, 1, 1),
+                StartingBankroll = 100m,
+                ProtectModeBelowBankroll = 0m,
+                DailyStopLossAmount = 0m,
+                MonthlyPokerStopLossPercent = 10m
+            },
+            TournamentEntries =
+            [
+                new TournamentEntry { Date = new DateOnly(2026, 5, 31), BuyIn = 20m, ActualBullets = 1 },
+                new TournamentEntry { Date = today, BuyIn = 5m, ActualBullets = 1 }
+            ]
+        };
+
+        var status = StopLossService.GetStatus(data, today);
+
+        Assert.IsFalse(status.MonthlyStopLossHit);
+        AssertMoney(-5m, status.ThisMonthProfitLoss);
+    }
+
+    [TestMethod]
+    public void RuleEngineUsesCalendarMonthStartForCategoryBudget()
+    {
+        var today = new DateOnly(2026, 6, 9);
+        var settings = new BankrollSettings
+        {
+            ActiveMonthStart = new DateOnly(2026, 1, 1),
+            StartingBankroll = 100m,
+            ProtectModeBelowBankroll = 0m,
+            DailyStopLossAmount = 0m,
+            MonthlyPokerStopLossPercent = 0m,
+            DailyRiskCapPercent = 100m,
+            ActiveExposureCapPercent = 100m
+        };
+        settings.GetRule(TournamentCategory.MainGrind).MonthlyBudgetPercent = 10m;
+
+        var data = new BankrollData
+        {
+            Settings = settings,
+            TournamentEntries =
+            [
+                new TournamentEntry
+                {
+                    Date = new DateOnly(2026, 5, 31),
+                    Category = TournamentCategory.MainGrind,
+                    BuyIn = 10m,
+                    ActualBullets = 1
+                }
+            ]
+        };
+
+        var result = RuleEngine.Evaluate(
+            data,
+            new DecisionRequest
+            {
+                Category = TournamentCategory.MainGrind,
+                Format = TournamentFormat.MTT,
+                BuyIn = 2m,
+                PlannedBullets = 1
+            },
+            today);
+
+        Assert.AreNotEqual(DecisionLabel.Pass, result.Label);
+        Assert.IsTrue(result.Thresholds.Any(threshold => threshold.Contains("Category budget", StringComparison.Ordinal)
+            && threshold.Contains("available", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public void SessionLockOnlyAppliesOnLockedDate()
     {
         var settings = new BankrollSettings { StartingBankroll = 100m };

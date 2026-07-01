@@ -48,7 +48,6 @@ public static class FirstRunSetupService
             : options.CurrencySymbol.Trim();
         data.Settings.EnabledPlatforms = enabledPlatforms;
         data.Settings.DefaultPlatform = defaultPlatform;
-        data.Settings.ActiveMonthStart = new DateOnly(options.SetupDate.Year, options.SetupDate.Month, 1);
         data.Settings.ActiveReviewYear = options.SetupDate.Year;
         data.Settings.StartingBankroll = options.FundingMode == FirstRunFundingMode.StartingBankroll
             ? fundingAmount
