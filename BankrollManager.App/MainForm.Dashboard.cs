@@ -367,13 +367,15 @@ public sealed partial class MainForm
             Padding = new Padding(0),
             Margin = new Padding(0)
         };
-        layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        layout.RowStyles.Add(new RowStyle(SizeType.Absolute, Theme.ButtonHeight + 10));
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         shell.Controls.Add(layout);
 
         var header = new Panel
         {
             Dock = DockStyle.Fill,
+            Width = 1,
             Height = Theme.ButtonHeight,
             BackColor = Theme.Panel,
             Margin = new Padding(0, 0, 0, 10)
