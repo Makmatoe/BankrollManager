@@ -15,7 +15,7 @@ public sealed partial class MainForm
 
     private Control BuildDashboardTab()
     {
-        const int minimumDashboardHeight = 920;
+        const int minimumDashboardHeight = 1380;
         var viewport = new Panel
         {
             Dock = DockStyle.Fill,
@@ -27,34 +27,23 @@ public sealed partial class MainForm
         {
             Dock = DockStyle.Top,
             Height = minimumDashboardHeight,
-            ColumnCount = 2,
-            RowCount = 1,
-            BackColor = Theme.Back
+            ColumnCount = 1,
+            RowCount = 6,
+            BackColor = Theme.Back,
+            Padding = new Padding(10)
         };
+        shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 232));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 264));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 292));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 300));
+        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         viewport.Controls.Add(shell);
         viewport.Resize += (_, _) =>
         {
             shell.Height = Math.Max(viewport.ClientSize.Height, minimumDashboardHeight);
         };
-
-        var guardrailColumn = new ColumnStyle(SizeType.Absolute, 330);
-        shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        shell.ColumnStyles.Add(guardrailColumn);
-
-        var root = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            RowCount = 5,
-            BackColor = Theme.Back,
-            Padding = new Padding(10)
-        };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 132));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 292));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 244));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        shell.Controls.Add(root, 0, 0);
-        shell.Controls.Add(BuildGuardrailRail(), 1, 0);
 
         _stopLossBanner = Theme.Label(string.Empty, Theme.HeaderFont, Theme.Text);
         _stopLossBanner.AutoSize = false;
@@ -63,7 +52,7 @@ public sealed partial class MainForm
         _stopLossBanner.TextAlign = ContentAlignment.MiddleLeft;
         _stopLossBanner.Padding = new Padding(18, 8, 18, 8);
         _stopLossBanner.BackColor = Theme.Panel;
-        root.Controls.Add(_stopLossBanner, 0, 0);
+        shell.Controls.Add(_stopLossBanner, 0, 0);
 
         var kpis = new FlowLayoutPanel
         {
@@ -73,7 +62,6 @@ public sealed partial class MainForm
             WrapContents = true,
             Padding = new Padding(0, 4, 0, 4)
         };
-        root.Controls.Add(kpis, 0, 1);
 
         foreach (var title in new[]
         {
@@ -83,9 +71,12 @@ public sealed partial class MainForm
             AddKpi(kpis, title);
         }
 
+        shell.Controls.Add(kpis, 0, 1);
+        shell.Controls.Add(BuildGuardrailBand(), 0, 2);
+
         _runningChart = new MiniChart { Dock = DockStyle.Fill, Margin = new Padding(6, 4, 6, 8) };
         _runningChart.PointActivated += (_, e) => OpenRunningChartPoint(e.Point);
-        root.Controls.Add(_runningChart, 0, 2);
+        shell.Controls.Add(_runningChart, 0, 3);
 
         var overview = new TableLayoutPanel
         {
@@ -97,7 +88,7 @@ public sealed partial class MainForm
         overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
         overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
         overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-        root.Controls.Add(overview, 0, 3);
+        shell.Controls.Add(overview, 0, 4);
 
         _overviewAttentionGrid = CreateGrid(_overviewAttentionSource);
         _overviewAttentionGrid.CellDoubleClick += (_, _) => OpenSelectedAttentionItem();
@@ -138,7 +129,7 @@ public sealed partial class MainForm
         charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
         charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
         charts.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.Controls.Add(charts, 0, 4);
+        shell.Controls.Add(charts, 0, 5);
 
         _dailyChart = new MiniChart { Dock = DockStyle.Fill };
         _comparisonChart = new MiniChart { Dock = DockStyle.Fill };
@@ -251,52 +242,37 @@ public sealed partial class MainForm
     }
 
 
-    private Control BuildGuardrailRail()
+    private Control BuildGuardrailBand()
     {
-        var shell = new Panel
+        var shell = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            AutoScroll = true,
-            BackColor = Theme.Panel,
-            Padding = new Padding(6),
-            Margin = new Padding(6, 8, 0, 8)
-        };
-
-        var content = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
             ColumnCount = 1,
-            RowCount = 4,
-            BackColor = Theme.Panel,
+            RowCount = 2,
+            BackColor = Theme.Back,
+            Padding = new Padding(0, 4, 0, 4),
             Margin = new Padding(0)
         };
-        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        shell.Controls.Add(content);
+        shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 32));
+        shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
         var heading = Theme.Label("Guardrails", Theme.SubHeaderFont, Theme.Text);
         heading.AutoSize = false;
-        heading.Dock = DockStyle.Top;
-        heading.Height = 28;
-        heading.Margin = new Padding(8, 4, 8, 8);
+        heading.Dock = DockStyle.Fill;
+        heading.Margin = new Padding(6, 0, 6, 4);
         heading.TextAlign = ContentAlignment.MiddleLeft;
-        content.Controls.Add(heading, 0, 0);
+        shell.Controls.Add(heading, 0, 0);
 
         var guardrails = new FlowLayoutPanel
         {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            BackColor = Theme.Panel,
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+            BackColor = Theme.Back,
             WrapContents = true,
-            Margin = new Padding(0, 0, 0, 8)
+            Margin = new Padding(0)
         };
-        content.Controls.Add(guardrails, 0, 1);
+        shell.Controls.Add(guardrails, 0, 1);
 
         foreach (var title in new[]
         {
@@ -306,43 +282,6 @@ public sealed partial class MainForm
         {
             AddKpi(guardrails, title);
         }
-
-        var toggle = Theme.Button("More stats");
-        toggle.AutoSize = false;
-        toggle.Dock = DockStyle.Top;
-        toggle.Height = Theme.ButtonHeight;
-        toggle.Margin = new Padding(8, 0, 8, 10);
-        content.Controls.Add(toggle, 0, 2);
-
-        var detailKpis = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            BackColor = Theme.Panel,
-            WrapContents = true,
-            Visible = false
-        };
-        content.Controls.Add(detailKpis, 0, 3);
-
-        foreach (var title in new[]
-        {
-            "On tables", "Total value P/L", "Total poker P/L", "Tournament value P/L", "Tournament P/L",
-            "Cash P/L", "Today P/L", "This month P/L", "Total deposits", "Total withdrawals",
-            "Best day", "Worst day", "Protect mode", "Bankroll tier"
-        })
-        {
-            AddKpi(detailKpis, title);
-        }
-
-        var expanded = false;
-        toggle.Click += (_, _) =>
-        {
-            expanded = !expanded;
-            detailKpis.Visible = expanded;
-            toggle.Text = expanded ? "Hide stats" : "More stats";
-            shell.Parent?.PerformLayout();
-        };
 
         return shell;
     }
