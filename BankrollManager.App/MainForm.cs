@@ -333,7 +333,7 @@ public sealed partial class MainForm : Form
         SuspendLayout();
         Text = "Bankroll Manager";
         Size = new Size(1420, 900);
-        MinimumSize = new Size(1120, 720);
+        MinimumSize = new Size(760, 720);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Theme.Back;
         ForeColor = Theme.Text;
@@ -410,7 +410,7 @@ public sealed partial class MainForm : Form
             BackColor = Theme.Panel
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 380));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 300));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         shell.Controls.Add(layout);
 

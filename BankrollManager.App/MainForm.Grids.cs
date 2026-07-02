@@ -485,7 +485,7 @@ public sealed partial class MainForm
             "Date" or "FinishedDate" or "ClosedDate" or "LastUpdatedDate" or "Month" => 82,
             "Time" or "RegistrationTime" or "FinishedTime" or "ClosedTime" or "SessionTime" => 62,
             "Status" or "Type" or "Platform" or "Category" or "Format" => 78,
-            _ when IsRightAlignedColumn(property) => Math.Min(preferredWidth, 68),
+            _ when IsRightAlignedColumn(property) => NumericMinimumWidth(property, preferredWidth),
             _ => Math.Min(preferredWidth, 76)
         };
         var maximumWidth = property switch
@@ -497,11 +497,35 @@ public sealed partial class MainForm
             "Tags" => 220,
             "Rule" or "RuleCheckResult" => 180,
             _ when flexible => Math.Max(preferredWidth + 120, 220),
-            _ when IsRightAlignedColumn(property) => Math.Max(preferredWidth, 140),
+            _ when IsRightAlignedColumn(property) => Math.Max(preferredWidth, 160),
             _ => Math.Max(preferredWidth, 180)
         };
 
         return new GridColumnLayout(preferredWidth, minimumWidth, Math.Max(maximumWidth, minimumWidth), flexible);
+    }
+
+    private static int NumericMinimumWidth(string property, int preferredWidth)
+    {
+        if (property.EndsWith("ROI", StringComparison.OrdinalIgnoreCase)
+            || property.Contains("RiskPercentage", StringComparison.OrdinalIgnoreCase)
+            || property is "MaxRiskPercent" or "MonthlyBudgetPercent" or "BudgetWarningPercent")
+        {
+            return Math.Clamp(preferredWidth, 76, 92);
+        }
+
+        if (property is "Hands" or "Minutes" or "HoursPlayed" or "Count" or "Year" or "Placement" or "FieldSize"
+            or "PlannedBullets" or "ActualBullets" or "BulletCap" or "DailyEntryCap" or "CooldownDays")
+        {
+            return Math.Clamp(preferredWidth, 64, 78);
+        }
+
+        if (property.Contains("BB", StringComparison.OrdinalIgnoreCase)
+            && property != "BigBlindAmount")
+        {
+            return Math.Clamp(preferredWidth, 78, 92);
+        }
+
+        return Math.Clamp(Math.Max(preferredWidth, 92), 92, 112);
     }
 
     private static bool IsFlexibleColumn(string property)

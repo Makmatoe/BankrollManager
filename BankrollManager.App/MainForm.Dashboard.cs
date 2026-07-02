@@ -16,6 +16,7 @@ public sealed partial class MainForm
     private Control BuildDashboardTab()
     {
         const int minimumDashboardHeight = 1380;
+        const int portraitDashboardBreakpoint = 1180;
         var viewport = new Panel
         {
             Dock = DockStyle.Fill,
@@ -40,10 +41,6 @@ public sealed partial class MainForm
         shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 300));
         shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         viewport.Controls.Add(shell);
-        viewport.Resize += (_, _) =>
-        {
-            shell.Height = Math.Max(viewport.ClientSize.Height, minimumDashboardHeight);
-        };
 
         _stopLossBanner = Theme.Label(string.Empty, Theme.SubHeaderFont, Theme.Text);
         _stopLossBanner.AutoSize = false;
@@ -85,9 +82,6 @@ public sealed partial class MainForm
             RowCount = 1,
             BackColor = Theme.Back
         };
-        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
-        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-        overview.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
         shell.Controls.Add(overview, 0, 4);
 
         _overviewAttentionGrid = CreateGrid(_overviewAttentionSource);
@@ -96,7 +90,7 @@ public sealed partial class MainForm
         AddTextColumn(_overviewAttentionGrid, "Area", "Area", 86);
         AddTextColumn(_overviewAttentionGrid, "Summary", "Summary", 280);
         AddTextColumn(_overviewAttentionGrid, "Action", "Action", 112);
-        overview.Controls.Add(BuildOverviewPanel("Needs attention", _overviewAttentionGrid, OpenSelectedAttentionItem, "Open"), 0, 0);
+        var attentionPanel = BuildOverviewPanel("Needs attention", _overviewAttentionGrid, OpenSelectedAttentionItem, "Open");
 
         _overviewOpenGrid = CreateGrid(_overviewOpenTournamentSource);
         _overviewOpenGrid.CellDoubleClick += (_, _) => EditSelectedTournament(_overviewOpenTournamentSource);
@@ -107,7 +101,7 @@ public sealed partial class MainForm
         AddTextColumn(_overviewOpenGrid, "CashCost", "Cash Cost", 90);
         AddTextColumn(_overviewOpenGrid, "TicketBuyInValue", "Ticket", 82);
         AddTextColumn(_overviewOpenGrid, "RuleCheckResult", "Rule", 96);
-        overview.Controls.Add(BuildOverviewPanel("Open tournaments", _overviewOpenGrid, () => EditSelectedTournament(_overviewOpenTournamentSource)), 1, 0);
+        var openPanel = BuildOverviewPanel("Open tournaments", _overviewOpenGrid, () => EditSelectedTournament(_overviewOpenTournamentSource));
 
         _overviewActivityGrid = CreateGrid(_overviewRecentActivitySource);
         AddTextColumn(_overviewActivityGrid, "Date", "Date", 92);
@@ -116,7 +110,8 @@ public sealed partial class MainForm
         AddTextColumn(_overviewActivityGrid, "Name", "Name", 230);
         AddTextColumn(_overviewActivityGrid, "Result", "Result", 90);
         AddTextColumn(_overviewActivityGrid, "BankrollAfter", "Cash After", 104);
-        overview.Controls.Add(BuildOverviewPanel("Recent activity", _overviewActivityGrid), 2, 0);
+        var activityPanel = BuildOverviewPanel("Recent activity", _overviewActivityGrid);
+        var overviewPanels = new[] { attentionPanel, openPanel, activityPanel };
 
         var charts = new TableLayoutPanel
         {
@@ -125,10 +120,6 @@ public sealed partial class MainForm
             RowCount = 1,
             BackColor = Theme.Back
         };
-        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34));
-        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-        charts.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33));
-        charts.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         shell.Controls.Add(charts, 0, 5);
 
         _dailyChart = new MiniChart { Dock = DockStyle.Fill };
@@ -137,11 +128,83 @@ public sealed partial class MainForm
         _dailyChart.PointActivated += (_, e) => OpenDailyChartPoint(e.Point);
         _comparisonChart.PointActivated += (_, e) => OpenComparisonChartPoint(e.Point);
         _monthlyChart.PointActivated += (_, e) => OpenMonthlyChartPoint(e.Point);
-        charts.Controls.Add(_dailyChart, 0, 0);
-        charts.Controls.Add(_comparisonChart, 1, 0);
-        charts.Controls.Add(_monthlyChart, 2, 0);
+        var chartPanels = new Control[] { _dailyChart, _comparisonChart, _monthlyChart };
+
+        void ApplyResponsiveDashboardLayout()
+        {
+            var width = viewport.ClientSize.Width <= 0 ? ClientSize.Width : viewport.ClientSize.Width;
+            var narrow = width < portraitDashboardBreakpoint;
+            var extraNarrow = width < 940;
+
+            ConfigureDashboardBand(overview, narrow, overviewPanels);
+            ConfigureDashboardBand(charts, narrow, chartPanels);
+
+            shell.RowStyles[1].Height = extraNarrow ? 356 : 232;
+            shell.RowStyles[2].Height = narrow ? extraNarrow ? 500 : 388 : 264;
+            shell.RowStyles[4].Height = narrow ? 780 : 300;
+            shell.RowStyles[5].SizeType = narrow ? SizeType.Absolute : SizeType.Percent;
+            shell.RowStyles[5].Height = narrow ? 720 : 100;
+
+            var dashboardHeight = narrow
+                ? 66 + (extraNarrow ? 356 : 232) + (extraNarrow ? 500 : 388) + 292 + 780 + 720 + 20
+                : minimumDashboardHeight;
+            shell.Height = Math.Max(viewport.ClientSize.Height, dashboardHeight);
+        }
+
+        viewport.Resize += (_, _) => ApplyResponsiveDashboardLayout();
+        ApplyResponsiveDashboardLayout();
 
         return viewport;
+    }
+
+    private static void ConfigureDashboardBand(
+        TableLayoutPanel layout,
+        bool stacked,
+        IReadOnlyList<Control> controls)
+    {
+        layout.SuspendLayout();
+        try
+        {
+            layout.ColumnStyles.Clear();
+            layout.RowStyles.Clear();
+            layout.ColumnCount = stacked ? 1 : controls.Count;
+            layout.RowCount = stacked ? controls.Count : 1;
+
+            if (stacked)
+            {
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                for (var index = 0; index < controls.Count; index++)
+                {
+                    layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f / controls.Count));
+                }
+            }
+            else
+            {
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+                for (var index = 0; index < controls.Count; index++)
+                {
+                    layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / controls.Count));
+                }
+            }
+
+            for (var index = 0; index < controls.Count; index++)
+            {
+                var control = controls[index];
+                if (!layout.Controls.Contains(control))
+                {
+                    layout.Controls.Add(control);
+                }
+
+                layout.SetColumn(control, stacked ? 0 : index);
+                layout.SetRow(control, stacked ? index : 0);
+                layout.SetColumnSpan(control, 1);
+                layout.SetRowSpan(control, 1);
+            }
+        }
+        finally
+        {
+            layout.ResumeLayout();
+        }
     }
 
 

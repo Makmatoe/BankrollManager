@@ -14,14 +14,23 @@ public sealed partial class MainForm
 {
     private Control BuildTournamentEvTab()
     {
-        var root = new TableLayoutPanel
+        const int portraitBreakpoint = 1180;
+        var viewport = new Panel
         {
             Dock = DockStyle.Fill,
+            AutoScroll = true,
+            BackColor = Theme.Back
+        };
+
+        var root = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
             ColumnCount = 3,
             RowCount = 1,
             BackColor = Theme.Back,
             Padding = new Padding(8)
         };
+        viewport.Controls.Add(root);
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 340));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 440));
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
@@ -203,7 +212,65 @@ public sealed partial class MainForm
         _tournamentEvBankrollSwingLabel = AddTournamentEvResultRow(varianceLayout, "1 SD / bankroll");
 
         RefreshTournamentEv();
-        return root;
+
+        var panels = new Control[] { formScroller, result, variance };
+        void ApplyResponsiveTournamentEvLayout()
+        {
+            var width = viewport.ClientSize.Width <= 0 ? ClientSize.Width : viewport.ClientSize.Width;
+            var stacked = width < portraitBreakpoint;
+            ConfigureTournamentEvRoot(root, stacked, panels);
+            root.Height = Math.Max(viewport.ClientSize.Height, stacked ? 1580 : viewport.ClientSize.Height);
+        }
+
+        viewport.Resize += (_, _) => ApplyResponsiveTournamentEvLayout();
+        ApplyResponsiveTournamentEvLayout();
+        return viewport;
+    }
+
+    private static void ConfigureTournamentEvRoot(
+        TableLayoutPanel root,
+        bool stacked,
+        IReadOnlyList<Control> panels)
+    {
+        root.SuspendLayout();
+        try
+        {
+            root.ColumnStyles.Clear();
+            root.RowStyles.Clear();
+            root.ColumnCount = stacked ? 1 : 3;
+            root.RowCount = stacked ? 3 : 1;
+
+            if (stacked)
+            {
+                root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                root.RowStyles.Add(new RowStyle(SizeType.Absolute, 820));
+                root.RowStyles.Add(new RowStyle(SizeType.Absolute, 354));
+                root.RowStyles.Add(new RowStyle(SizeType.Absolute, 382));
+            }
+            else
+            {
+                root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 340));
+                root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 440));
+                root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            }
+
+            for (var index = 0; index < panels.Count; index++)
+            {
+                var panel = panels[index];
+                root.SetColumn(panel, stacked ? 0 : index);
+                root.SetRow(panel, stacked ? index : 0);
+                panel.Margin = stacked && index > 0
+                    ? new Padding(0, 8, 0, 0)
+                    : index > 0
+                        ? new Padding(8, 0, 0, 0)
+                        : new Padding(0);
+            }
+        }
+        finally
+        {
+            root.ResumeLayout();
+        }
     }
 
     private void RefreshTournamentEv()

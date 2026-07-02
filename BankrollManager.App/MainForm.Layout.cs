@@ -46,7 +46,7 @@ public sealed partial class MainForm
             BackColor = Theme.Back,
             Padding = new Padding(14)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 116));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         buttons = BuildActionBar();
         root.Controls.Add(buttons, 0, 0);

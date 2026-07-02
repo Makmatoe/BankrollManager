@@ -15,8 +15,8 @@ public sealed class KpiCard : Control
         BackColor = Theme.Panel;
         ForeColor = Theme.Text;
         Font = Theme.BodyFont;
-        Size = new Size(216, 100);
-        MinimumSize = new Size(180, 92);
+        Size = new Size(236, 104);
+        MinimumSize = new Size(200, 96);
         Margin = new Padding(6);
     }
 

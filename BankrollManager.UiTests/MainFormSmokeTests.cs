@@ -41,7 +41,8 @@ public sealed class MainFormSmokeTests
     private static readonly Size[] SmokeSizes =
     [
         new(1280, 720),
-        new(1600, 900)
+        new(1600, 900),
+        new(900, 1600)
     ];
 
     [TestMethod]
@@ -208,6 +209,7 @@ public sealed class MainFormSmokeTests
                 var context = $"{appearanceMode} {size.Width}x{size.Height} {page}";
                 AssertVisibleControlsHaveSaneBounds(form, context);
                 AssertSeededDetailPageLoadedRows(form, page, context);
+                AssertReadableMoneyColumns(form, context);
                 AssertRenderedBitmapHasContent(form, context);
             }
 
@@ -298,6 +300,53 @@ public sealed class MainFormSmokeTests
         Assert.IsTrue(
             grids.Any(grid => grid.Rows.Count > 0),
             $"{context}: seeded detail rows were not loaded on first navigation.");
+    }
+
+    private static void AssertReadableMoneyColumns(Form form, string context)
+    {
+        foreach (var grid in EnumerateVisibleControls(form).OfType<DataGridView>())
+        {
+            foreach (DataGridViewColumn column in grid.Columns)
+            {
+                if (!column.Visible || !LooksLikeMoneyColumn(column))
+                {
+                    continue;
+                }
+
+                Assert.IsGreaterThanOrEqualTo(
+                    86,
+                    column.Width,
+                    $"{context}: money-like column {column.DataPropertyName}/{column.HeaderText} is too narrow at {column.Width}px.");
+            }
+        }
+    }
+
+    private static bool LooksLikeMoneyColumn(DataGridViewColumn column)
+    {
+        var property = column.DataPropertyName;
+        if (property.EndsWith("ROI", StringComparison.OrdinalIgnoreCase)
+            || property.Contains("Percent", StringComparison.OrdinalIgnoreCase)
+            || property.StartsWith("NumberOf", StringComparison.OrdinalIgnoreCase)
+            || property is "Count" or "Hands" or "Minutes" or "HoursPlayed")
+        {
+            return false;
+        }
+
+        var text = $"{column.DataPropertyName} {column.HeaderText}";
+        return text.Contains("Amount", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Bankroll", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("BuyIn", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Buy-in", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Cash", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Cost", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Deposits", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Exposure", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Loss", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("P/L", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Profit", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Ticket", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Value", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("Withdrawals", StringComparison.OrdinalIgnoreCase);
     }
 
     private static IEnumerable<Control> EnumerateVisibleControls(Control root)
