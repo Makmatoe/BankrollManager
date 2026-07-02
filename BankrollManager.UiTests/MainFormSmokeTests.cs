@@ -30,6 +30,14 @@ public sealed class MainFormSmokeTests
         "Settings"
     ];
 
+    private static readonly HashSet<string> DetailPagesWithSeedRows = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Timeline",
+        "MTTs",
+        "Cash",
+        "Ledger"
+    };
+
     private static readonly Size[] SmokeSizes =
     [
         new(1280, 720),
@@ -199,6 +207,7 @@ public sealed class MainFormSmokeTests
 
                 var context = $"{appearanceMode} {size.Width}x{size.Height} {page}";
                 AssertVisibleControlsHaveSaneBounds(form, context);
+                AssertSeededDetailPageLoadedRows(form, page, context);
                 AssertRenderedBitmapHasContent(form, context);
             }
 
@@ -275,6 +284,20 @@ public sealed class MainFormSmokeTests
         }
 
         Assert.Fail($"{context}: rendered form appears blank or visually collapsed.");
+    }
+
+    private static void AssertSeededDetailPageLoadedRows(Form form, string page, string context)
+    {
+        if (!DetailPagesWithSeedRows.Contains(page))
+        {
+            return;
+        }
+
+        var grids = EnumerateVisibleControls(form).OfType<DataGridView>().ToArray();
+        Assert.IsNotEmpty(grids, $"{context}: no visible detail grid was found.");
+        Assert.IsTrue(
+            grids.Any(grid => grid.Rows.Count > 0),
+            $"{context}: seeded detail rows were not loaded on first navigation.");
     }
 
     private static IEnumerable<Control> EnumerateVisibleControls(Control root)

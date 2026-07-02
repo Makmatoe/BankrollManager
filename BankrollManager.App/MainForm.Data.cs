@@ -115,7 +115,7 @@ public sealed partial class MainForm
     {
         if (string.Equals(title, "MTTs", StringComparison.OrdinalIgnoreCase))
         {
-            _tournamentLoader.Load();
+            _tournamentLoader.SetRows(FilteredTournamentRows(), loadNow: true);
             UpdateTournamentInspector();
             FitGridColumns(_tournamentGrid);
             return;
@@ -123,7 +123,7 @@ public sealed partial class MainForm
 
         if (string.Equals(title, "Cash", StringComparison.OrdinalIgnoreCase))
         {
-            _cashLoader.Load();
+            _cashLoader.SetRows(FilteredCashRows(), loadNow: true);
             UpdateCashInspector();
             FitGridColumns(_cashGrid);
             return;
@@ -131,14 +131,14 @@ public sealed partial class MainForm
 
         if (string.Equals(title, "Ledger", StringComparison.OrdinalIgnoreCase))
         {
-            _ledgerLoader.Load();
+            _ledgerLoader.SetRows(FilteredLedgerRows(), loadNow: true);
             FitGridColumns(_ledgerGrid);
             return;
         }
 
         if (string.Equals(title, "Timeline", StringComparison.OrdinalIgnoreCase))
         {
-            _timelineLoader.Load();
+            _timelineLoader.SetRows(FilteredTimelineRows(), loadNow: true);
             FitGridColumns(_timelineGrid);
         }
     }

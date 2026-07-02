@@ -33,7 +33,7 @@ public sealed partial class MainForm
             Padding = new Padding(10)
         };
         shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 58));
+        shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 66));
         shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 232));
         shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 264));
         shell.RowStyles.Add(new RowStyle(SizeType.Absolute, 292));
@@ -45,7 +45,7 @@ public sealed partial class MainForm
             shell.Height = Math.Max(viewport.ClientSize.Height, minimumDashboardHeight);
         };
 
-        _stopLossBanner = Theme.Label(string.Empty, Theme.HeaderFont, Theme.Text);
+        _stopLossBanner = Theme.Label(string.Empty, Theme.SubHeaderFont, Theme.Text);
         _stopLossBanner.AutoSize = false;
         _stopLossBanner.AutoEllipsis = true;
         _stopLossBanner.Dock = DockStyle.Fill;

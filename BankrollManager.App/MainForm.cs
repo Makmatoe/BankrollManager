@@ -345,7 +345,7 @@ public sealed partial class MainForm : Form
             RowCount = 3,
             BackColor = Theme.Back
         };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 82));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         Controls.Add(root);
@@ -410,7 +410,7 @@ public sealed partial class MainForm : Form
             BackColor = Theme.Panel
         };
         layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 330));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 380));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         shell.Controls.Add(layout);
 
@@ -422,7 +422,7 @@ public sealed partial class MainForm : Form
             BackColor = Theme.Panel,
             Margin = new Padding(0)
         };
-        identity.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        identity.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
         identity.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         layout.Controls.Add(identity, 0, 0);
 

@@ -46,7 +46,7 @@ public sealed partial class MainForm
             BackColor = Theme.Back,
             Padding = new Padding(14)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         buttons = BuildActionBar();
         root.Controls.Add(buttons, 0, 0);
@@ -57,9 +57,9 @@ public sealed partial class MainForm
     {
         return new FlowLayoutPanel
         {
-            Dock = DockStyle.Top,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Fill,
+            AutoSize = false,
+            AutoScroll = true,
             BackColor = Theme.Back,
             FlowDirection = FlowDirection.LeftToRight,
             WrapContents = true,
